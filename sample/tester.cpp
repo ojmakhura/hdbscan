@@ -5,7 +5,7 @@
  *      Author: junior
  */
 
-#include "hdbscan.h"
+#include "hdbscan.hpp"
 #include <cstdlib>
 #include <iostream>
 

@@ -12,11 +12,11 @@
 #include <set>
 #include <map>
 
-#include "cluster.h"
-#include "constraint.h"
-#include "distance.h"
-#include "outlier_score.h"
-#include "undirected_graph.h"
+#include "cluster.hpp"
+#include "constraint.hpp"
+#include "distance.hpp"
+#include "outlier_score.hpp"
+#include "undirected_graph.hpp"
 
 using namespace std;
 using namespace clustering;
