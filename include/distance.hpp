@@ -5,8 +5,8 @@
  *      Author: junior
  */
 
-#ifndef DISTANCE_H_
-#define DISTANCE_H_
+#ifndef DISTANCE_HPP_
+#define DISTANCE_HPP_
 
 #include <cmath>
 #include <vector>
@@ -72,4 +72,4 @@ private:
 }
 }
 
-#endif /* DISTANCE_H_ */
+#endif /* DISTANCE_HPP_ */

@@ -5,7 +5,11 @@ set(CMAKE_BUILD_TYPE Release)
 set(HDBSCAN_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 include_directories(${HDBSCAN_INCLUDE_DIR})
 
-set(HDBSCAN_SRC_DIR ${PROJECT_SOURCE_DIR}/src)
+set(CADT_INCLUDE_DIR /usr/local/cadt-1.0/include)
+include_directories(${HDBSCAN_INCLUDE_DIR})
+
+set(CADT_LIB_DIR /usr/local/hdbscan-1.0/lib)
+set(HDBSCAN_SRC_DIR ${CADT_INCLUDE_DIR}/src)
 
 # get all *.cpp files recursively
 file(GLOB_RECURSE SRC_FILES ${HDBSCAN_SRC_DIR}/*.cpp)
