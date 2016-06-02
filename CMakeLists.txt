@@ -9,6 +9,7 @@ set(HDBSCAN_SRC_DIR ${PROJECT_SOURCE_DIR}/src)
 
 # get all *.cpp files recursively
 file(GLOB_RECURSE SRC_FILES ${HDBSCAN_SRC_DIR}/*.cpp)
+file(GLOB_RECURSE INCLUDE_FILES ${HDBSCAN_INCLUDE_DIR}/*.hpp)
 
 # ---[ HDBSCAN version
 set(HDBSCAN_TARGET_VERSION "1.0.0")
@@ -20,3 +21,5 @@ set( CMAKE_CXX_FLAGS "-D__cplusplus=201103L -O0 -g3 -Wall -fmessage-length=0 -st
 
 add_library(hdbscan++ SHARED ${SRC_FILES})
  
+install (TARGETS hdbscan++ DESTINATION lib)
+install (FILES ${INCLUDE_FILES} DESTINATION include)
