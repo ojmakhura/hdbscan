@@ -11,10 +11,11 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <chrono>
 
 using namespace clustering;
 using namespace clustering::distance;
-
+using namespace std::chrono;
 namespace clustering {
 
 string getWarningMessage() {
@@ -218,20 +219,20 @@ void HDBSCAN::calculateCoreDistances() {
 		return;
 	}
 
-	for (unsigned int point = 0; point < dataSet->size(); point++) {
-		vector<double> kNNDistances(numNeighbors); //Sorted nearest distances found so far
-		for (int i = 0; i < numNeighbors; i++) {
-			kNNDistances[i] = numeric_limits<double>::max();
-		}
+	uint size = dataSet->size();
 
-		for (unsigned int neighbor = 0; neighbor < dataSet->size();
-				neighbor++) {
+	for (unsigned int point = 0; point < size; point++) {
+		vector<double> kNNDistances(numNeighbors, numeric_limits<double>::max()); //Sorted nearest distances found so far
+
+		for (unsigned int neighbor = 0; neighbor < size; neighbor++) {
 			if (point == neighbor) {
 				continue;
 			}
 
-			vector<double> attributesOne = (*dataSet)[point];
-			vector<double> attributesTwo = (*dataSet)[neighbor];
+			vector<double> attributesOne = dataSet[0][point];
+			vector<double> attributesTwo = dataSet[0][neighbor];
+
+
 			double distance = distanceFunction->computeDistance(&attributesOne,
 					&attributesTwo);
 
@@ -263,36 +264,36 @@ void HDBSCAN::calculateCoreDistances() {
  * @param coreDistances An array of core distances for each data point
  * @param selfEdges If each point should have an edge to itself with weight equal to core distance
  * @param distanceFunction A DistanceCalculator to compute distances between points
- * @return An MST for the data set using the mutual reachability distances
  */
 void HDBSCAN::constructMST() {
 
 	int selfEdgeCapacity = 0;
+	uint size = dataSet->size();
 	if (selfEdges)
-		selfEdgeCapacity = dataSet->size();
+		selfEdgeCapacity = size;
 
 	//One bit is set (true) for each attached point, or unset (false) for unattached points:
-	vector<bool> attachedPoints(dataSet->size(), false);
+	bool attachedPoints[selfEdgeCapacity] = {};
 
 	//Each point has a current neighbor point in the tree, and a current nearest distance:
-	vector<int>* nearestMRDNeighbors = new vector<int>(
-			dataSet->size() - 1 + selfEdgeCapacity);
-	vector<double>* nearestMRDDistances = new vector<double>(
-			dataSet->size() - 1 + selfEdgeCapacity,
-			numeric_limits<double>::max());
+	vector<int>* nearestMRDNeighbors = new vector<int>(size - 1 + selfEdgeCapacity);
+	vector<double>* nearestMRDDistances = new vector<double>(size - 1 + selfEdgeCapacity, numeric_limits<double>::max());
+
+	//Create an array for vertices in the tree that each point attached to:
+	vector<int>* otherVertexIndices = new vector<int>(size - 1 + selfEdgeCapacity);
 
 	//The MST is expanded starting with the last point in the data set:
-	int currentPoint = dataSet->size() - 1;
+	unsigned int currentPoint = size - 1;
 	int numAttachedPoints = 1;
-	attachedPoints[dataSet->size() - 1] = true;
-
+	attachedPoints[size - 1] = true;
+	high_resolution_clock::time_point t1 = high_resolution_clock::now();
 	//Continue attaching points to the MST until all points are attached:
-	while (numAttachedPoints < (int)dataSet->size()) {
+	while (numAttachedPoints < (int)size) {
 		int nearestMRDPoint = -1;
 		double nearestMRDDistance = numeric_limits<double>::max();
 
 		//Iterate through all unattached points, updating distances using the current point:
-		for (unsigned int neighbor = 0; neighbor < dataSet->size();
+		for (unsigned int neighbor = 0; neighbor < size;
 				neighbor++) {
 			if (currentPoint == neighbor) {
 				continue;
@@ -329,21 +330,20 @@ void HDBSCAN::constructMST() {
 
 		//Attach the closest point found in this iteration to the tree:
 		attachedPoints[nearestMRDPoint] = true;
+		(*otherVertexIndices)[numAttachedPoints] = numAttachedPoints;
 		numAttachedPoints++;
 		currentPoint = nearestMRDPoint;
 
 	}
+	high_resolution_clock::time_point t2 = high_resolution_clock::now();
+	auto duration = duration_cast<microseconds>( t2 - t1 ).count();
 
-	//Create an array for vertices in the tree that each point attached to:
-	vector<int>* otherVertexIndices = new vector<int>(
-			dataSet->size() - 1 + selfEdgeCapacity);
-	for (unsigned int i = 0; i < dataSet->size() - 1; i++) {
-		(*otherVertexIndices)[i] = i;
-	}
+	cout << "construct mst while loop time : " << duration << endl;
 
 	//If necessary, attach self edges:
 	if (selfEdges) {
-		for (uint i = dataSet->size() - 1; i < dataSet->size() * 2 - 1; i++) {
+
+		for (uint i = size - 1; i < size * 2 - 1; i++) {
 			int vertex = i - (dataSet->size() - 1);
 			(*nearestMRDNeighbors)[i] = vertex;
 			(*otherVertexIndices)[i] = vertex;
@@ -351,9 +351,8 @@ void HDBSCAN::constructMST() {
 		}
 	}
 
-	mst = new UndirectedGraph(dataSet->size(), nearestMRDNeighbors,
+	mst = new UndirectedGraph(size, nearestMRDNeighbors,
 			otherVertexIndices, nearestMRDDistances);
-
 }
 
 /**
@@ -849,38 +848,83 @@ void HDBSCAN::computeHierarchyAndClusterTree(bool compactHierarchy,
 }
 
 void HDBSCAN::run(bool calcDistances) {
-
+	high_resolution_clock::time_point t1 = high_resolution_clock::now();
 	if (calcDistances) {
 		calculateCoreDistances();
 	}
+	high_resolution_clock::time_point t2 = high_resolution_clock::now();
+	auto duration = duration_cast<microseconds>( t2 - t1 ).count();
 
+	cout << "calculateCoreDistances time : " << duration << endl;
+
+	t1 = high_resolution_clock::now();
 	//Calculate minimum spanning tree:
 	constructMST();
+	t2 = high_resolution_clock::now();
+	duration = duration_cast<microseconds>( t2 - t1 ).count();
 
+	cout << "constructMST time : " << duration << endl;
+
+	t1 = high_resolution_clock::now();
 	mst->quicksortByEdgeWeight();
+	t2 = high_resolution_clock::now();
+	duration = duration_cast<microseconds>( t2 - t1 ).count();
+
+	cout << "quicksortByEdgeWeight time : " << duration << endl;
+
 	int numPoints = coreDistances->size();
+
+	t1 = high_resolution_clock::now();
 	// Remove references to unneeded objects:
 	vector<vector<double> >().swap(*dataSet);
 
 	vector<double>* pointNoiseLevels = new vector<double>(numPoints);
 	vector<int>* pointLastClusters = new vector<int>(numPoints);
 	//Compute hierarchy and cluster tree:
+	t2 = high_resolution_clock::now();
+	duration = duration_cast<microseconds>( t2 - t1 ).count();
+
+	cout << "vector<vector<double> >().swap(*dataSet) time : " << duration << endl;
+
+	t1 = high_resolution_clock::now();
 	computeHierarchyAndClusterTree(true, pointNoiseLevels, pointLastClusters);
-	cout << "computeHierarchyAndClusterTree done ..... clusters "
-			<< clusters->size() << endl;
 
 	//Remove references to unneeded objects:
 	mst = NULL;
 	//Propagate clusters:
+	t2 = high_resolution_clock::now();
+	duration = duration_cast<microseconds>( t2 - t1 ).count();
+
+	cout << "computeHierarchyAndClusterTree time : " << duration << endl;
+
+	t1 = high_resolution_clock::now();
 	bool infiniteStability = propagateTree();
 
+	t2 = high_resolution_clock::now();
+	duration = duration_cast<microseconds>( t2 - t1 ).count();
+
+	cout << "propagateTree time : " << duration << endl;
+
+	t1 = high_resolution_clock::now();
 	//Compute final flat partitioning:
 	findProminentClusters(infiniteStability);
 
+	t2 = high_resolution_clock::now();
+	duration = duration_cast<microseconds>( t2 - t1 ).count();
+
+	cout << "findProminentClusters time : " << duration << endl;
+
+	t1 = high_resolution_clock::now();
 	//Compute outlier scores for each point:
 	calculateOutlierScores(pointNoiseLevels, pointLastClusters,
 			infiniteStability);
 
+	t2 = high_resolution_clock::now();
+	duration = duration_cast<microseconds>( t2 - t1 ).count();
+
+	cout << "calculateOutlierScores time : " << duration << endl;
+
+	cout << endl;
 }
 
 /**

@@ -1,5 +1,6 @@
 project (hdbscan-test CXX)
 option(BUILD_EXAMPLES "Build samples" ON)
-set( CMAKE_CXX_FLAGS "-D__cplusplus=201103L -O0 -g3 -Wall -fmessage-length=0 -std=c++11")
+set( CMAKE_CXX_FLAGS "-D__cplusplus=201103L -O3 -march=native -flto -fwhole-program -g3 -Wall -fmessage-length=0 -std=c++11")
+set ( CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -O3 -march=native -flto -fwhole-program -lhdbscan++" )
 add_executable(hdbscan-test tester.cpp)
 target_link_libraries(hdbscan-test hdbscan++)

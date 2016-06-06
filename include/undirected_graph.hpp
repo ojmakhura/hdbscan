@@ -25,7 +25,7 @@ private:
 	vector<int>* verticesA;
 	vector<int>* verticesB;
 	vector<double>* edgeWeights;
-	vector<vector<int>* > *edges;
+	vector<vector<int> > *edges;
 
 	/**
 	 * Quicksorts the graph in the interval [startIndex, endIndex] by edge weight.

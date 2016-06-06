@@ -28,11 +28,11 @@ double DistanceCalculator::computeDistance(vector<double>* attributesOne,
 	this->attributesOne = attributesOne;
 	this->attributesTwo = attributesTwo;
 
-	if (cal == EUCLIDEAN) {
+	if (cal == _EUCLIDEAN) {
 		do_euclidean();
 	} else if (cal == COSINE) {
 		do_cosine();
-	} else if (cal == MANHATTAN) {
+	} else if (cal == _MANHATTAN) {
 		do_manhattan();
 	} else if (cal == PEARSON) {
 		do_pearson();
@@ -50,7 +50,7 @@ void DistanceCalculator::do_euclidean() {
 				* ((*attributesOne)[i] - (*attributesTwo)[i]));
 	}
 
-	distance = sqrt(distance);
+	//distance = sqrt(distance);
 }
 
 void DistanceCalculator::do_cosine() {
@@ -64,7 +64,7 @@ void DistanceCalculator::do_cosine() {
 		magnitudeTwo += ((*attributesTwo)[i] * (*attributesTwo)[i]);
 	}
 
-	distance = 1 - (dotProduct / sqrt(magnitudeOne * magnitudeTwo));
+	distance = 1 - (dotProduct / (magnitudeOne * magnitudeTwo));
 
 }
 
@@ -100,7 +100,7 @@ void DistanceCalculator::do_pearson() {
 	}
 
 	distance = (1
-			- (covariance / sqrt(standardDeviationOne * standardDeviationTwo)));
+			- (covariance / (standardDeviationOne * standardDeviationTwo)));
 }
 
 void DistanceCalculator::do_supremum() {

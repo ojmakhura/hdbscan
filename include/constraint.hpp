@@ -5,8 +5,8 @@
  *      Author: junior
  */
 
-#ifndef CONSTRAINT_HPP_
-#define CONSTRAINT_HPP_
+#ifndef CONSTRAINT_H_
+#define CONSTRAINT_H_
 
 #include <string>
 
@@ -54,4 +54,4 @@ public:
 
 } /* namespace clustering */
 
-#endif /* CONSTRAINT_HPP_ */
+#endif /* CONSTRAINT_H_ */

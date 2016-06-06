@@ -33,18 +33,17 @@ UndirectedGraph::UndirectedGraph(int numVertices, vector<int>* verticesA,
 	this->verticesB = verticesB;
 	this->edgeWeights = edgeWeights;
 
-	this->edges = new  vector<vector<int>* >(numVertices);
-	for (unsigned int i = 0; i < this->edges->size(); i++) {
-		(*this->edges)[i] = new vector<int>();
-	}
+	this->edges = new  vector<vector<int> >(numVertices);
+
+	bool selfEdges = edgeWeights->size() == numVertices * 2 - 1;
 
 	for (unsigned int i = 0; i < edgeWeights->size(); i++) {
-		int vertexOne = (*this->verticesA)[i];
-		int vertexTwo = (*this->verticesB)[i];
-		(*this->edges)[vertexOne]->push_back(vertexTwo);
+		int vertexOne = this->verticesA[0][i];
+		int vertexTwo = this->verticesB[0][i];
+		(*this->edges)[vertexOne].push_back(vertexTwo);
 
 		if (vertexOne != vertexTwo){
-			(*this->edges)[vertexTwo]->push_back(vertexOne);
+			(*this->edges)[vertexTwo].push_back(vertexOne);
 		}
 	}
 }
@@ -203,7 +202,7 @@ double UndirectedGraph::getEdgeWeightAtIndex(int index) {
 }
 
 vector<int>* UndirectedGraph::getEdgeListForVertex(int vertex) {
-	return (*this->edges)[vertex];
+	return &(*this->edges)[vertex];
 }
 
 void UndirectedGraph::removeEdge(int va, int vb){
@@ -252,10 +251,10 @@ void UndirectedGraph::print() {
 	}
 
 	printf("\n\nEdges\n");
-	for (vector<vector<int>* >::iterator itr = edges->begin(); itr != edges->end(); itr++) {
-		vector<int>* edge = *itr;
+	for (vector<vector<int> >::iterator itr = edges->begin(); itr != edges->end(); itr++) {
+		//vector<int>* edge = itr;
 		printf("[");
-		for(vector<int>::iterator it = edge->begin(); it != edge->end(); ++it){
+		for(vector<int>::iterator it = itr->begin(); it != itr->end(); ++it){
 			printf("%d, ", *it);
 		}
 		printf("]\n");

@@ -5,8 +5,8 @@
  *      Author: junior
  */
 
-#ifndef DISTANCE_HPP_
-#define DISTANCE_HPP_
+#ifndef DISTANCE_H_
+#define DISTANCE_H_
 
 #include <cmath>
 #include <vector>
@@ -15,8 +15,8 @@
 using namespace std;
 
 #define COSINE 			0
-#define EUCLIDEAN 		1
-#define MANHATTAN		2
+#define _EUCLIDEAN 		1
+#define _MANHATTAN		2
 #define PEARSON			3
 #define SUPREMUM		4
 
@@ -36,7 +36,7 @@ private:
 	vector<double>* attributesOne;
 	vector<double>* attributesTwo;
 	double distance;
-	calculator cal = EUCLIDEAN;
+	calculator cal = _EUCLIDEAN;
 
 	/**
 	 * Computes the euclidean distance between two points, d = sqrt((x1-y1)^2 + (x2-y2)^2 + ... + (xn-yn)^2).
@@ -72,4 +72,4 @@ private:
 }
 }
 
-#endif /* DISTANCE_HPP_ */
+#endif /* DISTANCE_H_ */
