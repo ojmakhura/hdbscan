@@ -1,9 +1,18 @@
-project (hdbscanlib)
 
-# get all *.cpp files recursively
-file(GLOB_RECURSE SRC_FILES *.cpp)
+configure_file(config.h.in "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
 
-add_library(hdbscan SHARED ${SRC_FILES})
-target_link_libraries(hdbscan PUBLIC m)
-target_include_directories(hdbscan PUBLIC ${HDBSCAN_INCLUDE_DIR})
+file(GLOB HDBSCAN_CSRC "*.c")
+file(GLOB HDBSCAN_CPPSRC "*.cpp")
 
+add_library(hdbscan SHARED ${HDBSCAN_CSRC} ${HDBSCAN_CPPSRC})
+target_link_libraries(hdbscan ${GLIB2_LIBRARIES} m)
+include_directories(${HDBSCAN_INCLUDE_DIR} ${GLIB2_INCLUDE_DIRS})
+
+set_target_properties(hdbscan PROPERTIES PUBLIC_HEADER "hdbscan.h;${CMAKE_CURRENT_BINARY_DIR}/config.h")
+install(TARGETS hdbscan
+  # IMPORTANT: Add the hdbscan library to the "export-set"
+  EXPORT HdbscanTargets
+  RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
+  LIBRARY DESTINATION "${INSTALL_LIB_DIR}" COMPONENT shlib
+  PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}/hdbscan"
+    COMPONENT dev)

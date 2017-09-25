@@ -1,13 +1,71 @@
-cmake_minimum_required (VERSION 2.6)
-project (hdbscan)
-set(CMAKE_BUILD_TYPE Release)
+cmake_minimum_required (VERSION 2.8)
+
+project(hdbscan)
+
+# The version number.
+set (HDBSCAN_MAJOR_VERSION 3)
+set (HDBSCAN_MINOR_VERSION 0)
+set (HDBSCAN_PATCH_VERSION 0)
+set (HDBSCAN_VERSION ${HDBSCAN_VERSION_MAJOR}.${HDBSCAN_VERSION_MINOR}.${HDBSCAN_PATCH_VERSION})
+
+set(INSTALL_LIB_DIR lib CACHE PATH "Installation directory for libraries")
+set(INSTALL_BIN_DIR bin CACHE PATH "Installation directory for executables")
+set(INSTALL_INCLUDE_DIR include CACHE PATH "Installation directory for header files")
+
+
+if(WIN32 AND NOT CYGWIN)
+  set(DEF_INSTALL_CMAKE_DIR CMake)
+else()
+  set(DEF_INSTALL_CMAKE_DIR lib/CMake/hdbscan)
+endif()
+set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH "Installation directory for CMake files")
+
+# Make relative paths absolute (needed later on)
+foreach(p LIB BIN INCLUDE CMAKE)
+  set(var INSTALL_${p}_DIR)
+  if(NOT IS_ABSOLUTE "${${var}}")
+    set(${var} "${CMAKE_INSTALL_PREFIX}/${${var}}")
+  endif()
+endforeach()
 
 set(HDBSCAN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
+include_directories( "${HDBSCAN_INCLUDE_DIR}" "${PROJECT_BINARY_DIR}" ${GLIB2_INCLUDE_DIRS})
 
-# ---[ HDBSCAN version
-set(HDBSCAN_TARGET_VERSION "2.0.0")
-set(HDBSCAN_TARGET_SOVERSION "2.0.0")
-add_definitions(-DHDBSCAN_VERSION=${HDBSCAN_TARGET_VERSION})
+#ensure we have pkg-config in the system
+find_package(PkgConfig)
+
+# lookup gli-2.0 in pkg-config
+pkg_check_modules(GLIB2 REQUIRED glib-2.0>=2.36.0)
 
 add_subdirectory(src)
 add_subdirectory(sample)
+
+# Add all targets to the build-tree export set
+export(TARGETS hdbscan FILE "${PROJECT_BINARY_DIR}/HdbscanTargets.cmake")
+ 
+# Export the package for use from the build-tree
+# (this registers the build-tree with a global CMake-registry)
+export(PACKAGE hdbscan)
+
+# Create the HdbscanConfig.cmake and HdbscanConfigVersion files
+file(RELATIVE_PATH REL_INCLUDE_DIR "${INSTALL_CMAKE_DIR}" "${INSTALL_INCLUDE_DIR}")
+
+# ... for the build tree
+set(CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}")
+configure_file(HdbscanConfig.cmake.in "${PROJECT_BINARY_DIR}/HdbscanConfig.cmake" @ONLY)
+
+# ... for the install tree
+set(CONF_INCLUDE_DIRS "\${HDBSCAN_CMAKE_DIR}/${REL_INCLUDE_DIR}")
+configure_file(HdbscanConfig.cmake.in "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/HdbscanConfig.cmake" @ONLY)
+
+# ... for both
+configure_file(HdbscanConfigVersion.cmake.in "${PROJECT_BINARY_DIR}/HdbscanConfigVersion.cmake" @ONLY)
+ 
+# Install the HdbscanConfig.cmake and HdbscanConfigVersion.cmake
+install(FILES
+  "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/HdbscanConfig.cmake"
+  "${PROJECT_BINARY_DIR}/HdbscanConfigVersion.cmake"
+  DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)
+ 
+# Install the export set for use with the install-tree
+install(EXPORT HdbscanTargets DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)

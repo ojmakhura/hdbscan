@@ -8,21 +8,34 @@
 #ifndef OUTLIER_SCORE_H_
 #define OUTLIER_SCORE_H_
 
-namespace clustering {
+#ifdef __cplusplus
+extern "C" {
+#endif
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include "utils.h"
+
+#define OUTLIERSCORE_SUCCESS 1
+#define OUTLIERSCORE_ERROR 0
+
+#ifdef __cplusplus
+namespace clustering {
+#endif
 /**
  * Simple storage class that keeps the outlier score, core distance, and id (index) for a single point.
  * OutlierScores are sorted in ascending order by outlier score, with core distances used to break
  * outlier score ties, and ids used to break core distance ties.
  * @author junior
  */
-class OutlierScore {
 
-private:
-	float score;
-	float coreDistance;
-	int id;
+struct OutlierScore{
+	double score;
+	double coreDistance;
+	int32_t id;
 
+#ifdef __cplusplus
 public:
 	/**
 	 * Creates a new OutlierScore for a given point.
@@ -36,16 +49,20 @@ public:
 
 	// ------------------------------ PUBLIC METHODS ------------------------------
 
-	bool operator<(const OutlierScore& other);
+	boolean operator<(const OutlierScore& other);
 	int compareTO(const OutlierScore& other);
-
-	// ------------------------------ GETTERS & SETTERS ------------------------------
-
-	float getScore();
-	float getCoreDistance();
-	int getId();
+#endif
 };
 
-} /* namespace clustering */
+typedef struct OutlierScore outlier_score;
+
+outlier_score* outlier_score_init(outlier_score* , double score, double coreDistance, int32_t id);
+void outlier_score_destroy(outlier_score* os);
+
+#ifdef __cplusplus
+
+}; /* namespace clustering */
+}
+#endif
 
 #endif /* OUTLIER_SCORE_H_ */

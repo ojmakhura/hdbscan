@@ -552,6 +552,7 @@ void dummy_tester(){
 	printf("\n");
 	//printf("\nlabel size is %d\n", lbs.size());
 	delete scan;
+	//hdbscan_destroy(&scan, FALSE);
 
 }
 
