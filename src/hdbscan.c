@@ -124,18 +124,6 @@ void hdbscan_clean(hdbscan* sc){
 		}
 	}
 
-	if(sc->clusters != NULL){
-
-		for(guint i = 0; i < sc->clusters->len; i++){
-			cluster* cl = (sc->clusters->pdata)[i];
-			cluster_destroy(cl);
-		}
-
-		g_ptr_array_free(sc->clusters, TRUE);
-	}
-
-
-
 	if(sc->clusterStabilities != NULL){
 
 		//IntList *keys = g_hash_table_get_keys(sc->clusterStabilities);
@@ -188,6 +176,17 @@ void hdbscan_clean(hdbscan* sc){
 		g_hash_table_destroy(sc->hierarchy);
 
 	}
+
+	if(sc->clusters != NULL){
+
+		for(guint i = 0; i < sc->clusters->len; i++){
+			cluster* cl = (sc->clusters->pdata)[i];
+			cluster_destroy(cl);
+		}
+
+		g_ptr_array_free(sc->clusters, TRUE);
+	}
+
 }
 
 void hdbscan_destroy(hdbscan* sc){
@@ -516,9 +515,9 @@ int32_t hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int32_t compactH
 					/*printf(" \n\n\n\n 33 ********************************************************************************************************************\n");
 					graph_print(sc->mst);
 					printf("********************************************************************************************************************\n");*/
-					cluster* examinedCluster = (sc->clusters->pdata)[examinedClusterLabel]; //g_list_nth_data(sc->clusters, examinedClusterLabel);
+					cluster* examinedCluster = (sc->clusters->pdata)[examinedClusterLabel];
 
-					hdbscan_create_new_cluster(sc, constructingSubCluster, currentClusterLabels, examinedCluster, 0, currentEdgeWeight);
+					cluster* newCluster = hdbscan_create_new_cluster(sc, constructingSubCluster, currentClusterLabels, examinedCluster, 0, currentEdgeWeight);
 
 					it = g_list_first(constructingSubCluster);
 					while(it != NULL){
@@ -530,7 +529,16 @@ int32_t hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int32_t compactH
 						it = g_list_next(it);
 					}
 
+					cluster_destroy(newCluster);
+
 				}
+
+
+				/********************
+				 * Clean up constructing subcluster
+				 *******************/
+				list_int_clean(constructingSubCluster);
+				list_int_clean(unexploredSubClusterPoints);
 			}
 
 			/*printf("**************************************************************************************************\n");
@@ -576,6 +584,9 @@ int32_t hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int32_t compactH
 				//printf("Finish exploring %d\n", newCluster);
 				g_ptr_array_add(sc->clusters, newCluster);
 			}
+			list_int_clean(firstChildCluster);
+			list_int_clean(unexploredFirstChildClusterPoints);
+			list_int_clean(examinedVertices);
 		}
 
 		if (compactHierarchy == FALSE || nextLevelSignificant == TRUE || g_list_length(newClusters) > 0) {
@@ -616,8 +627,9 @@ int32_t hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int32_t compactH
 			nextLevelSignificant = TRUE;
 		}
 
+		g_list_free(newClusters);
+		list_int_clean(newClusterLabels);
 	}
-
 	int32_t* labels = (int32_t*) malloc(numVertices * sizeof(int32_t));
 	memset(labels, 0, numVertices * sizeof(int32_t));
 	// Write out the final level of the hierarchy (all points noise):
@@ -628,6 +640,8 @@ int32_t hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int32_t compactH
 	lineCount++;
 
 	//mst.print();
+	list_int_clean(affectedClusterLabels);
+	list_int_clean(affectedVertices);
 
 	return HDBSCAN_SUCCESS;
 }
@@ -697,14 +711,18 @@ int32_t hdbscan_construct_mst(hdbscan* sc){
 	//Each point has a current neighbor point in the tree, and a current nearest distance:
 	int32_t ssize = size - 1 + selfEdgeCapacity;
 	int32_t *nearestMRDNeighbors = (int32_t *) malloc(ssize * sizeof(int32_t));
+
+	//Create an array for vertices in the tree that each point attached to:
+	int32_t *otherVertexIndices = (int32_t *) malloc(ssize * sizeof(int32_t));
+
 	double *nearestMRDDistances = (double *) malloc(ssize * sizeof(double));//, numeric_limits<double>::max());
 
 	for(int32_t i = 0; i < ssize; i++){
 		nearestMRDDistances[i] = DBL_MAX;
+		nearestMRDNeighbors[i] = 0;
+		otherVertexIndices[i] = 0;
 	}
 
-	//Create an array for vertices in the tree that each point attached to:
-	int32_t *otherVertexIndices = (int32_t *) malloc(ssize * sizeof(int32_t));
 
 /*
 #ifdef USE_OPENMP
@@ -920,53 +938,37 @@ void hdbscan_find_prominent_clusters(hdbscan* sc, int32_t infiniteStability){
 	}
 	//printf("***************************************************************************\n");
 
-	GHashTableIter iter;
-	gpointer key;
-	gpointer value;
-	g_hash_table_iter_init (&iter, significant);
 	sc->clusterLabels = (int32_t *)malloc(sc->numPoints * sizeof(int32_t));
 	for (int32_t i = 0; i < sc->numPoints; i++) {
 		(sc->clusterLabels)[i] = 0;
 	}
 
+	GHashTableIter iter;
+	gpointer key;
+	gpointer value;
+	g_hash_table_iter_init (&iter, significant);
+
 	while (g_hash_table_iter_next (&iter, &key, &value)){
 		int64_t offset = *((int64_t *)key);
 		int64_t l = offset + 1;
-		//printf("Offset is %d and offset+1 is %d\n", offset, offset+1);
 		IntList* clusterList = (IntList*)value;
 		int32_t* hpSecond = (int32_t *)g_hash_table_lookup(sc->hierarchy, &l);
-		//printf("clusterList has %d and hpSecond has %d\n", g_list_length(clusterList), sc->mst->numVertices);
-
-		//printf("%d [[[[[[[[[[[[[", sc->mst->numVertices);
 
 		for(int32_t i = 0; i < sc->numPoints; i++){
 			int32_t label = hpSecond[i];
 			ListNode* it = g_list_find_custom(clusterList, &label, gint_compare);
 			if(it != NULL){
 				sc->clusterLabels[i] = label;
-				//printf("found label %d in clusterList\n", label);
 			}
 		}
-		//printf("]]]]]]]]]\n");
-
 	}
+	g_hash_table_iter_init (&iter, significant);
 
-	/*printf("%d [[[[[[[[[[[[[\n", sc->numPoints);
+	while (g_hash_table_iter_next (&iter, &key, &value)){
 
-	for(int32_t i = 0; i < sc->numPoints; i++){
-		printf("%d ", sc->clusterLabels[i]);
+		IntList* clusterList = (IntList*)value;
+		list_int_clean(clusterList);
 	}
-	printf("\n]]]]]]]]]\n");*/
-
-	/*for(int32_t i = 0; i < sc->numPoints; i++){
-		for(int32_t j = 0; j < g_list_length(solution); j++){
-			cluster* cl = (cluster *)g_list_nth_data(solution, j);
-
-			if(cl->label == sc->clusterLabels[i]){
-				g_hash_table_insert(sc->clusterStabilities, &cl->label, &cl->stability);
-			}
-		}
-	}*/
 
 	g_hash_table_destroy(significant);
 }

@@ -538,30 +538,33 @@ double data[] = {
 
 int main(int argc, char** argv){
 
-	hdbscan* scan = hdbscan_init(NULL, 3);
+	for(int i = 0; i < 1000; i++){
+		hdbscan* scan = hdbscan_init(NULL, 3);
 
-	if(scan == NULL){
-		printf("ERROR: Could not initialise hdbscan\n");
-	} else{
-		printf("SUCCESS: hdbscan fully initialised\n");
-		uint w = 2;
-		uint h = 500;
-
-		int err = hdbscan_run(scan, data, h, w, 1);
-		if(err == HDBSCAN_ERROR){
-			printf("ERROR: Could not run hdbscan\n");
+		if(scan == NULL){
+			printf("ERROR: Could not initialise hdbscan\n");
 		} else{
-			printf("SUCCESS: hdbscan clustring completed\n");
+			printf("SUCCESS: hdbscan fully initialised\n");
+			uint w = 2;
+			uint h = 500;
 
-			printf("Number total number of clusters is %d\n", scan->clusters->len);
-			IntIntListMap* clusters = g_hash_table_new(g_int_hash, g_int_equal);
+			int err = hdbscan_run(scan, data, h, w, 1);
+			if(err == HDBSCAN_ERROR){
+				printf("ERROR: Could not run hdbscan\n");
+			} else{
+				printf("SUCCESS: hdbscan clustring completed\n");
 
-			printf("Cluster labels = [");
-			for(uint i = 0; i < scan->numPoints; i++){
-				printf("%d ", scan->clusterLabels[i]);
+				printf("Number total number of clusters is %d\n", scan->clusters->len);
+				IntIntListMap* clusters = g_hash_table_new(g_int_hash, g_int_equal);
+
+				printf("Cluster labels = [");
+				for(uint i = 0; i < scan->numPoints; i++){
+					printf("%d ", scan->clusterLabels[i]);
+				}
+				printf("]\n");
 			}
-			printf("]\n");
 		}
+		hdbscan_clean(scan);
 	}
 
 	return 0;

@@ -70,6 +70,9 @@ boolean set_int_ptr_insert(IntPtrSet* set, int32_t d);
 IntList* list_int_insert(IntList* list, int32_t d);
 void list_int_ptr_insert(IntPtrList* list, int32_t d);
 
+
+void list_int_clean(IntList* list);
+
 IntList* list_full_link_delete(IntList* list, ListNode* l, GDestroyNotify free_func);
 #ifdef __cplusplus
 }

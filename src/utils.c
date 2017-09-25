@@ -83,3 +83,16 @@ IntList* list_full_link_delete(IntList* list, ListNode* l, GDestroyNotify free_f
 
 	return list;
 }
+
+
+void list_int_clean(IntList* list){
+	ListNode* node = g_list_first(list);
+
+	while(node != NULL){
+		free(node->data);
+
+		node = g_list_next(node);
+	}
+
+	g_list_free(list);
+}

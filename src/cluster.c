@@ -42,13 +42,21 @@ cluster* cluster_init(cluster* cl, int32_t label, cluster* parent, double birthL
 void cluster_destroy(cluster* cl){
 //#ifdef __cplusplus
 	if(cl != NULL){
-		if(cl->virtualChildCluster)
-			g_list_free_full(cl->virtualChildCluster, (GDestroyNotify)free);
+		if(cl->virtualChildCluster){
+			list_int_clean(cl->virtualChildCluster);
+		}
 
-		if(cl->propagatedDescendants)
-			g_list_free(cl->propagatedDescendants);
+		if(cl->propagatedDescendants){
+			ListNode* node = g_list_first(cl->propagatedDescendants);
 
-		//free(cl);
+			while(node != NULL){
+				node->data = NULL;
+				node = g_list_next(node);
+			}
+			//printf("cl->propagatedDescendants has %d clusters\n", g_list_length(cl->propagatedDescendants));
+			//g_list_free(cl->propagatedDescendants);
+		}
+		free(cl);
 	}
 //#endif
 }

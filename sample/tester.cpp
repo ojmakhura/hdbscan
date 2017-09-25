@@ -539,19 +539,21 @@ void dummy_tester(){
 			20.9613116,75.10722918,
 			22.8386819,79.47603878};
 
-	hdbscan* scan = new hdbscan(3);
-	scan->run(data, 500, 2, TRUE);
+	
+	for(int i = 0; i < 10000; i++){
+		hdbscan* scan = new hdbscan(3);
+		scan->run(data, 500, 2, TRUE);
 
-	int32_t* labels = scan->clusterLabels;
-	//set<int> lbs;
-	//lbs.insert(labels, labels + scan.numPoints);
-	for(uint i = 0; i < scan->numPoints; i++){
-		printf("%d ", labels[i]);
+		int32_t* labels = scan->clusterLabels;
+		//set<int> lbs;
+		//lbs.insert(labels, labels + scan.numPoints);
+		for(uint i = 0; i < scan->numPoints; i++){
+			printf("%d ", labels[i]);
 
+		}
+		printf("\n");
+		delete scan;
 	}
-	printf("\n");
-	//printf("\nlabel size is %d\n", lbs.size());
-	delete scan;
 
 }
 

@@ -112,7 +112,7 @@ void hdbscan::calculateOutlierScores(DoubleList* pointNoiseLevels, IntList* poin
 }
 
 void hdbscan::clean(){
-	hdbscan_clean(this);
+	hdbscan_destroy(this);
 }
 };
 #endif

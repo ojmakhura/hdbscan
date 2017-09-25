@@ -30,7 +30,13 @@ UndirectedGraph* graph_init(UndirectedGraph* g, int32_t numVertices, int32_t* ve
 	g->verticesA = verticesA;
 	g->verticesB = verticesB;
 	g->edgeWeights = edgeWeights;
+	g->edges = NULL;
 	g->edges = (IntList**) malloc(numVertices * sizeof(IntList*));
+
+	if(g->edges == NULL){
+		printf("Graph Init: Could not allocate memory for edges.\n");
+		return NULL;
+	}
 
 	for(int32_t i = 0; i < numVertices; i++){
 		IntList* list = NULL;
@@ -44,7 +50,7 @@ UndirectedGraph* graph_init(UndirectedGraph* g, int32_t numVertices, int32_t* ve
 		int vertexTwo = (g->verticesB)[i];
 
 		g->edges[vertexOne] = list_int_insert(g->edges[vertexOne], vertexTwo);
-
+		//printf("vertexTwo = %d, vertexOne = %d\n", vertexTwo, vertexOne);
 		if (vertexOne != vertexTwo) {
 			g->edges[vertexTwo] = list_int_insert(g->edges[vertexTwo], vertexOne);
 		}
@@ -79,9 +85,10 @@ void graph_clean(UndirectedGraph* g) {
 		}
 
 		if (g->edges != NULL) {
+
 			for (int32_t i = 0; i < g->numVertices; i++) {
 				IntList* list = g->edges[i];
-				g_list_free_full(list, (GDestroyNotify) free);
+				list_int_clean(list);
 			}
 			free(g->edges);
 		}
