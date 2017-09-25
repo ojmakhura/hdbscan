@@ -23,18 +23,18 @@ class Cluster {
 
 private:
 	int label;
-	double birthLevel;
-	double deathLevel;
+	float birthLevel;
+	float deathLevel;
 	int numPoints;
 	long offset;//First level where points with this cluster's label appear
-	double stability;
-	double propagatedStability;
-	double propagatedLowestChildDeathLevel;
+	float stability;
+	float propagatedStability;
+	float propagatedLowestChildDeathLevel;
 	int numConstraintsSatisfied;
 	int propagatedNumConstraintsSatisfied;
-	set<int>* virtualChildCluster;
+	set<int> virtualChildCluster;
 	Cluster* parent;
-	vector<Cluster*>* propagatedDescendants;
+	vector<Cluster*> propagatedDescendants;
 
 public:
 	bool hasChildren;
@@ -46,7 +46,7 @@ public:
 	 * @param birthLevel The MST edge level at which this cluster first appeared
 	 * @param numPoints The initial number of points in this cluster
 	 */
-	Cluster(int label, Cluster* parent, double birthLevel, int numPoints);
+	Cluster(int label, Cluster* parent, float birthLevel, int numPoints);
 
 	virtual ~Cluster();
 
@@ -57,7 +57,7 @@ public:
 	 * @param numPoints The number of points to remove from the cluster
 	 * @param level The MST edge level at which to remove these points
 	 */
-	void detachPoints(int numPoints, double level);
+	void detachPoints(int numPoints, float level);
 
 
 	/**
@@ -70,7 +70,7 @@ public:
 	void propagate();
 
 
-	void addPointsToVirtualChildCluster(set<int>* points);
+	void addPointsToVirtualChildCluster(set<int>& points);
 
 
 	bool virtualChildClusterContaintsPoint(int point);
@@ -94,18 +94,18 @@ public:
 
 	Cluster* getParent();
 
-	double getBirthLevel();
+	float getBirthLevel();
 
-	double getDeathLevel();
+	float getDeathLevel();
 
 	long getOffset();
 
 	void setOffset(long offset);
 
-	double getStability();
-	double getPropagatedStability();
+	float getStability();
+	float getPropagatedStability();
 
-	double getPropagatedLowestChildDeathLevel();
+	float getPropagatedLowestChildDeathLevel();
 
 	int getNumConstraintsSatisfied();
 
@@ -113,11 +113,13 @@ public:
 
 	vector<Cluster*>* getPropagatedDescendants();
 
-	set<int>* getVirtualChildCluster();
+	set<int>& getVirtualChildCluster();
 
 	 bool hasKids();
 
 	 bool operator==(Cluster* another);
+
+	 void clean();
 };
 
 namespace Exception{

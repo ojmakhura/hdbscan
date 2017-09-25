@@ -22,10 +22,10 @@ class UndirectedGraph {
 
 private:
 	int numVertices;
-	vector<int>* verticesA;
-	vector<int>* verticesB;
-	vector<double>* edgeWeights;
-	vector<vector<int>* > *edges;
+	vector<int> verticesA;
+	vector<int> verticesB;
+	vector<double> edgeWeights;
+	vector<vector<int> > edges;
 
 	/**
 	 * Quicksorts the graph in the interval [startIndex, endIndex] by edge weight.
@@ -72,8 +72,8 @@ public:
 	 * @param verticesB An array of vertices corresponding to the array of edges
 	 * @param edgeWeights An array of edges corresponding to the arrays of vertices
 	 */
-	UndirectedGraph(int numVertices, vector<int>* verticesA,
-			vector<int>* verticesB, vector<double>* edgeWeights);
+	UndirectedGraph(int numVertices, vector<int> verticesA, vector<int> verticesB, vector<double> edgeWeights);
+	UndirectedGraph();
 
 	// ------------------------------ PUBLIC METHODS ------------------------------
 
@@ -104,6 +104,8 @@ public:
 	void removeEdge(int va, int vb);
 
 	void print();
+
+	void clean();
 };
 
 } /* namespace clustering */

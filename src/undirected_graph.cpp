@@ -5,14 +5,31 @@
  *      Author: junior
  */
 
-#include "undirected_graph.hpp"
+#include "hdbscan/undirected_graph.hpp"
 
 #include <algorithm>
+#include <cstdio>
 
 namespace clustering {
 
 UndirectedGraph::~UndirectedGraph() {
-	// TODO Auto-generated destructor stub
+
+	/*if(verticesA != NULL){
+		delete verticesA;
+	}
+
+	if(verticesB != NULL){
+		delete verticesB;
+	}
+
+	if(edgeWeights != NULL){
+		delete edgeWeights;
+	}*/
+
+	/*if(edges != NULL){
+
+		delete edges;
+	}*/
 }
 
 // ------------------------------ CONSTRUCTORS ------------------------------
@@ -26,65 +43,75 @@ UndirectedGraph::~UndirectedGraph() {
  * @param verticesB An array of vertices corresponding to the array of edges
  * @param edgeWeights An array of edges corresponding to the arrays of vertices
  */
-UndirectedGraph::UndirectedGraph(int numVertices, vector<int>* verticesA,
-		vector<int>* verticesB, vector<double>* edgeWeights) {
+UndirectedGraph::UndirectedGraph(int numVertices, vector<int> verticesA,
+		vector<int> verticesB, vector<double> edgeWeights) {
 	this->numVertices = numVertices;
 	this->verticesA = verticesA;
 	this->verticesB = verticesB;
 	this->edgeWeights = edgeWeights;
 
-	this->edges = new  vector<vector<int> >(numVertices);
+	this->edges.resize(numVertices); // = new  vector<vector<int> >(numVertices);
 
-	bool selfEdges = edgeWeights->size() == numVertices * 2 - 1;
+	/*for (unsigned int i = 0; i < this->edges->size(); i++) {
+		(*this->edges)[i] = new vector<int>();
+	}*/
 
-	for (unsigned int i = 0; i < edgeWeights->size(); i++) {
-		int vertexOne = this->verticesA[0][i];
-		int vertexTwo = this->verticesB[0][i];
-		(*this->edges)[vertexOne].push_back(vertexTwo);
+	for (unsigned int i = 0; i < edgeWeights.size(); i++) {
+		int vertexOne = (this->verticesA)[i];
+		int vertexTwo = (this->verticesB)[i];
+		(this->edges)[vertexOne].push_back(vertexTwo);
 
 		if (vertexOne != vertexTwo){
-			(*this->edges)[vertexTwo].push_back(vertexOne);
+			(this->edges)[vertexTwo].push_back(vertexOne);
 		}
 	}
+}
+
+UndirectedGraph::UndirectedGraph(){
+
+	this->numVertices = 0;
 }
 
 // ------------------------------ PUBLIC METHODS ------------------------------
 
 /**
- * Quicksorts the graph by edge weight in descending order.  This quicksort implementation is
+ * Quicksorts the graph by edge weight in descending order. This quicksort implementation is
  * iterative and in-place.
  */
 void UndirectedGraph::quicksortByEdgeWeight() {
-	if (this->edgeWeights->size() <= 1)
+	if (this->edgeWeights.size() <= 1)
 		return;
 
-	vector<int>* startIndexStack = new vector<int>(this->edgeWeights->size()/2);
-	vector<int>* endIndexStack = new vector<int>(this->edgeWeights->size()/2);
+	vector<int> startIndexStack(this->edgeWeights.size()/2);
+	vector<int> endIndexStack(this->edgeWeights.size()/2);
 
-	(*startIndexStack)[0] = 0;
-	(*endIndexStack)[0] = this->edgeWeights->size() - 1;
+	(startIndexStack)[0] = 0;
+	(endIndexStack)[0] = this->edgeWeights.size() - 1;
 	int stackTop = 0;
 
 	while (stackTop >= 0) {
-		int startIndex = (*startIndexStack)[stackTop];
-		int endIndex = (*endIndexStack)[stackTop];
+		int startIndex = (startIndexStack)[stackTop];
+		int endIndex = (endIndexStack)[stackTop];
 		stackTop--;
 
 		int pivotIndex = this->selectPivotIndex(startIndex, endIndex);
 		pivotIndex = this->partition(startIndex, endIndex, pivotIndex);
 
 		if (pivotIndex > startIndex + 1) {
-			(*startIndexStack)[stackTop + 1] = startIndex;
-			(*endIndexStack)[stackTop + 1] = pivotIndex - 1;
+			(startIndexStack)[stackTop + 1] = startIndex;
+			(endIndexStack)[stackTop + 1] = pivotIndex - 1;
 			stackTop++;
 		}
 
 		if (pivotIndex < endIndex - 1) {
-			(*startIndexStack)[stackTop + 1] = pivotIndex + 1;
-			(*endIndexStack)[stackTop + 1] = endIndex;
+			(startIndexStack)[stackTop + 1] = pivotIndex + 1;
+			(endIndexStack)[stackTop + 1] = endIndex;
 			stackTop++;
 		}
 	}
+
+	//delete startIndexStack;
+	//delete endIndexStack;
 }
 
 // ------------------------------ PRIVATE METHODS ------------------------------
@@ -114,9 +141,9 @@ int UndirectedGraph::selectPivotIndex(int startIndex, int endIndex) {
 	if (startIndex - endIndex <= 1)
 		return startIndex;
 
-	double first = (*edgeWeights)[startIndex];
-	double middle = (*edgeWeights)[startIndex + (endIndex - startIndex) / 2];
-	double last = (*edgeWeights)[endIndex];
+	double first = edgeWeights[startIndex];
+	double middle = edgeWeights[startIndex + (endIndex - startIndex) / 2];
+	double last = edgeWeights[endIndex];
 
 	if (first <= middle) {
 		if (middle <= last)
@@ -143,12 +170,12 @@ int UndirectedGraph::selectPivotIndex(int startIndex, int endIndex) {
  * @return The index position of the pivot edge weight after the partition
  */
 int UndirectedGraph::partition(int startIndex, int endIndex, int pivotIndex) {
-	double pivotValue = (*this->edgeWeights)[pivotIndex];
+	double pivotValue = this->edgeWeights[pivotIndex];
 	this->swapEdges(pivotIndex, endIndex);
 	int lowIndex = startIndex;
 
 	for (int i = startIndex; i < endIndex; i++) {
-		if ((*this->edgeWeights)[i] < pivotValue) {
+		if (this->edgeWeights[i] < pivotValue) {
 			this->swapEdges(i, lowIndex);
 			lowIndex++;
 		}
@@ -165,17 +192,17 @@ int UndirectedGraph::partition(int startIndex, int endIndex, int pivotIndex) {
  */
 void UndirectedGraph::swapEdges(int indexOne, int indexTwo) {
 	if (indexOne != indexTwo){
-		int tempVertexA = (*this->verticesA)[indexOne];
-		int tempVertexB = (*this->verticesB)[indexOne];
-		double tempEdgeDistance = (*this->edgeWeights)[indexOne];
+		int tempVertexA = this->verticesA[indexOne];
+		int tempVertexB = this->verticesB[indexOne];
+		double tempEdgeDistance = this->edgeWeights[indexOne];
 
-		(*this->verticesA)[indexOne] = (*this->verticesA)[indexTwo];
-		(*this->verticesB)[indexOne] = (*this->verticesB)[indexTwo];
-		(*this->edgeWeights)[indexOne] = (*this->edgeWeights)[indexTwo];
+		this->verticesA[indexOne] = this->verticesA[indexTwo];
+		this->verticesB[indexOne] = this->verticesB[indexTwo];
+		this->edgeWeights[indexOne] = this->edgeWeights[indexTwo];
 
-		(*this->verticesA)[indexTwo] = tempVertexA;
-		(*this->verticesB)[indexTwo] = tempVertexB;
-		(*this->edgeWeights)[indexTwo] = tempEdgeDistance;
+		this->verticesA[indexTwo] = tempVertexA;
+		this->verticesB[indexTwo] = tempVertexB;
+		this->edgeWeights[indexTwo] = tempEdgeDistance;
 	}
 }
 
@@ -186,23 +213,23 @@ int UndirectedGraph::getNumVertices() {
 }
 
 int UndirectedGraph::getNumEdges() {
-	return this->edgeWeights->size();
+	return this->edgeWeights.size();
 }
 
 int UndirectedGraph::getFirstVertexAtIndex(int index) {
-	return (*this->verticesA)[index];
+	return this->verticesA[index];
 }
 
 int UndirectedGraph::getSecondVertexAtIndex(int index) {
-	return (*this->verticesB)[index];
+	return this->verticesB[index];
 }
 
 double UndirectedGraph::getEdgeWeightAtIndex(int index) {
-	return (*this->edgeWeights)[index];
+	return this->edgeWeights[index];
 }
 
 vector<int>* UndirectedGraph::getEdgeListForVertex(int vertex) {
-	return &(*this->edges)[vertex];
+	return &(this->edges)[vertex];
 }
 
 void UndirectedGraph::removeEdge(int va, int vb){
@@ -230,35 +257,42 @@ void UndirectedGraph::print() {
 
 	printf(
 			"numVertices: %ld, verticesA.length: %ld,  verticesB.length: %ld, edgeWeights.length: %ld, edges.length: %ld\n",
-			numVertices, verticesA->size(), verticesB->size(), edgeWeights->size(),
-			edges->size());
+			numVertices, verticesA.size(), verticesB.size(), edgeWeights.size(),
+			edges.size());
 	printf("\nVertices A\n");
 
-	for (vector<int>::iterator itr = verticesA->begin(); itr != verticesA->end(); itr++) {
+	for (vector<int>::iterator itr = verticesA.begin(); itr != verticesA.end(); itr++) {
 		int vertex = *itr;
 		printf("%d, ", vertex);
 	}
 
 	printf("\n\nVertices B\n");
-	for (vector<int>::iterator itr = verticesB->begin(); itr != verticesB->end(); itr++) {
+	for (vector<int>::iterator itr = verticesB.begin(); itr != verticesB.end(); itr++) {
 		int vertex = *itr;
 		printf("%d, ", vertex);
 	}
 
 	printf("\n\nedgeWeights\n");
-	for (vector<double>::iterator itr = edgeWeights->begin(); itr != edgeWeights->end(); itr++) {
+	for (vector<double>::iterator itr = edgeWeights.begin(); itr != edgeWeights.end(); itr++) {
 		printf("%f, ", *itr);
 	}
 
 	printf("\n\nEdges\n");
-	for (vector<vector<int> >::iterator itr = edges->begin(); itr != edges->end(); itr++) {
-		//vector<int>* edge = itr;
-		printf("[");
-		for(vector<int>::iterator it = itr->begin(); it != itr->end(); ++it){
+	for (vector<vector<int> >::iterator itr = edges.begin(); itr != edges.end(); itr++) {
+		vector<int> edge = *itr;
+		printf("edge size = %d [", edge.size());
+		for(vector<int>::iterator it = edge.begin(); it != edge.end(); ++it){
 			printf("%d, ", *it);
 		}
 		printf("]\n");
 	}
+}
+
+void UndirectedGraph::clean(){
+	this->edgeWeights.clear();
+	this->edges.clear();
+	this->verticesA.clear();
+	this->verticesB.clear();
 }
 
 } /* namespace clustering */

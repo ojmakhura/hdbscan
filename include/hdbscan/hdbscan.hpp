@@ -1,6 +1,6 @@
 /*
  * hdbscan.h
- * Implementation of the HDBSCAN* algorithm, which is broken into several methods.
+ * Implementation of the hdbscan* algorithm, which is broken into several methods.
  *  Created on: 18 May 2016
  *      Author: junior
  */
@@ -11,6 +11,7 @@
 #include <vector>
 #include <set>
 #include <map>
+#include <string>
 
 #include "cluster.hpp"
 #include "constraint.hpp"
@@ -26,26 +27,26 @@ using namespace clustering::distance;
 
 namespace clustering {
 /**
- * Implementation of the HDBSCAN* algorithm, which is broken into several methods.
+ * Implementation of the hdbscan* algorithm, which is broken into several methods.
  * @author zjullion
  */
 
 string getWarningMessage();
 
-class HDBSCAN {
+template <class T1>
+class hdbscan {
 
 private:
-	DistanceCalculator* distanceFunction;
-	vector<vector<double> >* dataSet;
-	UndirectedGraph* mst;
-	vector<Constraint*>* constraints;
-	vector<double>* coreDistances;
-	vector<Cluster*>* clusters;
-	vector<OutlierScore*>* outlierScores;
-	vector<int>* clusterLabels;
-	map<long, vector<int>* >* hierarchy;
+	DistanceCalculator<T1> distanceFunction;
+	UndirectedGraph mst;
+	vector<Constraint*> constraints;
+	vector<Cluster*> clusters;
+	vector<OutlierScore> outlierScores;
+	vector<int> clusterLabels;
+	map<int, double> clusterStabilities;
+	map<long, vector<int> > hierarchy;
 	bool selfEdges = true;
-	uint minPoints, minClusterSize, numPoints;
+	uint minPoints, numPoints;
 
 	/**
 	 * Calculates the number of constraints satisfied by the new clusters and virtual children of the
@@ -55,7 +56,7 @@ private:
 	 * @param constraints An vector of constraints
 	 * @param clusterLabels an array of current cluster labels for points
 	 */
-	void calculateNumConstraintsSatisfied(set<int> newClusterLabels, vector<int> currentClusterLabels);
+	void calculateNumConstraintsSatisfied(set<int>& newClusterLabels, vector<int>& currentClusterLabels);
 	/**
 	 * Removes the set of points from their parent Cluster, and creates a new Cluster, provided the
 	 * clusterId is not 0 (noise).
@@ -68,38 +69,24 @@ private:
 	Cluster* createNewCluster(set<int>* points,
 			vector<int>* clusterLabels, Cluster* parentCluster, int clusterLabel,
 			double edgeWeight);
+
+	void run();
 public:
+	hdbscan();
+	hdbscan(calculator cal, uint minPts);
+	~hdbscan();
 
-	HDBSCAN(calculator cal, uint minPoints, uint minClusterSize);
-	HDBSCAN(vector<vector<double> >* dataSet, calculator cal, uint minPoints, uint minClusterSize);
-	HDBSCAN(string fileName, calculator cal, uint minPoints, uint minClusterSize);
-	HDBSCAN(string dataFileName, string constraintFileName, calculator cal, uint minPoints, uint minClusterSize);
-	~HDBSCAN();
-
-	vector<Cluster*>* getClusters();
-	vector<int>* getClusterLabels();
-	vector<vector<double> >* getDataSet();
-
-	/**
-	 * Reads in the input data set from the file given, assuming the delimiter separates attributes
-	 * for each data point, and each point is given on a separate line.  Error messages are printed
-	 * if any part of the input is improperly formatted.
-	 * @param fileName The path to the input file
-	 */
-	void readInDataSet(string fileName);
+	vector<Cluster*>& getClusters();
+	vector<int>& getClusterLabels();
+	map<int, double>& getClusterStabilities();
 
 	/**
 	 *
 	 */
-	void run(bool useDataset);
-
-	/**
-	 * Reads in constraints from the file given, assuming the delimiter separates the points involved
-	 * in the constraint and the type of the constraint, and each constraint is given on a separate
-	 * line.  Error messages are printed if any part of the input is improperly formatted.
-	 * @param fileName The path to the input file
-	 */
-	void readInConstraints(string fileName);
+	void run(vector<T1>& dataset);
+	void run(vector<T1>& dataset, int rows, int cols, bool rowwise);
+	void run(T1* dataset, int size);
+	void run(T1* dataset, int rows, int cols, bool rowwise);
 
 	/**
 	 * Calculates the core distances for each point in the data set, given some value for k.
@@ -107,7 +94,8 @@ public:
 	 * @param k Each point's core distance will be it's distance to the kth nearest neighbor
 	 * @param distanceFunction A DistanceCalculator to compute distances between points
 	 */
-	void calculateCoreDistances();
+	void calculateCoreDistances(T1* dataSet, int rows, int cols);
+	void calculateCoreDistances(vector<vector<T1> >& dataSet);
 
 	/**
 	 * Constructs the minimum spanning tree of mutual reachability distances for the data set, given
@@ -158,6 +146,7 @@ public:
 	 * @param infiniteStability true if there are any clusters with infinite stability, false otherwise
 	 */
 	void findProminentClusters(bool infiniteStability);
+	vector<int> findProminentClusters(bool infiniteStability, vector<Cluster*>* solution);
 
 	/**
 	 * Produces the outlier score for each point in the data set, and returns a sorted list of outlier
@@ -174,6 +163,13 @@ public:
 
 	bool compareClusters(Cluster* one, Cluster* two);
 
+	double* getCoreDistances();
+	DistanceCalculator<T1>& getDistanceFunction();
+
+	double getDistance(uint i, uint j);
+
+	void clean();
+
 // ------------------------------ PRIVATE METHODS ------------------------------
 
 
@@ -182,5 +178,5 @@ public:
 
 };
 } /* namespace clustering */
-#endif /* HDBSCAN_H_ */
+#endif /* hdbscan_H_ */
 

@@ -5,7 +5,7 @@
  *      Author: junior
  */
 
-#include "constraint.hpp"
+#include "hdbscan/constraint.hpp"
 
 namespace clustering {
 

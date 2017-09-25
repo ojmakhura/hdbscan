@@ -5,7 +5,7 @@
  *      Author: junior
  */
 
-#include "cluster.hpp"
+#include "hdbscan/cluster.hpp"
 #include <stdio.h>
 
 using namespace std;
@@ -21,22 +21,21 @@ Cluster::Cluster() {
 	this->offset = 0;
 	this->stability = 0;
 	this->propagatedStability = 0;
-	this->propagatedLowestChildDeathLevel = numeric_limits<double>::max();
+	this->propagatedLowestChildDeathLevel = numeric_limits<float>::max();
 	this->numConstraintsSatisfied = 0;
 	this->propagatedNumConstraintsSatisfied = 0;
 	this->parent = NULL;
 	this->hasChildren = false;
-	this->virtualChildCluster = new set<int>();
-	this->propagatedDescendants = new vector<Cluster*>(1);
 }
 
+/**
+ * The destructor
+ *
+ * Do not delete parent as it will be deleted when the
+ * parent is being deleted
+ */
 Cluster::~Cluster() {
 
-	if(parent != NULL){
-		delete parent;
-	}
-	delete propagatedDescendants;
-	delete virtualChildCluster;
 }
 
 /**
@@ -46,7 +45,7 @@ Cluster::~Cluster() {
  * @param birthLevel The MST edge level at which this cluster first appeared
  * @param numPoints The initial number of points in this cluster
  */
-Cluster::Cluster(int label, Cluster* parent, double birthLevel, int numPoints) {
+Cluster::Cluster(int label, Cluster* parent, float birthLevel, int numPoints) {
 	this->label = label;
 	this->birthLevel = birthLevel;
 	this->deathLevel = 0;
@@ -56,17 +55,15 @@ Cluster::Cluster(int label, Cluster* parent, double birthLevel, int numPoints) {
 	this->stability = 0;
 	this->propagatedStability = 0;
 
-	this->propagatedLowestChildDeathLevel = numeric_limits<double>::max();
+	this->propagatedLowestChildDeathLevel = numeric_limits<float>::max();
 
 	this->numConstraintsSatisfied = 0;
 	this->propagatedNumConstraintsSatisfied = 0;
-	this->virtualChildCluster = new set<int>();
 
 	this->parent = parent;
 	if (this->parent != NULL)
 		this->parent->hasChildren = true;
 	this->hasChildren = false;
-	this->propagatedDescendants = new vector<Cluster*>();
 }
 
 /**
@@ -76,7 +73,7 @@ Cluster::Cluster(int label, Cluster* parent, double birthLevel, int numPoints) {
  * @param numPoints The number of points to remove from the cluster
  * @param level The MST edge level at which to remove these points
  */
-void Cluster::detachPoints(int numPoints, double level) {
+void Cluster::detachPoints(int numPoints, float level) {
 	//printf("Cluster::detachPoints: incoming points %d this points %d birthlevel %f\n", numPoints, this->numPoints, birthLevel);
 	this->numPoints -= numPoints;
 	this->stability += (numPoints * (1 / level - 1 / this->birthLevel));
@@ -100,7 +97,7 @@ void Cluster::propagate() {
 	if (this->parent != NULL) {
 
 		//Propagate lowest death level of any descendants:
-		if (this->propagatedLowestChildDeathLevel == numeric_limits<double>::max()){
+		if (this->propagatedLowestChildDeathLevel == numeric_limits<float>::max()){
 			this->propagatedLowestChildDeathLevel = this->deathLevel;
 		}
 		if (this->propagatedLowestChildDeathLevel < this->parent->propagatedLowestChildDeathLevel){
@@ -111,13 +108,13 @@ void Cluster::propagate() {
 		if (!this->hasChildren) {
 			this->parent->propagatedNumConstraintsSatisfied+= this->numConstraintsSatisfied;
 			this->parent->propagatedStability+= this->stability;
-			this->parent->propagatedDescendants->push_back(this);
+			this->parent->propagatedDescendants.push_back(this);
 		}
 
 		else if (this->numConstraintsSatisfied > this->propagatedNumConstraintsSatisfied) {
 			this->parent->propagatedNumConstraintsSatisfied+= this->numConstraintsSatisfied;
 			this->parent->propagatedStability+= this->stability;
-			this->parent->propagatedDescendants->push_back(this);
+			this->parent->propagatedDescendants.push_back(this);
 		}
 
 		else if (this->numConstraintsSatisfied < this->propagatedNumConstraintsSatisfied) {
@@ -126,7 +123,7 @@ void Cluster::propagate() {
 			this->parent->propagatedStability+= this->propagatedStability;
 
 			vector<Cluster*>* parentDescendants = this->parent->getPropagatedDescendants();
-			parentDescendants->insert(parentDescendants->end(), this->propagatedDescendants->begin(), this->propagatedDescendants->end());
+			parentDescendants->insert(parentDescendants->end(), this->propagatedDescendants.begin(), this->propagatedDescendants.end());
 		}
 
 		else if (this->numConstraintsSatisfied == this->propagatedNumConstraintsSatisfied) {
@@ -135,17 +132,16 @@ void Cluster::propagate() {
 			if (this->stability >= this->propagatedStability) {
 				this->parent->propagatedNumConstraintsSatisfied+= this->numConstraintsSatisfied;
 				this->parent->propagatedStability+= this->stability;
-				this->parent->propagatedDescendants->push_back(this);
+				this->parent->propagatedDescendants.push_back(this);
 			}
 
 			else {
 				this->parent->propagatedNumConstraintsSatisfied+= this->propagatedNumConstraintsSatisfied;
 				this->parent->propagatedStability+= this->propagatedStability;
-				//this->parent->propagatedDescendants->insert(parent->propagatedDescendants->end(), this->propagatedDescendants->begin(), this->propagatedDescendants->end());
 				vector<Cluster*>* parentDescendants =
 						this->parent->getPropagatedDescendants();
 
-				parentDescendants->insert(parentDescendants->end(),	this->propagatedDescendants->begin(), this->propagatedDescendants->end());
+				parentDescendants->insert(parentDescendants->end(),	this->propagatedDescendants.begin(), this->propagatedDescendants.end());
 
 			}
 		}
@@ -153,18 +149,16 @@ void Cluster::propagate() {
 }
 
 
-void Cluster::addPointsToVirtualChildCluster(set<int>* points) {
-	for (set<int>::iterator it = points->begin(); it != points->end(); ++it) {
-		int i = *it;
-		this->virtualChildCluster->insert(i);
-	}
+void Cluster::addPointsToVirtualChildCluster(set<int>& points) {
+
+	this->virtualChildCluster.insert(points.begin(), points.end());
 
 }
 
 
 bool Cluster::virtualChildClusterContaintsPoint(int point) {
 
-	return this->virtualChildCluster->find(point) != this->virtualChildCluster->end();
+	return this->virtualChildCluster.find(point) != this->virtualChildCluster.end();
 }
 
 
@@ -188,9 +182,6 @@ void Cluster::releaseVirtualChildCluster() {
 	if(parent != NULL){
 		delete parent;
 	}
-	delete propagatedDescendants;
-	delete virtualChildCluster;
-
 }
 
 
@@ -210,11 +201,11 @@ Cluster* Cluster::getParent() {
 	return this->parent;
 }
 
-double Cluster::getBirthLevel() {
+float Cluster::getBirthLevel() {
 	return this->birthLevel;
 }
 
-double Cluster::getDeathLevel() {
+float Cluster::getDeathLevel() {
 	return this->deathLevel;
 }
 
@@ -226,19 +217,19 @@ void Cluster::setOffset(long offset) {
 	this->offset = offset;
 }
 
-double Cluster::getStability() {
+float Cluster::getStability() {
 	return this->stability;
 }
 
 
-double Cluster::getPropagatedStability(){
+float Cluster::getPropagatedStability(){
 	return this->propagatedStability;
 }
-set<int>* Cluster::getVirtualChildCluster(){
+set<int>& Cluster::getVirtualChildCluster(){
 	return this->virtualChildCluster;
 }
 
-double Cluster::getPropagatedLowestChildDeathLevel() {
+float Cluster::getPropagatedLowestChildDeathLevel() {
 	return this->propagatedLowestChildDeathLevel;
 }
 
@@ -251,7 +242,7 @@ int Cluster::getPropagatedNumConstraintsSatisfied() {
 }
 
 vector<Cluster*>* Cluster::getPropagatedDescendants() {
-	return this->propagatedDescendants;
+	return &this->propagatedDescendants;
 }
 
 bool Cluster::hasKids() {
@@ -264,6 +255,11 @@ bool Cluster::operator==(Cluster* another){
 	}
 
 	return false;
+}
+
+void Cluster::clean(){
+	this->propagatedDescendants.clear();
+	this->virtualChildCluster.clear();
 }
 
 namespace Exception{

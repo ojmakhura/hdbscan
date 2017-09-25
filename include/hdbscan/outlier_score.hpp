@@ -19,8 +19,8 @@ namespace clustering {
 class OutlierScore {
 
 private:
-	double score;
-	double coreDistance;
+	float score;
+	float coreDistance;
 	int id;
 
 public:
@@ -30,19 +30,19 @@ public:
 	 * @param coreDistance The point's core distance
 	 * @param id The id (index) of the point
 	 */
-	OutlierScore(double score, double coreDistance, int id);
+	OutlierScore(float score, float coreDistance, int id);
 	OutlierScore();
 	virtual ~OutlierScore();
 
 	// ------------------------------ PUBLIC METHODS ------------------------------
 
-	bool operator<(OutlierScore* other);
-	int compareTO(OutlierScore* other);
+	bool operator<(const OutlierScore& other);
+	int compareTO(const OutlierScore& other);
 
 	// ------------------------------ GETTERS & SETTERS ------------------------------
 
-	double getScore();
-	double getCoreDistance();
+	float getScore();
+	float getCoreDistance();
 	int getId();
 };
 

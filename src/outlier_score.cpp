@@ -5,11 +5,11 @@
  *      Author: junior
  */
 
-#include "outlier_score.hpp"
+#include "hdbscan/outlier_score.hpp"
 
 namespace clustering {
 
-OutlierScore::OutlierScore(double score, double coreDistance, int id) {
+OutlierScore::OutlierScore(float score, float coreDistance, int id) {
 	this->score = score;
 	this->coreDistance = coreDistance;
 	this->id = id;
@@ -26,28 +26,28 @@ OutlierScore::~OutlierScore() {
 
 // ------------------------------ PUBLIC METHODS ------------------------------
 
-bool OutlierScore::operator<(OutlierScore* other) {
+bool OutlierScore::operator<(const OutlierScore& other) {
 
-	if(this->score < other->score && this->coreDistance < other->coreDistance){
+	if(this->score < other.score && this->coreDistance < other.coreDistance){
 		return true;
 	} else{
 		return false;
 	}
 }
 
-int OutlierScore::compareTO(OutlierScore* other){
-	if (this->score > other->score)
+int OutlierScore::compareTO(const OutlierScore& other){
+	if (this->score > other.score)
 		return 1;
-	else if (this->score < other->score)
+	else if (this->score < other.score)
 		return -1;
 	else {
 
-		if (this->coreDistance > other->coreDistance)
+		if (this->coreDistance > other.coreDistance)
 			return 1;
-		else if (this->coreDistance < other->coreDistance)
+		else if (this->coreDistance < other.coreDistance)
 			return -1;
 		else
-			return this->id-other->id;
+			return this->id-other.id;
 	}
 }
 
@@ -55,11 +55,11 @@ int OutlierScore::compareTO(OutlierScore* other){
 
 // ------------------------------ GETTERS & SETTERS ------------------------------
 
-double OutlierScore::getScore() {
+float OutlierScore::getScore() {
 	return this->score;
 }
 
-double OutlierScore::getCoreDistance(){
+float OutlierScore::getCoreDistance(){
 	return this->coreDistance;
 }
 
