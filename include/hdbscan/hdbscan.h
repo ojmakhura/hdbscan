@@ -48,6 +48,7 @@ struct hdbscan {
 	int32_t* clusterLabels;
 	LongIntListMap* hierarchy;
 	IntDoubleMap *clusterStabilities;
+	IntIntListMap* clusterTable;
 	boolean selfEdges;
 	uint minPoints, minClusterSize, numPoints;
 #ifdef __cplusplus
@@ -215,6 +216,17 @@ void hdbscan_find_prominent_clusters(hdbscan* sc, int32_t infiniteStability);
  * @param infiniteStability true if there are any clusters with infinite stability, false otherwise
  */
 int hdbscsan_calculate_outlier_scores(hdbscan* sc, double* pointNoiseLevels, int* pointLastClusters, boolean infiniteStability);
+
+/**
+ * Given an array of labels, create a hash table where the keys are the labels and the values are the indices.
+ **/
+IntIntListMap* hdbscan_create_cluster_table(int32_t* labels, int32_t size);
+
+/**
+ * 
+ * 
+ */
+void hdbscan_destroy_cluster_table(IntIntListMap* table);
 
 #ifdef __cplusplus
 };

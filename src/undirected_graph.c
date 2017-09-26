@@ -201,22 +201,11 @@ void graph_quicksort(UndirectedGraph* g, int32_t startIndex, int32_t endIndex) {
 	}
 }
 
-/*IntList* graph_get_edge_list_for_vertex(UndirectedGraph* g, int vertex) {
-
-	return g->edges[vertex];
-}*/
-
 IntList* do_remove(IntList* list, int32_t data){
-	//printf("in do_remove removing %d\n", data);
 	ListNode* node = g_list_find_custom(list, &data, (GCompareFunc)gint_compare);
 	if(node != NULL){
-		//int* data = node->data;
-		//printf("in do_remove removing %d from list of length %d\n", *data, g_list_length(list));
-		//list = g_list_remove(list, data);
 		list = list_full_link_delete(list, node, (GDestroyNotify)free);
-		//free(data);
 	}
-	//printf("data removes, list now has %d length\n", g_list_length(list));
 
 	return list;
 }

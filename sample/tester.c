@@ -539,6 +539,8 @@ double data[] = {
 int main(int argc, char** argv){
 
 	for(int i = 0; i < 1000; i++){
+		printf("***********************************************************************************\n");
+		clock_t begin = clock();
 		hdbscan* scan = hdbscan_init(NULL, 3, DATATYPE_DOUBLE);
 
 		if(scan == NULL){
@@ -554,10 +556,27 @@ int main(int argc, char** argv){
 			} else{
 				printf("SUCCESS: hdbscan clustring completed\n");
 
-				printf("Number total number of clusters is %d\n", scan->clusters->len);
-				IntIntListMap* clusters = g_hash_table_new(g_int_hash, g_int_equal);
+				printf("Number total number of clusters is %d\n\n", scan->clusters->len);
+				scan->clusterTable = hdbscan_create_cluster_table(scan->clusterLabels, scan->numPoints);
+					
+				GHashTableIter iter;
+				gpointer key;
+				gpointer value;
+				g_hash_table_iter_init (&iter, scan->clusterTable);
 
-				printf("Cluster labels = [");
+				while (g_hash_table_iter_next (&iter, &key, &value)){
+					int32_t label = *((int32_t *)key);
+					IntPtrList* clusterList = (IntPtrList*)value;
+					printf("%d -> [", label);
+					
+					for(int j = 0; j < clusterList->len; j++){
+						int32_t *dpointer = ((int32_t **)clusterList->pdata)[j];
+						printf("%d ", *dpointer);
+					}
+					printf("]\n");
+				}
+
+				printf("\n\nCluster labels = [");
 				for(uint i = 0; i < scan->numPoints; i++){
 					printf("%d ", scan->clusterLabels[i]);
 				}
@@ -565,6 +584,10 @@ int main(int argc, char** argv){
 			}
 		}
 		hdbscan_clean(scan);
+		clock_t end = clock();
+		double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+		printf("Process took %f\n", time_spent);
+		printf("***********************************************************************************\n\n");
 	}
 
 	return 0;

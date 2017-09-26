@@ -135,7 +135,10 @@ double get_diff(distance* dis, void* dataset, uint i, uint j, uint k){
 void do_euclidean(distance* dis, void* dataset) {
 
 	double sortedDistance[dis->rows];
+//#pragma omp parallel for private(sortedDistance)
+//#pragma omp parallel for ordered schedule(dynamic)
 	for (uint i = 0; i < dis->rows; i++) {
+//#pragma omp parallel for
 		for (uint j = 0; j < dis->rows; j++) {
 			double sum, diff = 0.0;
 			uint offset1;
