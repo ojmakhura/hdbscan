@@ -64,12 +64,12 @@ hdbscan* hdbscan_init(hdbscan* sc, uint minPoints, uint datatype){
 		printf("Error: Could not allocate memory for HDBSCAN.\n");
 	} else{
 		sc->minPoints = minPoints;
-		sc->distanceFunction = distance_init(NULL, _EUCLIDEAN, datatype);
+		distance_init(&sc->distanceFunction, _EUCLIDEAN, datatype);
 
-		if(sc->distanceFunction == NULL){
+		/*if(sc->distanceFunction == NULL){
 			printf("Error: Could not create the distance calculator\n");
 			return NULL;
-		}
+		}*/
 
 		sc->selfEdges = TRUE;
 
@@ -81,7 +81,7 @@ hdbscan* hdbscan_init(hdbscan* sc, uint minPoints, uint datatype){
 		sc->clusterLabels = NULL;
 		sc->clusters = NULL;
 		sc->coreDistances = NULL;
-		sc->mst = NULL;
+		//sc->mst = NULL;
 		sc->outlierScores = NULL;
 
 	}
@@ -93,14 +93,18 @@ void hdbscan_clean(hdbscan* sc){
 	if(sc->clusterLabels != NULL){
 		free(sc->clusterLabels);
 	}
-
-	if(sc->distanceFunction != NULL){
-		distance_destroy(sc->distanceFunction);
+	
+	if(sc->outlierScores != NULL){
+		free(sc->outlierScores);
 	}
 
-	if(sc->mst != NULL){
-		graph_destroy(sc->mst);
-	}
+	//if(sc->distanceFunction != NULL){
+	distance_clean(&sc->distanceFunction);
+	//}
+
+	//if(sc->mst != NULL){
+		graph_clean(&sc->mst);
+	//}
 
 	if(sc->constraints != NULL){
 
@@ -184,7 +188,7 @@ int32_t hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean ro
 	guint csize = sc->numPoints/2;
 	sc->clusters = g_ptr_array_sized_new(csize);
 
-	distance_compute(sc->distanceFunction, dataset, rows, cols, sc->minPoints-1);
+	distance_compute(&sc->distanceFunction, dataset, rows, cols, sc->minPoints-1);
 	//printf("hdbscan_run: distance computed\n");
 
 	int32_t err = hdbscan_construct_mst(sc);
@@ -194,7 +198,7 @@ int32_t hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean ro
 	}
 
 	//printf("hdbscan_run: minimum spanning tree created\n");
-	graph_quicksort_by_edge_weight(sc->mst);
+	graph_quicksort_by_edge_weight(&sc->mst);
 	//graph_print(sc->mst);
 	//printf("hdbscan_run: weights sorted\n");
 
@@ -245,12 +249,12 @@ int32_t hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int32_t compactH
 								// hierarchyFile.
 
 	//The current edge being removed from the MST:
-	int32_t currentEdgeIndex = sc->mst->esize - 1;
+	int32_t currentEdgeIndex = sc->mst.esize - 1;
 
 	int32_t nextClusterLabel = 2;
 	boolean nextLevelSignificant = TRUE;
 	//The previous and current cluster numbers of each point in the data set:
-	int32_t numVertices = sc->mst->numVertices;
+	int32_t numVertices = sc->mst.numVertices;
 	int32_t previousClusterLabels[numVertices];
 	int32_t currentClusterLabels[numVertices];
 
@@ -278,17 +282,17 @@ int32_t hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int32_t compactH
 	//int32_t dd = 0;
 	while (currentEdgeIndex >= 0) {
 
-		double currentEdgeWeight = sc->mst->edgeWeights[currentEdgeIndex];
+		double currentEdgeWeight = sc->mst.edgeWeights[currentEdgeIndex];
 		//int32_t cc = 0;
 		ClusterList* newClusters = NULL;
 		//Remove all edges tied with the current edge weight, and store relevant clusters and vertices:
 
-		while(currentEdgeIndex >= 0 && sc->mst->edgeWeights[currentEdgeIndex] == currentEdgeWeight){
-			int32_t firstVertex = sc->mst->verticesA[currentEdgeIndex];
+		while(currentEdgeIndex >= 0 && sc->mst.edgeWeights[currentEdgeIndex] == currentEdgeWeight){
+			int32_t firstVertex = sc->mst.verticesA[currentEdgeIndex];
 
-			int32_t secondVertex = sc->mst->verticesB[currentEdgeIndex];
+			int32_t secondVertex = sc->mst.verticesB[currentEdgeIndex];
 
-			graph_remove_edge(sc->mst, firstVertex, secondVertex);
+			graph_remove_edge(&sc->mst, firstVertex, secondVertex);
 
 			if (currentClusterLabels[firstVertex] == 0) {
 				currentEdgeIndex--;
@@ -394,7 +398,7 @@ int32_t hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int32_t compactH
 					unexploredSubClusterPoints = list_full_link_delete(unexploredSubClusterPoints, itr, free);
 					unexploredSubClusterPointsSize--;
 
-					IntList* v = sc->mst->edges[vertexToExplore]; // mst.getEdgeListForVertex(vertexToExplore);
+					IntList* v = sc->mst.edges[vertexToExplore]; // mst.getEdgeListForVertex(vertexToExplore);
 
 					itr = g_list_first(v);
 					while(itr != NULL){
@@ -534,7 +538,7 @@ int32_t hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int32_t compactH
 					unexploredFirstChildClusterPoints = list_full_link_delete(unexploredFirstChildClusterPoints, it, free);
 					unexploredFirstChildSize--;
 
-					IntList* v = sc->mst->edges[vertexToExplore];
+					IntList* v = sc->mst.edges[vertexToExplore];
 					ListNode* itr = g_list_first(v);
 					while(itr != NULL){
 						int32_t neighbor = *((int32_t *)itr->data);
@@ -624,7 +628,7 @@ void print_distances(hdbscan* sc){
 	for (int32_t i = 0; i < sc->numPoints; i++) {
 		printf("[");
 		for (int32_t j = 0; j < sc->numPoints; j++) {
-			printf("%f ", distance_get(sc->distanceFunction, i, j));
+			printf("%f ", distance_get(&sc->distanceFunction, i, j));
 		}
 
 		printf("]\n");
@@ -654,15 +658,7 @@ void print_graph_components(int32_t *nearestMRDNeighbors, int32_t *otherVertexIn
 }
 
 int32_t hdbscan_construct_mst(hdbscan* sc){
-	double*  coreDistances = sc->distanceFunction->coreDistances;
-
-	/*printf("\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>coreDistances>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
-	for(int32_t i = 0; i < sc->numPoints; i++){
-		printf("%f ", coreDistances[i]);
-	}
-
-	printf("\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");*/
-	/**/
+	double*  coreDistances = sc->distanceFunction.coreDistances;
 
 	int32_t selfEdgeCapacity = 0;
 	uint size = sc->numPoints;
@@ -703,7 +699,6 @@ int32_t hdbscan_construct_mst(hdbscan* sc){
 #pragma omp parallel for
 #endif
 */
-	//print_graph_components(nearestMRDNeighbors, otherVertexIndices, nearestMRDDistances, ssize);
 	//Continue attaching points to the MST until all points are attached:
 	for (uint numAttachedPoints = 1; numAttachedPoints < size; numAttachedPoints++) {
 		int32_t nearestMRDPoint = -1;
@@ -712,63 +707,46 @@ int32_t hdbscan_construct_mst(hdbscan* sc){
 		//Iterate through all unattached points, updating distances using the current point:
 
 		for (unsigned int neighbor = 0; neighbor < size; neighbor++) {
-			//printf("Current Point = %d and neighbor = %d\n", currentPoint, neighbor);
-
+			
 			if (currentPoint == neighbor) {
 				continue;
 			}
 
 			if (attachedPoints[neighbor] == TRUE) {
-				//printf(">>>>>>>>>>>>>> attachedPoints[neighbor] == TRUE so we continue\n");
 				continue;
 			}
 
-			double mutualReachabiltiyDistance = distance_get(sc->distanceFunction, neighbor, currentPoint);
-			//printf("(%d, %d) : %f\n", neighbor, currentPoint, mutualReachabiltiyDistance);
-			//printf("(coreDistances[currentPoint], coreDistances[neighbor]) : (%f, %f)\n", coreDistances[neighbor], coreDistances[currentPoint]);
-
-
+			double mutualReachabiltiyDistance = distance_get(&sc->distanceFunction, neighbor, currentPoint);
+			
 			if (coreDistances[currentPoint] > mutualReachabiltiyDistance) {
-				//printf("1 : %d -> %f, %f\n", currentPoint, coreDistances[currentPoint], mutualReachabiltiyDistance);
 				mutualReachabiltiyDistance = coreDistances[currentPoint];
 			}
 
 			if (coreDistances[neighbor] > mutualReachabiltiyDistance) {
-				//printf("2 : %d -> %f, %f\n", neighbor, coreDistances[neighbor], mutualReachabiltiyDistance);
 				mutualReachabiltiyDistance = coreDistances[neighbor];
 			}
 
 			if (mutualReachabiltiyDistance < nearestMRDDistances[neighbor]) {
-				//printf("3 : %d -> %f, %f\n", neighbor, mutualReachabiltiyDistance, nearestMRDDistances[neighbor]);
 				nearestMRDDistances[neighbor] = mutualReachabiltiyDistance;
 				nearestMRDNeighbors[neighbor] = currentPoint;
 			}
 
 			//Check if the unattached point being updated is the closest to the tree:
 			if (nearestMRDDistances[neighbor] <= nearestMRDDistance) {
-				//printf("4 : %d -> %f, %f\n", neighbor, nearestMRDDistances[neighbor], nearestMRDDistance);
 				nearestMRDDistance = nearestMRDDistances[neighbor];
 				nearestMRDPoint = neighbor;
 			}
-			//printf("next ----------------------------\n");
 		}
 
 		//Attach the closest point found in this iteration to the tree:
 		attachedPoints[nearestMRDPoint] = TRUE;
 		otherVertexIndices[numAttachedPoints] = numAttachedPoints;
-		//numAttachedPoints++;
-		//printf("CurrentPoint being changed from %d to %d\n", currentPoint, nearestMRDPoint);
 		currentPoint = nearestMRDPoint;
-		//print_graph_components(nearestMRDNeighbors, otherVertexIndices, nearestMRDDistances, ssize);
-		//exit(0);
-
+		
 	}
 
 	//If necessary, attach self edges:
 	if (sc->selfEdges == TRUE) {
-		//size_t n = size * 2 - 1;
-
-		//parallel_for(size_t(0), n, [=](size_t i) {
 //#ifdef USE_OPENMP
 //#pragma omp parallel for
 //#endif
@@ -782,10 +760,10 @@ int32_t hdbscan_construct_mst(hdbscan* sc){
 	}
 
 
-	sc->mst = graph_init(NULL, size, nearestMRDNeighbors, ssize, otherVertexIndices, ssize, nearestMRDDistances, ssize);
+	graph_init(&sc->mst, size, nearestMRDNeighbors, ssize, otherVertexIndices, ssize, nearestMRDDistances, ssize);
 	//graph_print(sc->mst);
 
-	if(sc->mst == NULL){
+	if(&sc->mst == NULL){
 		printf("Error: Could not initialise mst.\n");
 		return HDBSCAN_ERROR;
 	}
@@ -810,22 +788,8 @@ boolean hdbscan_propagate_tree(hdbscan* sc){
 		if(cl != NULL && cl->hasChildren == FALSE){
 			clustersToExamine = set_int_insert(clustersToExamine, cl->label, &clustersToExamineSize);
 			addedToExaminationList[cl->label] = TRUE;
-			//printf("Cluster %d to be examined\n", cl->label);
 		}
 	}
-	/*
-	ListNode* node = g_list_first(sc->clusters);
-	while(node != NULL){
-		cluster* cl = node->data;
-
-		if(cl != NULL && cl->hasChildren == FALSE){
-			clustersToExamine = set_int_insert(clustersToExamine, cl->label, &clustersToExamineSize);
-			addedToExaminationList[cl->label] = TRUE;
-			//printf("Cluster %d to be examined\n", cl->label);
-		}
-
-		node = g_list_next(node);
-	}*/
 
 	while(clustersToExamineSize > 0){
 		ListNode* last = g_list_last(clustersToExamine);
@@ -872,28 +836,9 @@ void hdbscan_find_prominent_clusters(hdbscan* sc, int32_t infiniteStability){
 	cluster* cl = (cluster *)(sc->clusters->pdata)[1];
 	ClusterList *solution = cl->propagatedDescendants;
 
-	/*printf("Solution contains [[[[[[[[[[[[[[[[[[[");
-	ListNode* nn = g_list_first(solution);
-
-	int xx = 0;
-	while(nn != NULL){
-
-		cluster* c = (cluster *)nn->data;
-		printf("%d ", xx);
-		if(c != NULL){
-			printf(", %d\n", c->label);
-		} else{
-			printf(", -1\n");
-		}
-
-		nn = g_list_next(nn);
-	}
-	printf("]]]]]]]]]]]]]]]]]]]]]]]]\n");*/
-
 	LongIntListMap *significant = g_hash_table_new(g_int64_hash, g_int64_equal);
 	ListNode* node = g_list_first(solution);
 
-	//printf("***************************************************************************\n Printing solution list\n");
 	int x = 0;
 	while(node != NULL){
 		cluster* c = (cluster *)node->data;
@@ -903,15 +848,11 @@ void hdbscan_find_prominent_clusters(hdbscan* sc, int32_t infiniteStability){
 
 			clusterList = list_int_insert(clusterList, c->label);
 			g_hash_table_insert(significant, &c->offset, clusterList);
-			//printf("found cluster %d at offset %d\n", c->label, c->offset);
-		}else{
-			//printf("skipping at %d\n", x);
 		}
 		x++;
 		node = g_list_next(node);
 	}
-	//printf("***************************************************************************\n");
-
+	
 	sc->clusterLabels = (int32_t *)malloc(sc->numPoints * sizeof(int32_t));
 	for (int32_t i = 0; i < sc->numPoints; i++) {
 		(sc->clusterLabels)[i] = 0;
@@ -947,66 +888,41 @@ void hdbscan_find_prominent_clusters(hdbscan* sc, int32_t infiniteStability){
 	g_hash_table_destroy(significant);
 }
 
-/*
-
-int hdbscsan_calculate_outlier_scores(hdbscan* sc, DoubleList* pointNoiseLevels, IntList* pointLastClusters, bool infiniteStability){
 
 
-	double* coreDistances = sc->distanceFunction->coreDistances;
-	int numPoints = g_list_length(pointNoiseLevels);
-	//printf("Creating outlierScores\n");
+int hdbscsan_calculate_outlier_scores(hdbscan* sc, double* pointNoiseLevels, int* pointLastClusters, boolean infiniteStability){
+
+
+	double* coreDistances = sc->distanceFunction.coreDistances;
+	int numPoints = sc->numPoints;
 	sc->outlierScores = (outlier_score*)malloc(numPoints*sizeof(outlier_score));
 
 	if(!sc->outlierScores){
-
+		printf("ERROR: Calculate Outlier Score - Could not allocate memory for outlier scores.\n");
+		return HDBSCAN_ERROR;
 	}
-
-
-	//printf("Created outlierScores\n");
-	//Iterate through each point, calculating its outlier score:
 
 	int i = 0;
-
-	for(vector<Cluster*>::iterator it = clusters->begin(); it != clusters->end(); ++it){
-		Cluster* c = *it;
-		double epsilon_max = c->getPropagatedLowestChildDeathLevel();
-		//printf("hey too\n");
-		double epsilon = (*pointNoiseLevels)[i];
-
+	
+	for(uint i = 0; i < sc->numPoints; i++){
+		int tmp = pointLastClusters[i];
+		cluster* c = (cluster*)(sc->clusters->pdata)[tmp];
+		double epsilon_max = c->propagatedLowestChildDeathLevel;
+		double epsilon = pointNoiseLevels[i];
+		
 		double score = 0;
-		if (epsilon != 0) {
+		if(epsilon != 0){
 			score = 1 - (epsilon_max / epsilon);
 		}
-		//printf("3333333333 %d of %d outlierScores size %d\n", i, numPoints, outlierScores->size(), coreDistances);
-		outlierScores->push_back(new OutlierScore(score, coreDistances[i], i));
-		//printf("Finishes createing and pushing outlier\n");
-		++i;
+		
+		sc->outlierScores[i].id = i;		
+		sc->outlierScores[i].score = score;
+		sc->outlierScores[i].coreDistance = coreDistances[i];
 	}
 
-	for (int i = 0; i < numPoints; i++) {
-
-		int tmp = (*pointLastClusters)[i];
-
-		//printf("heyxxxxxxxxxxx\n");
-		Cluster* c = clusters[tmp];
-		//printf("fffffffffffffffffffffffffff %d\n", c);
-		double epsilon_max =
-				c->getPropagatedLowestChildDeathLevel();
-		//printf("hey too\n");
-		double epsilon = (*pointNoiseLevels)[i];
-
-		double score = 0;
-		if (epsilon != 0) {
-			score = 1 - (epsilon_max / epsilon);
-		}
-		//printf("3333333333 %d of %d outlierScores size %d\n", i, numPoints, outlierScores->size(), coreDistances);
-		outlierScores.push_back(OutlierScore(score, coreDistances[i], i));
-		//printf("Finishes createing and pushing outlier\n");
-	}
-	//printf("outlierScores for loop complete\n");
 	//Sort the outlier scores:
-	std::sort(outlierScores.begin(), outlierScores.end());
+	qsort(sc->outlierScores, numPoints, sizeof(outlier_score), outlier_score_compare);
 	//printf("outlierScores sorted\n");
 }
-*/
+
 

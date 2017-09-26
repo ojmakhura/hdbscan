@@ -56,8 +56,11 @@ public:
 
 typedef struct OutlierScore outlier_score;
 
-outlier_score* outlier_score_init(outlier_score* , double score, double coreDistance, int32_t id);
+outlier_score* outlier_score_init(outlier_score* os, double score, double coreDistance, int32_t id);
 void outlier_score_destroy(outlier_score* os);
+
+
+int outlier_score_compare(const void* score1, const void* score2);
 
 #ifdef __cplusplus
 

@@ -539,7 +539,7 @@ double data[] = {
 int main(int argc, char** argv){
 
 	for(int i = 0; i < 1000; i++){
-		hdbscan* scan = hdbscan_init(NULL, 3, DATATYPE_FLOAT);
+		hdbscan* scan = hdbscan_init(NULL, 3, DATATYPE_DOUBLE);
 
 		if(scan == NULL){
 			printf("ERROR: Could not initialise hdbscan\n");
@@ -548,7 +548,7 @@ int main(int argc, char** argv){
 			uint w = 2;
 			uint h = 500;
 
-			int err = hdbscan_run(scan, d2, 23, 4, 1);
+			int err = hdbscan_run(scan, data, h, w, TRUE);
 			if(err == HDBSCAN_ERROR){
 				printf("ERROR: Could not run hdbscan\n");
 			} else{

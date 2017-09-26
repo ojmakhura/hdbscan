@@ -38,9 +38,9 @@ namespace clustering {
 #endif
 
 struct hdbscan {
-	distance* distanceFunction;
+	distance distanceFunction;
 	double* dataSet;
-	UndirectedGraph* mst;
+	UndirectedGraph mst;
 	ConstraintList* constraints;
 	double* coreDistances;
 	ClusterPtrList* clusters;
@@ -214,7 +214,7 @@ void hdbscan_find_prominent_clusters(hdbscan* sc, int32_t infiniteStability);
  * @param delimiter The delimiter for the output file
  * @param infiniteStability true if there are any clusters with infinite stability, false otherwise
  */
-int hdbscsan_calculate_outlier_scores(hdbscan* sc, DoubleList* pointNoiseLevels, IntList* pointLastClusters, boolean infiniteStability);
+int hdbscsan_calculate_outlier_scores(hdbscan* sc, double* pointNoiseLevels, int* pointLastClusters, boolean infiniteStability);
 
 #ifdef __cplusplus
 };
