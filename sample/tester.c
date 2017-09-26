@@ -541,7 +541,7 @@ int main(int argc, char** argv){
 	for(int i = 0; i < 1000; i++){
 		printf("***********************************************************************************\n");
 		clock_t begin = clock();
-		hdbscan* scan = hdbscan_init(NULL, 3, DATATYPE_DOUBLE);
+		hdbscan* scan = hdbscan_init(NULL, 50, DATATYPE_DOUBLE);
 
 		if(scan == NULL){
 			printf("ERROR: Could not initialise hdbscan\n");

@@ -93,7 +93,10 @@ void hdbscan_clean(hdbscan* sc){
 
 	distance_clean(&sc->distanceFunction);
 	
-	graph_clean(&sc->mst);
+	if(sc->mst != NULL){
+		graph_destroy(sc->mst);
+		sc->mst = NULL;
+	}
 
 	if(sc->constraints != NULL){
 
@@ -193,8 +196,7 @@ int32_t hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean ro
 	}
 
 	//printf("hdbscan_run: minimum spanning tree created\n");
-	graph_quicksort_by_edge_weight(&sc->mst);
-	//graph_print(sc->mst);
+	graph_quicksort_by_edge_weight(sc->mst);
 	//printf("hdbscan_run: weights sorted\n");
 
 	double pointNoiseLevels[sc->numPoints];
@@ -234,12 +236,12 @@ int32_t hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int32_t compactH
 								// hierarchyFile.
 
 	//The current edge being removed from the MST:
-	int32_t currentEdgeIndex = sc->mst.esize - 1;
+	int32_t currentEdgeIndex = sc->mst->esize - 1;
 
 	int32_t nextClusterLabel = 2;
 	boolean nextLevelSignificant = TRUE;
 	//The previous and current cluster numbers of each point in the data set:
-	int32_t numVertices = sc->mst.numVertices;
+	int32_t numVertices = sc->mst->numVertices;
 	int32_t previousClusterLabels[numVertices];
 	int32_t currentClusterLabels[numVertices];
 
@@ -263,17 +265,17 @@ int32_t hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int32_t compactH
 	//int32_t dd = 0;
 	while (currentEdgeIndex >= 0) {
 
-		double currentEdgeWeight = sc->mst.edgeWeights[currentEdgeIndex];
+		double currentEdgeWeight = sc->mst->edgeWeights[currentEdgeIndex];
 		//int32_t cc = 0;
 		ClusterList* newClusters = NULL;
 		//Remove all edges tied with the current edge weight, and store relevant clusters and vertices:
 
-		while(currentEdgeIndex >= 0 && sc->mst.edgeWeights[currentEdgeIndex] == currentEdgeWeight){
-			int32_t firstVertex = sc->mst.verticesA[currentEdgeIndex];
+		while(currentEdgeIndex >= 0 && sc->mst->edgeWeights[currentEdgeIndex] == currentEdgeWeight){
+			int32_t firstVertex = sc->mst->verticesA[currentEdgeIndex];
 
-			int32_t secondVertex = sc->mst.verticesB[currentEdgeIndex];
+			int32_t secondVertex = sc->mst->verticesB[currentEdgeIndex];
 
-			graph_remove_edge(&sc->mst, firstVertex, secondVertex);
+			graph_remove_edge(sc->mst, firstVertex, secondVertex);
 
 			if (currentClusterLabels[firstVertex] == 0) {
 				currentEdgeIndex--;
@@ -361,7 +363,7 @@ int32_t hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int32_t compactH
 					unexploredSubClusterPoints = list_full_link_delete(unexploredSubClusterPoints, itr, free);
 					unexploredSubClusterPointsSize--;
 
-					IntList* v = sc->mst.edges[vertexToExplore];
+					IntList* v = sc->mst->edges[vertexToExplore];
 
 					itr = g_list_first(v);
 					while(itr != NULL){
@@ -482,7 +484,7 @@ int32_t hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int32_t compactH
 					unexploredFirstChildClusterPoints = list_full_link_delete(unexploredFirstChildClusterPoints, it, free);
 					unexploredFirstChildSize--;
 
-					IntList* v = sc->mst.edges[vertexToExplore];
+					IntList* v = sc->mst->edges[vertexToExplore];
 					ListNode* itr = g_list_first(v);
 					while(itr != NULL){
 						int32_t neighbor = *((int32_t *)itr->data);
@@ -698,10 +700,10 @@ int32_t hdbscan_construct_mst(hdbscan* sc){
 	}
 
 
-	graph_init(&sc->mst, size, nearestMRDNeighbors, ssize, otherVertexIndices, ssize, nearestMRDDistances, ssize);
+	sc->mst = graph_init(NULL, size, nearestMRDNeighbors, ssize, otherVertexIndices, ssize, nearestMRDDistances, ssize);
 	//graph_print(sc->mst);
 
-	if(&sc->mst == NULL){
+	if(sc->mst == NULL){
 		printf("Error: Could not initialise mst.\n");
 		return HDBSCAN_ERROR;
 	}

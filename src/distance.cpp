@@ -16,7 +16,7 @@ Distance::Distance(){
 }
 
 Distance::~Distance(){
-	distance_destroy(this);
+	distance_clean(this);
 }
 
 };

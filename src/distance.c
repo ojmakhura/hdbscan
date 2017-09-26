@@ -75,11 +75,15 @@ void distance_destroy(distance* d) {
 }
 
 void distance_clean(distance* d){
-	if(d->distances != NULL)
+	if(d->distances != NULL){
 		free(d->distances);
+		d->distances = NULL;
+	}
 
-	if(d->coreDistances != NULL)
+	if(d->coreDistances != NULL){
 		free(d->coreDistances);
+		d->coreDistances = NULL;
+	}
 }
 
 /**

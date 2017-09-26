@@ -74,14 +74,17 @@ void graph_clean(UndirectedGraph* g) {
 
 		if (g->verticesA != NULL) {
 			free(g->verticesA);
+			g->verticesA = NULL;
 		}
 
 		if (g->verticesB != NULL) {
 			free(g->verticesB);
+			g->verticesB = NULL;
 		}
 
 		if (g->edgeWeights != NULL) {
 			free(g->edgeWeights);
+			g->edgeWeights = NULL;
 		}
 
 		if (g->edges != NULL) {
@@ -91,6 +94,7 @@ void graph_clean(UndirectedGraph* g) {
 				list_int_clean(list);
 			}
 			free(g->edges);
+			g->edges = NULL;
 		}
 	}
 }

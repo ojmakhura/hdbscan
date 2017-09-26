@@ -541,15 +541,36 @@ void dummy_tester(){
 
 	
 	for(int i = 0; i < 10000; i++){
-		hdbscan scan(3, DATATYPE_DOUBLE);
+		printf("***********************************************************************************\n");
+		hdbscan scan(50, DATATYPE_DOUBLE);
 		scan.run(data, 500, 2, TRUE);
+		
+		
+		scan.clusterTable = hdbscan_create_cluster_table(scan.clusterLabels, scan.numPoints);
+					
+		GHashTableIter iter;
+		gpointer key;
+		gpointer value;
+		g_hash_table_iter_init (&iter, scan.clusterTable);
 
-		int32_t* labels = scan.clusterLabels;
-		for(uint i = 0; i < scan.numPoints; i++){
-			printf("%d ", labels[i]);
-
+		while (g_hash_table_iter_next (&iter, &key, &value)){
+			int32_t label = *((int32_t *)key);
+			IntPtrList* clusterList = (IntPtrList*)value;
+			printf("%d -> [", label);
+					
+			for(int j = 0; j < clusterList->len; j++){
+				int32_t *dpointer = ((int32_t **)clusterList->pdata)[j];
+				printf("%d ", *dpointer);
+			}
+			printf("]\n");
 		}
-		printf("\n\n");
+				
+		printf("\n\nCluster labels = [");
+		for(uint i = 0; i < scan.numPoints; i++){
+			printf("%d ", scan.clusterLabels[i]);
+		}
+		printf("]\n\n");
+		printf("***********************************************************************************\n");
 	}
 
 }

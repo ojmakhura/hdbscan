@@ -40,7 +40,7 @@ namespace clustering {
 struct hdbscan {
 	distance distanceFunction;
 	double* dataSet;
-	UndirectedGraph mst;
+	UndirectedGraph* mst;
 	ConstraintList* constraints;
 	double* coreDistances;
 	ClusterPtrList* clusters;

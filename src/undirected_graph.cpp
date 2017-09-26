@@ -15,7 +15,7 @@ UndirectedGraph::UndirectedGraph(){
 }
 
 UndirectedGraph::~UndirectedGraph(){
-	graph_destroy(this);
+	graph_clean(this);
 }
 
 };
