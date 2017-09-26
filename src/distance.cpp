@@ -12,7 +12,7 @@
 namespace clustering {
 
 Distance::Distance(){
-	distance_init(this, _EUCLIDEAN);
+	distance_init(this, _EUCLIDEAN, DATATYPE_DOUBLE);
 }
 
 Distance::~Distance(){

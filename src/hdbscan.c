@@ -9,10 +9,10 @@
 
 uint hdbscan_get_dataset_size(uint rows, uint cols, boolean rowwise){
     if(rowwise == 1){
-    	printf("hdbscan_get_dataset_size: data is rowwise\n");
+    	//printf("hdbscan_get_dataset_size: data is rowwise\n");
         return rows;
     } else{
-    	printf("hdbscan_get_dataset_size: data is not rowwise\n");
+    	//printf("hdbscan_get_dataset_size: data is not rowwise\n");
         return rows * cols;
     }
 }
@@ -27,7 +27,6 @@ uint hdbscan_get_dataset_size(uint rows, uint cols, boolean rowwise){
  * @param edgeWeight The edge weight at which to remove the points from their previous Cluster
  */
 cluster* hdbscan_create_new_cluster(hdbscan* sc, IntSet* points, int32_t* clusterLabels, cluster* parentCluster, int32_t clusterLabel, double edgeWeight){
-	//printf("Points has length %d\n", g_list_length(points));
 
 	ListNode* node = g_list_first(points);
 
@@ -41,22 +40,12 @@ cluster* hdbscan_create_new_cluster(hdbscan* sc, IntSet* points, int32_t* cluste
 		node = g_list_next(node);
 	}
 
-
-	/*node = g_list_first(points);
-	while(node != NULL){
-		int32_t* it = node->data;
-		clusterLabels[*it] = clusterLabel;
-
-		node = g_list_next(node);
-	}*/
-
 	guint ptsSize = g_list_length(points);
 
 	cluster_detach_points(parentCluster, ptsSize, edgeWeight);
 
 	if (clusterLabel != 0) {
 
-		//guint s = ptsSize;
 		cluster* new = cluster_init(NULL, clusterLabel, parentCluster, edgeWeight, ptsSize);
 		return new;
 	} else{
@@ -67,7 +56,7 @@ cluster* hdbscan_create_new_cluster(hdbscan* sc, IntSet* points, int32_t* cluste
 }
 
 
-hdbscan* hdbscan_init(hdbscan* sc, uint minPoints){
+hdbscan* hdbscan_init(hdbscan* sc, uint minPoints, uint datatype){
 	if(sc == NULL)
 		sc = (hdbscan*) malloc(sizeof(hdbscan));
 
@@ -75,7 +64,7 @@ hdbscan* hdbscan_init(hdbscan* sc, uint minPoints){
 		printf("Error: Could not allocate memory for HDBSCAN.\n");
 	} else{
 		sc->minPoints = minPoints;
-		sc->distanceFunction = distance_init(NULL, _EUCLIDEAN);
+		sc->distanceFunction = distance_init(NULL, _EUCLIDEAN, datatype);
 
 		if(sc->distanceFunction == NULL){
 			printf("Error: Could not create the distance calculator\n");
@@ -129,8 +118,6 @@ void hdbscan_clean(hdbscan* sc){
 		//IntList *keys = g_hash_table_get_keys(sc->clusterStabilities);
 		DoubleList *values = g_hash_table_get_values(sc->clusterStabilities);
 
-		//g_list_free_full(keys, (GDestroyNotify)free);
-
 		ListNode* node = g_list_first(values);
 
 		while(node != NULL){
@@ -160,19 +147,6 @@ void hdbscan_clean(hdbscan* sc){
 			if(key != NULL)
 				free(key);
 		}
-
-		/*IntList *keys = g_hash_table_get_keys(sc->hierarchy);
-		ListIntList *values = g_hash_table_get_values(sc->hierarchy);
-
-		ListNode* node = g_list_first(values);
-
-		while(node != NULL){
-			int32_t *val = node->data;
-			free(val);
-			node = g_list_next(node);
-		}
-		g_list_free_full(keys, (GDestroyNotify)free);
-		g_list_free(values);*/
 		g_hash_table_destroy(sc->hierarchy);
 
 	}
@@ -197,21 +171,21 @@ void hdbscan_destroy(hdbscan* sc){
 }
 
 
-int32_t hdbscan_run(hdbscan* sc, double* dataset, uint rows, uint cols, boolean rowwise){
+int32_t hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean rowwise){
 
 	if(sc == NULL){
 		printf("hdbscan_run: sc has not been initialised.\n");
 		return HDBSCAN_ERROR;
 	}
 
-	printf("hdbscan_run: Running hdbscan\n");
+	//printf("hdbscan_run: Running hdbscan\n");
 	sc->numPoints = hdbscan_get_dataset_size(rows, cols, rowwise);
-	printf("hdbscan_run: numPoints set as %d\n", sc->numPoints);
+	//printf("hdbscan_run: numPoints set as %d\n", sc->numPoints);
 	guint csize = sc->numPoints/2;
 	sc->clusters = g_ptr_array_sized_new(csize);
 
 	distance_compute(sc->distanceFunction, dataset, rows, cols, sc->minPoints-1);
-	printf("hdbscan_run: distance computed\n");
+	//printf("hdbscan_run: distance computed\n");
 
 	int32_t err = hdbscan_construct_mst(sc);
 	if(err == HDBSCAN_ERROR){
@@ -219,20 +193,20 @@ int32_t hdbscan_run(hdbscan* sc, double* dataset, uint rows, uint cols, boolean 
 		return HDBSCAN_ERROR;
 	}
 
-	printf("hdbscan_run: minimum spanning tree created\n");
+	//printf("hdbscan_run: minimum spanning tree created\n");
 	graph_quicksort_by_edge_weight(sc->mst);
 	//graph_print(sc->mst);
-	printf("hdbscan_run: weights sorted\n");
+	//printf("hdbscan_run: weights sorted\n");
 
 	double pointNoiseLevels[sc->numPoints];
 	int32_t pointLastClusters[sc->numPoints];
 
 	hdbscan_compute_hierarchy_and_cluster_tree(sc, 0, pointNoiseLevels, pointLastClusters);
-	printf("hdbscan_run: hierarchy and cluster tree computed\n");
+	//printf("hdbscan_run: hierarchy and cluster tree computed\n");
 	int32_t infiniteStability = hdbscan_propagate_tree(sc);
-	printf("hdbscan_run: tree propagated\n");
+	//printf("hdbscan_run: tree propagated\n");
 	hdbscan_find_prominent_clusters(sc, infiniteStability);
-	printf("hdbscan_run: prominent clusters found\n");
+	//printf("hdbscan_run: prominent clusters found\n");
 
 	return HDBSCAN_SUCCESS;
 }

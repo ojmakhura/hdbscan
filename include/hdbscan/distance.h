@@ -32,6 +32,12 @@ namespace clustering {
 #define _EUCLIDEAN 		1
 #endif
 
+#define DATATYPE_FLOAT			0
+#define DATATYPE_DOUBLE			1
+#define DATATYPE_INT			2
+#define DATATYPE_LONG			3
+#define DATATYPE_SHORT			4
+
 /*
 #ifndef MANHATTAN
 #define MANHATTAN		2
@@ -57,6 +63,7 @@ struct Distance{
 	uint internalRows, internalCols;
 	int numNeighbors;
 	calculator cal;
+	uint datatype;
 
 #ifdef __cplusplus
 public:
@@ -85,7 +92,7 @@ private:
 	/**
 	 * Computes the euclidean distance between two points, d = sqrt((x1-y1)^2 + (x2-y2)^2 + ... + (xn-yn)^2).
 	 */
-	void doEuclidean(double* dataset, int minPoints);
+	void doEuclidean(void* dataset, int minPoints);
 
 
 #endif
@@ -101,17 +108,17 @@ class Distance Distance;
 //typedef struct Distance Distance;
 typedef struct Distance distance;
 
-distance* distance_init(distance* dis, calculator cal);
+distance* distance_init(distance* dis, calculator cal, uint datatype);
 void distance_destroy(distance* d);
 void distance_clean(distance* d);
 
 /**
  * Computes the euclidean distance between two points, d = sqrt((x1-y1)^2 + (x2-y2)^2 + ... + (xn-yn)^2).
  */
-void distance_euclidean(double* dataset, distance* dis, uint rows, uint cols);
+void distance_euclidean(void* dataset, distance* dis, uint rows, uint cols);
 
 double distance_get(distance* dis, uint row, uint col);
-void distance_compute(distance* dis, double* dataset, int rows, int cols, int numNeighbors);
+void distance_compute(distance* dis, void* dataset, int rows, int cols, int numNeighbors);
 
 #ifdef __cplusplus
 };

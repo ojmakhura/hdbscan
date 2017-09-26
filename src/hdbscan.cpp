@@ -12,12 +12,12 @@ namespace clustering {
 
 
 hdbscan::hdbscan(){
-	hdbscan_init(this, 3);
+	hdbscan_init(this, 3, DATATYPE_DOUBLE);
 }
 
 
-hdbscan::hdbscan(uint minPts){
-	hdbscan_init(this, minPts);
+hdbscan::hdbscan(uint minPts, uint datatype){
+	hdbscan_init(this, minPts, datatype);
 }
 
 hdbscan::~hdbscan(){

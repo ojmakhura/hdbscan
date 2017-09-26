@@ -7,7 +7,7 @@
 
 #include "hdbscan/hdbscan.h"
 
-double d2[] = {
+float d2[] = {
 		1.0,1.0,3.0,3.0,
 		1.0,2.0,8.0,18.0,
 		2.0,1.0,8.0,18.0,
@@ -539,7 +539,7 @@ double data[] = {
 int main(int argc, char** argv){
 
 	for(int i = 0; i < 1000; i++){
-		hdbscan* scan = hdbscan_init(NULL, 3);
+		hdbscan* scan = hdbscan_init(NULL, 3, DATATYPE_FLOAT);
 
 		if(scan == NULL){
 			printf("ERROR: Could not initialise hdbscan\n");
@@ -548,7 +548,7 @@ int main(int argc, char** argv){
 			uint w = 2;
 			uint h = 500;
 
-			int err = hdbscan_run(scan, data, h, w, 1);
+			int err = hdbscan_run(scan, d2, 23, 4, 1);
 			if(err == HDBSCAN_ERROR){
 				printf("ERROR: Could not run hdbscan\n");
 			} else{
@@ -561,7 +561,7 @@ int main(int argc, char** argv){
 				for(uint i = 0; i < scan->numPoints; i++){
 					printf("%d ", scan->clusterLabels[i]);
 				}
-				printf("]\n");
+				printf("]\n\n");
 			}
 		}
 		hdbscan_clean(scan);

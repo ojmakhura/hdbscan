@@ -49,7 +49,7 @@ uint triangular(uint n) {
 	return (n * n + n) / 2;
 }
 
-distance* distance_init(distance* dis, calculator cal) {
+distance* distance_init(distance* dis, calculator cal, uint datatype) {
 	if(dis == NULL)
 		dis = (distance*)malloc(sizeof(distance));
 
@@ -60,6 +60,7 @@ distance* distance_init(distance* dis, calculator cal) {
 		dis->numNeighbors = 2; /// set the distance to minimum possible neighbors
 		dis->coreDistances = NULL;
 		dis->distances = NULL;
+		dis->datatype = datatype;
 	}
 	return dis;
 }
@@ -97,10 +98,41 @@ double l2_norm(double const* u, uint n) {
 	return sqrt(accum);
 }
 
+double get_diff(distance* dis, void* dataset, uint i, uint j, uint k){
+	double diff = 0;
+	double num1 = 0, num2 = 0;
+
+	if(dis->datatype == DATATYPE_FLOAT){
+		float* dt = (float*)dataset;
+		num1 = (double)(dt[i * dis->cols + k]);
+		num2 = (double)(dt[j * dis->cols + k]);
+	} else if(dis->datatype == DATATYPE_DOUBLE){
+		double* dt = (double*)dataset;
+    	num1 = dt[i * dis->cols + k];
+    	num2 = dt[j * dis->cols + k];
+	}else if(dis->datatype == DATATYPE_INT){
+		int* dt = (int*)dataset;
+    	num1 = (double)(dt[i * dis->cols + k]);
+    	num2 = (double)(dt[j * dis->cols + k]);
+
+	}	else if(dis->datatype == DATATYPE_LONG){
+		long* dt = (long*)dataset;
+    	num1 = (double)(dt[i * dis->cols + k]);
+    	num2 = (double)(dt[j * dis->cols + k]);
+
+	}else if(dis->datatype == DATATYPE_SHORT){
+		short* dt = (short*)dataset;
+    	num1 = (double)(dt[i * dis->cols + k]);
+    	num2 = (double)(dt[j * dis->cols + k]);
+	}
+	diff = num1 - num2;
+	return diff;
+}
+
 /**
  *
  */
-void do_euclidean(distance* dis, double* dataset) {
+void do_euclidean(distance* dis, void* dataset) {
 
 	double sortedDistance[dis->rows];
 	for (uint i = 0; i < dis->rows; i++) {
@@ -110,15 +142,12 @@ void do_euclidean(distance* dis, double* dataset) {
 			sum = 0;
 
             for (uint k = 0; ((k < dis->cols) && (i != j)); k++) {
-            	double num1 = dataset[i * dis->cols + k];
-            	double num2 = dataset[j * dis->cols + k];
-    			diff = num1 - num2;
+    			diff = get_diff(dis, dataset, i, j, k);
     			sum += (diff * diff);
             }
 
 			sum = sqrt(sum);
 
-			//printf("sum = %f\n", sum);
 			int c;
 			if (j > i) {
 				// Calculate the linearised upper triangular matrix offset
@@ -137,16 +166,7 @@ void do_euclidean(distance* dis, double* dataset) {
 
 		}
 		//#pragma omp barrier
-		//qsort()
 		qsort(sortedDistance, dis->rows, sizeof(double), cmpdouble);
-
-		/*printf("\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>sorted : %d >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n", i);
-		for(int j = 0; j < dis->rows; j++){
-
-			printf("%f ", sortedDistance[j]);
-		}
-		printf("Selecting with %d neighbors for distance %f", dis->numNeighbors, sortedDistance[dis->numNeighbors]);
-		printf("\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");*/
 
 		dis->coreDistances[i] = sortedDistance[dis->numNeighbors];
 	}
@@ -156,17 +176,13 @@ void do_euclidean(distance* dis, double* dataset) {
 double distance_get(distance* dis, uint row, uint col) {
 	uint idx;
 	if (row < col) {
-		//printf("row > col\n");
 		idx = (dis->rows * row + col) - triangular(row + 1);
 
 	} else if (row == col) {
-		//printf("row == col\n");
 		return 0;
 	} else {
-		//printf("row < col\n");
 		idx = (dis->rows * col + row) - triangular(col + 1);
 	}
-	//printf("getDistance at index %d\n", idx);
 	return dis->distances[idx];
 }
 void setDimenstions(distance* dis, int rows, int cols){
@@ -177,26 +193,9 @@ void setDimenstions(distance* dis, int rows, int cols){
     dis->distances = (double *)malloc(sub * sizeof(double));
     dis->coreDistances = (double *)malloc(dis->rows * sizeof(double));
 }
-void distance_compute(distance* dis, double* dataset, int rows, int cols, int numNeighbors){
-	//printf("Calculating distance with numNeighbors = %d\n", numNeighbors);
+void distance_compute(distance* dis, void* dataset, int rows, int cols, int numNeighbors){
 	dis->numNeighbors = numNeighbors;
 
-	/*dis->rows = rows;
-	dis->cols = cols;
-
-	int sub = (dis->rows * dis->rows - dis->rows) / 2;
-
-	if(dis->distances != NULL){
-		free(dis->distances);
-	}
-
-	dis->distances = malloc(sub * sizeof(double));
-
-	if(dis->coreDistances != NULL){
-		free(dis->coreDistances);
-	}
-
-	dis->coreDistances = malloc(dis->rows * sizeof(double));*/
 	setDimenstions(dis, rows, cols);
 	do_euclidean(dis, dataset);
 }

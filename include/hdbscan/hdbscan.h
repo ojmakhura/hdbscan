@@ -55,7 +55,7 @@ struct hdbscan {
 public:
 
 	hdbscan();
-	hdbscan(uint minPts);
+	hdbscan(uint minPts, uint datatype);
 	~hdbscan();
 
 	/**
@@ -69,7 +69,7 @@ public:
 	 * @param k Each point's core distance will be it's distance to the kth nearest neighbor
 	 * @param distanceFunction A DistanceCalculator to compute distances between points
 	 */
-	void calculateCoreDistances(double* dataSet, uint rows, uint cols);
+	void calculateCoreDistances(void* dataSet, uint rows, uint cols);
 
 	/**
 	 * Constructs the minimum spanning tree of mutual reachability distances for the data set, given
@@ -141,7 +141,7 @@ public:
 
 typedef struct hdbscan hdbscan;
 
-hdbscan* hdbscan_init(hdbscan* sc, uint minPoints);
+hdbscan* hdbscan_init(hdbscan* sc, uint minPoints, uint datatype);
 
 /**
  * Deallocate all memory including for the sc itself
@@ -157,7 +157,7 @@ void hdbscan_clean(hdbscan* sc);
 /**
  *
  */
-int hdbscan_run(hdbscan* sc, double* dataset, uint rows, uint cols, boolean rowwise);
+int hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean rowwise);
 
 /**
  *

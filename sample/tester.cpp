@@ -541,18 +541,15 @@ void dummy_tester(){
 
 	
 	for(int i = 0; i < 10000; i++){
-		hdbscan* scan = new hdbscan(3);
-		scan->run(data, 500, 2, TRUE);
+		hdbscan scan(3, DATATYPE_DOUBLE);
+		scan.run(data, 500, 2, TRUE);
 
-		int32_t* labels = scan->clusterLabels;
-		//set<int> lbs;
-		//lbs.insert(labels, labels + scan.numPoints);
-		for(uint i = 0; i < scan->numPoints; i++){
+		int32_t* labels = scan.clusterLabels;
+		for(uint i = 0; i < scan.numPoints; i++){
 			printf("%d ", labels[i]);
 
 		}
-		printf("\n");
-		delete scan;
+		printf("\n\n");
 	}
 
 }
