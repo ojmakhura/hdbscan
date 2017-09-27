@@ -62,7 +62,7 @@ public:
 	/**
 	 *
 	 */
-	void run(double* dataset, uint rows, uint cols, boolean rowwise);
+	void run(void* dataset, uint rows, uint cols, boolean rowwise);
 
 	/**
 	 * Calculates the core distances for each point in the data set, given some value for k.

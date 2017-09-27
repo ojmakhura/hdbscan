@@ -27,7 +27,7 @@ hdbscan::~hdbscan(){
 /**
  *
  */
-void hdbscan::run(double* dataset, uint rows, uint cols, boolean rowwise){
+void hdbscan::run(void* dataset, uint rows, uint cols, boolean rowwise){
 	hdbscan_run(this, dataset, rows, cols, rowwise);
 }
 
