@@ -18,8 +18,6 @@ extern "C" {
 #include <string.h>
 
 typedef GList ListNode;
-typedef GList IntSet;
-typedef GList IntList;
 typedef GList LongList;
 typedef GList ListIntList;
 typedef GList DoubleList;
