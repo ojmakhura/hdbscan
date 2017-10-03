@@ -34,7 +34,7 @@ struct Cluster {
 	double propagatedLowestChildDeathLevel;
 	int32_t numConstraintsSatisfied;
 	int32_t propagatedNumConstraintsSatisfied;
-	IntSet* virtualChildCluster;
+	IntArraySet* virtualChildCluster;
 	struct Cluster* parent;
 	ClusterList* propagatedDescendants;
 	boolean hasChildren;
@@ -74,7 +74,7 @@ public:
 	void propagate();
 
 
-	void addPointsToVirtualChildCluster(IntSet* points);
+	void addPointsToVirtualChildCluster(IntArraySet* points);
 
 
 	boolean virtualChildClusterContaintsPoint(int32_t point);
@@ -117,7 +117,7 @@ public:
 
 	ClusterList* getPropagatedDescendants();
 
-	IntSet* getVirtualChildCluster();
+	IntArraySetSet* getVirtualChildCluster();
 
 	 boolean hasKids();
 

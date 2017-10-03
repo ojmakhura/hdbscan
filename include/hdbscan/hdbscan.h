@@ -20,7 +20,7 @@ extern "C" {
 #include "distance.h"
 #include "outlier_score.h"
 #include "undirected_graph.h"
-#include "utils.h"
+#include "intset.h"
 
 #define FILE_BUFFER_SIZE = 32678
 #define HDBSCAN_SUCCESS 1
@@ -132,7 +132,7 @@ public:
 	 * @param delimiter The delimiter for the output file
 	 * @param infiniteStability true if there are any clusters with infinite stability, false otherwise
 	 */
-	void calculateOutlierScores(DoubleList* pointNoiseLevels, IntList* pointLastClusters, boolean infiniteStability);
+	void calculateOutlierScores(DoubleList* pointNoiseLevels, IntArrayList* pointLastClusters, boolean infiniteStability);
 
 	void clean();
 #endif

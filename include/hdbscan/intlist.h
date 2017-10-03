@@ -42,7 +42,7 @@ typedef struct IntArrayList{
 	int32_t max_size;
 } IntArrayList;
 
-int32_t extend_array(IntArrayList* list);;
+int32_t list_extend_array(IntArrayList* list);;
 IntArrayList* int_array_list_init();
 IntArrayList* int_array_list_init_size(int32_t size);
 void int_array_list_append(IntArrayList* list, int32_t data);
@@ -54,6 +54,8 @@ int32_t int_array_list_remove(IntArrayList* list, int32_t data);
 void int_array_list_delete(IntArrayList* list);
 int32_t int_array_list_data(IntArrayList* list, int32_t idx);
 void int_array_list_sort(IntArrayList* list);
+void int_array_list_extend(IntArrayList* dest, IntArrayList* src);
+
 
 /**************************************************************************
  *

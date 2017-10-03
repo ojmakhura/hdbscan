@@ -164,7 +164,7 @@ IntArrayList* int_array_list_init_size(int32_t size){
 	return list;
 }
 
-int32_t extend_array(IntArrayList* list){
+int32_t list_extend_array(IntArrayList* list){
 
 	int32_t newmax = list->max_size*2;
 
@@ -183,7 +183,7 @@ int32_t extend_array(IntArrayList* list){
 void int_array_list_append(IntArrayList* list, int32_t data){
 
 	if(list->size == list->max_size){
-		extend_array(list);
+		list_extend_array(list);
 	}
 	list->data[list->size] = data;
 	list->size++;
@@ -249,6 +249,20 @@ void int_array_list_insert_at(IntArrayList* list, int32_t data, int32_t index){
 
 	memcpy(to, from, cpysize * sizeof(int32_t));
 	list->size++;
+
+}
+
+void int_array_list_extend(IntArrayList* dest, IntArrayList* src){
+	int32_t cmbsize = dest->size + src->size;
+	
+	if(cmbsize >= dest->size){
+		list_extend_array(dest);
+	}
+	
+	if(dest->data != NULL){
+		int* to = dest->data + dest->size;
+		memcpy(to, src->data, (src->size)*sizeof(int));
+	}
 
 }
 

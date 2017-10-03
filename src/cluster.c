@@ -32,7 +32,7 @@ cluster* cluster_init(cluster* cl, int32_t label, cluster* parent, double birthL
 		if (cl->parent != NULL)
 			cl->parent->hasChildren = TRUE;
 		cl->hasChildren = FALSE;
-		cl->virtualChildCluster = NULL;
+		cl->virtualChildCluster = int_array_set_init();
 		cl->propagatedDescendants = NULL;
 	}
 
@@ -43,7 +43,7 @@ void cluster_destroy(cluster* cl){
 //#ifdef __cplusplus
 	if(cl != NULL){
 		if(cl->virtualChildCluster){
-			list_int_clean(cl->virtualChildCluster);
+			int_array_set_delete(cl->virtualChildCluster);
 		}
 
 		if(cl->propagatedDescendants){
@@ -126,9 +126,14 @@ void cluster_propagate(cluster* cl){
 }
 
 
-int cluster_add_points_to_virtual_child_cluster(cluster* cl, IntSet* points){
+int cluster_add_points_to_virtual_child_cluster(cluster* cl, IntArraySetSet* points){
+	
+	for(int32_t i = 0; i < points->size; i++){
+		int32_t d = (points->data)[i];
+		int_array_set_insert_sorted(cl->virtualChildCluster, d);
+	}
 
-	ListNode* node = g_list_first(points);
+	/**ListNode* node = g_list_first(points);
 	guint s = 0; // dummy size we won't be using for anything
 
 	while(node != NULL){
@@ -137,15 +142,16 @@ int cluster_add_points_to_virtual_child_cluster(cluster* cl, IntSet* points){
 		cl->virtualChildCluster = set_int_insert(cl->virtualChildCluster, *d, &s);
 
 		node = node->next;
-	}
+	}*/
 
 	return 1;
 }
 
 boolean cluster_virtual_child_contains_point(cluster* cl, int32_t point){
-	ListNode* node = g_list_find_custom(cl->virtualChildCluster, &point, (GCompareFunc)gint_compare);
+	//ListNode* node = g_list_find_custom(cl->virtualChildCluster, &point, (GCompareFunc)gint_compare);
+	int32_t idx = int_array_set_search_sorted(cl->virtualChildCluster, point);
 
-	return (node != NULL);
+	return (idx >= 0);
 }
 
 void cluster_add_virtual_child_constraints_satisfied(cluster* cl, int32_t numConstraints){

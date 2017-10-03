@@ -24,9 +24,13 @@ uint hdbscan_get_dataset_size(uint rows, uint cols, boolean rowwise){
  * @param clusterLabel The label of the new Cluster
  * @param edgeWeight The edge weight at which to remove the points from their previous Cluster
  */
-cluster* hdbscan_create_new_cluster(hdbscan* sc, IntSet* points, int32_t* clusterLabels, cluster* parentCluster, int32_t clusterLabel, double edgeWeight){
+cluster* hdbscan_create_new_cluster(hdbscan* sc, IntArraySet* points, int32_t* clusterLabels, cluster* parentCluster, int32_t clusterLabel, double edgeWeight){
 
-	ListNode* node = g_list_first(points);
+	for(int32_t i = 0; i < points->size; i++){
+		int32_t d = (points->data)[i];
+		clusterLabels[d] = clusterLabel;
+	}
+	/*ListNode* node = g_list_first(points);
 
 	while(node != NULL){
 		int32_t* it = node->data;
@@ -36,15 +40,15 @@ cluster* hdbscan_create_new_cluster(hdbscan* sc, IntSet* points, int32_t* cluste
 		}
 
 		node = g_list_next(node);
-	}
+	}*/
 
-	guint ptsSize = g_list_length(points);
+	//guint ptsSize = g_list_length(points);
 
-	cluster_detach_points(parentCluster, ptsSize, edgeWeight);
+	//cluster_detach_points(parentCluster, points->size, edgeWeight);
 
 	if (clusterLabel != 0) {
 
-		cluster* new = cluster_init(NULL, clusterLabel, parentCluster, edgeWeight, ptsSize);
+		cluster* new = cluster_init(NULL, clusterLabel, parentCluster, edgeWeight, points->size);
 		return new;
 	} else{
 		cluster_add_points_to_virtual_child_cluster(parentCluster, points);
