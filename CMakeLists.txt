@@ -29,7 +29,11 @@ foreach(p LIB BIN INCLUDE CMAKE)
 endforeach()
 
 set(HDBSCAN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
-include_directories( "${HDBSCAN_INCLUDE_DIR}" "${PROJECT_BINARY_DIR}" ${GLIB2_INCLUDE_DIRS})
+include_directories( "${HDBSCAN_INCLUDE_DIR}")
+include_directories( "${GNULIB_INCLUDE_DIR}")
+include_directories( "${LISTLIB_INCLUDE_DIR}")
+include_directories("${PROJECT_BINARY_DIR}") 
+include_directories(${GLIB2_INCLUDE_DIRS})
 
 #ensure we have pkg-config in the system
 find_package(PkgConfig)
@@ -46,6 +50,7 @@ IF(USE_OpenMP)
   ENDIF()
 ENDIF()
 
+#add_subdirectory(modules)
 add_subdirectory(src)
 add_subdirectory(sample)
 
