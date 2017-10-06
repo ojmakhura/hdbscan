@@ -12,8 +12,8 @@
 extern "C" {
 #endif
 
-#include "../containers/utils.h"
-#include "../gnulib/gl_array_oset.h"
+#include "listlib/utils.h"
+#include "gnulib/gl_array_oset.h"
 
 #define CLUSTER_SUCCESS 1
 #define CLUSTER_ERROR	0
@@ -117,7 +117,7 @@ public:
 
 	ClusterList* getPropagatedDescendants();
 
-	IntArraySetSet* getVirtualChildCluster();
+	//IntArraySetSet* getVirtualChildCluster();
 
 	 boolean hasKids();
 

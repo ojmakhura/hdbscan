@@ -5,6 +5,7 @@
  *      Author: ojmakh
  */
 #include "hdbscan/hdbscan.hpp"
+#include "dataset.h"
 
 using namespace std;
 using namespace clustering;
@@ -542,8 +543,8 @@ void dummy_tester(){
 	
 	for(int i = 0; i < 10000; i++){
 		printf("***********************************************************************************\n");
-		hdbscan scan(50, DATATYPE_DOUBLE);
-		scan.run(data, 500, 2, TRUE);
+		hdbscan scan(8, DATATYPE_DOUBLE);
+		scan.run(dataset, rows, cols, TRUE);
 		
 		
 		scan.clusterTable = hdbscan_create_cluster_table(scan.clusterLabels, scan.numPoints);
@@ -555,11 +556,11 @@ void dummy_tester(){
 
 		while (g_hash_table_iter_next (&iter, &key, &value)){
 			int32_t label = *((int32_t *)key);
-			IntPtrList* clusterList = (IntPtrList*)value;
+			IntArrayList* clusterList = (IntArrayList*)value;
 			printf("%d -> [", label);
-					
-			for(int j = 0; j < clusterList->len; j++){
-				int32_t *dpointer = ((int32_t **)clusterList->pdata)[j];
+				
+			for(int j = 0; j < clusterList->size; j++){
+				int32_t *dpointer = int_array_list_data(clusterList, j);
 				printf("%d ", *dpointer);
 			}
 			printf("]\n");

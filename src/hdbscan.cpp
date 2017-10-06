@@ -107,7 +107,7 @@ void hdbscan::findProminentClusters(boolean infiniteStability){
  * @param delimiter The delimiter for the output file
  * @param infiniteStability true if there are any clusters with infinite stability, false otherwise
  */
-void hdbscan::calculateOutlierScores(DoubleList* pointNoiseLevels, IntList* pointLastClusters, boolean infiniteStability){
+void hdbscan::calculateOutlierScores(double* pointNoiseLevels, int* pointLastClusters, boolean infiniteStability){
 	// TODO
 }
 

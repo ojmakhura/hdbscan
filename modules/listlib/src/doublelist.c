@@ -8,8 +8,8 @@
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
-#include "containers/doublelist.h"
-#include "containers/utils.h"
+#include "listlib/doublelist.h"
+#include "listlib/utils.h"
 
 
 /****************************************************************************************

@@ -11,6 +11,13 @@ set (HDBSCAN_VERSION ${HDBSCAN_VERSION_MAJOR}.${HDBSCAN_VERSION_MINOR}.${HDBSCAN
 set(INSTALL_LIB_DIR lib CACHE PATH "Installation directory for libraries")
 set(INSTALL_BIN_DIR bin CACHE PATH "Installation directory for executables")
 set(INSTALL_INCLUDE_DIR include CACHE PATH "Installation directory for header files")
+set(MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/modules)
+set(LISTLIB_DIR ${MODULE_PATH}/listlib)
+set(GNULIB_DIR ${MODULE_PATH}/gnulib)
+
+set(HDBSCAN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(GNULIB_INCLUDE_DIR ${GNULIB_DIR}/include)
+set(LISTLIB_INCLUDE_DIR ${LISTLIB_DIR}/include)
 
 
 if(WIN32 AND NOT CYGWIN)
@@ -28,12 +35,11 @@ foreach(p LIB BIN INCLUDE CMAKE)
   endif()
 endforeach()
 
-set(HDBSCAN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
-include_directories( "${HDBSCAN_INCLUDE_DIR}")
-include_directories( "${GNULIB_INCLUDE_DIR}")
-include_directories( "${LISTLIB_INCLUDE_DIR}")
-include_directories("${PROJECT_BINARY_DIR}") 
-include_directories(${GLIB2_INCLUDE_DIRS})
+#include_directories( "${HDBSCAN_INCLUDE_DIR}")
+#include_directories( "${GNULIB_INCLUDE_DIR}")
+#include_directories( "${LISTLIB_INCLUDE_DIR}")
+#include_directories("${PROJECT_BINARY_DIR}") 
+#include_directories(${GLIB2_INCLUDE_DIRS})
 
 #ensure we have pkg-config in the system
 find_package(PkgConfig)
@@ -50,7 +56,7 @@ IF(USE_OpenMP)
   ENDIF()
 ENDIF()
 
-#add_subdirectory(modules)
+add_subdirectory(modules)
 add_subdirectory(src)
 add_subdirectory(sample)
 

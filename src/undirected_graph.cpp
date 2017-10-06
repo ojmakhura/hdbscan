@@ -11,7 +11,7 @@
 namespace clustering {
 
 UndirectedGraph::UndirectedGraph(){
-	graph_init(this, 0, NULL, 0, NULL, 0, NULL, 0);
+	graph_init(this, 0, NULL, NULL, NULL);
 }
 
 UndirectedGraph::~UndirectedGraph(){

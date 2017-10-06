@@ -5,8 +5,10 @@
  *      Author: junior
  */
 
+#include "gnulib/config.h"
 #include "hdbscan/hdbscan.h"
-
+#include "dataset.h"
+#include <time.h>
 float d2[] = {
 		1.0,1.0,3.0,3.0,
 		1.0,2.0,8.0,18.0,
@@ -540,8 +542,8 @@ int main(int argc, char** argv){
 
 	for(int i = 0; i < 1000; i++){
 		printf("***********************************************************************************\n");
-		clock_t begin = clock();
-		hdbscan* scan = hdbscan_init(NULL, 50, DATATYPE_DOUBLE);
+		//clock_t begin = clock();
+		hdbscan* scan = hdbscan_init(NULL, 8, DATATYPE_DOUBLE);
 
 		if(scan == NULL){
 			printf("ERROR: Could not initialise hdbscan\n");
@@ -549,14 +551,17 @@ int main(int argc, char** argv){
 			printf("SUCCESS: hdbscan fully initialised\n");
 			uint w = 2;
 			uint h = 500;
-
-			int err = hdbscan_run(scan, data, h, w, TRUE);
+			clock_t begin = clock();
+			int err = hdbscan_run(scan, dataset, rows, cols, TRUE);
+			clock_t end = clock();
+			double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+			printf("hdbscan run Process took %f\n", time_spent);
 			if(err == HDBSCAN_ERROR){
 				printf("ERROR: Could not run hdbscan\n");
 			} else{
 				printf("SUCCESS: hdbscan clustring completed\n");
 
-				printf("Number total number of clusters is %d\n\n", scan->clusters->len);
+				//printf("Number total number of clusters is %d\n\n", scan->clusters->len);
 				scan->clusterTable = hdbscan_create_cluster_table(scan->clusterLabels, scan->numPoints);
 					
 				GHashTableIter iter;
@@ -566,11 +571,11 @@ int main(int argc, char** argv){
 
 				while (g_hash_table_iter_next (&iter, &key, &value)){
 					int32_t label = *((int32_t *)key);
-					IntPtrList* clusterList = (IntPtrList*)value;
+					IntArrayList* clusterList = (IntArrayList*)value;
 					printf("%d -> [", label);
 					
-					for(int j = 0; j < clusterList->len; j++){
-						int32_t *dpointer = ((int32_t **)clusterList->pdata)[j];
+					for(int j = 0; j < clusterList->size; j++){
+						int32_t *dpointer = int_array_list_data(clusterList, j);
 						printf("%d ", *dpointer);
 					}
 					printf("]\n");
@@ -584,10 +589,8 @@ int main(int argc, char** argv){
 			}
 		}
 		hdbscan_clean(scan);
-		clock_t end = clock();
-		double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-		printf("Process took %f\n", time_spent);
 		printf("***********************************************************************************\n\n");
+		exit(0);
 	}
 
 	return 0;

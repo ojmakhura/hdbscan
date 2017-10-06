@@ -12,9 +12,9 @@
 extern "C" {
 #endif
 
-#include "../containers/utils.h"
-#include "../containers/intlist.h"
-#include "../containers/doublelist.h"
+#include "listlib/utils.h"
+#include "listlib/intlist.h"
+#include "listlib/doublelist.h"
 
 #define GRAPH_SUCCESS 1
 #define GRAPH_ERROR 0

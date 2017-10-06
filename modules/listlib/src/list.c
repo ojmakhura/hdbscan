@@ -5,7 +5,7 @@
  *      Author: ojmakh
  */
 
-#include "containers/list.h"
+#include "listlib/list.h"
 #include <string.h>
 
 ArrayList* array_list_init(size_t initial_size, size_t step){
