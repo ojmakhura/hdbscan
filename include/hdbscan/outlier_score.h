@@ -15,7 +15,7 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include "utils.h"
+#include "../containers/utils.h"
 
 #define OUTLIERSCORE_SUCCESS 1
 #define OUTLIERSCORE_ERROR 0

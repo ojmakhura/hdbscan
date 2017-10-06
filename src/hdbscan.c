@@ -4,8 +4,9 @@
  *  Created on: 13 Sep 2017
  *      Author: ojmakh
  */
-
+#include "gnulib/config.h"
 #include "hdbscan/hdbscan.h"
+#include <time.h>
 
 uint hdbscan_get_dataset_size(uint rows, uint cols, boolean rowwise){
     if(rowwise == 1){
@@ -24,31 +25,16 @@ uint hdbscan_get_dataset_size(uint rows, uint cols, boolean rowwise){
  * @param clusterLabel The label of the new Cluster
  * @param edgeWeight The edge weight at which to remove the points from their previous Cluster
  */
-cluster* hdbscan_create_new_cluster(hdbscan* sc, IntArraySet* points, int32_t* clusterLabels, cluster* parentCluster, int32_t clusterLabel, double edgeWeight){
+cluster* hdbscan_create_new_cluster(hdbscan* sc, gl_oset_t points, int* clusterLabels, cluster* parentCluster, int clusterLabel, double edgeWeight){
 
-	for(int32_t i = 0; i < points->size; i++){
-		int32_t d = (points->data)[i];
+	for(int i = 0; i < points->count; i++){
+		int d ;
+		gl_oset_value_at(points, i, &d);
 		clusterLabels[d] = clusterLabel;
 	}
-	/*ListNode* node = g_list_first(points);
-
-	while(node != NULL){
-		int32_t* it = node->data;
-
-		if(it != NULL){
-			clusterLabels[*it] = clusterLabel;
-		}
-
-		node = g_list_next(node);
-	}*/
-
-	//guint ptsSize = g_list_length(points);
-
-	//cluster_detach_points(parentCluster, points->size, edgeWeight);
-
+	cluster_detach_points(parentCluster, points->count, edgeWeight);
 	if (clusterLabel != 0) {
-
-		cluster* new = cluster_init(NULL, clusterLabel, parentCluster, edgeWeight, points->size);
+		cluster* new = cluster_init(NULL, clusterLabel, parentCluster, edgeWeight, points->count);
 		return new;
 	} else{
 		cluster_add_points_to_virtual_child_cluster(parentCluster, points);
@@ -115,7 +101,7 @@ void hdbscan_clean(hdbscan* sc){
 
 	if(sc->clusterStabilities != NULL){
 
-		DoubleList *values = g_hash_table_get_values(sc->clusterStabilities);
+		/*DoubleArrayList *values = g_hash_table_get_values(sc->clusterStabilities);
 
 		ListNode* node = g_list_first(values);
 
@@ -127,7 +113,7 @@ void hdbscan_clean(hdbscan* sc){
 		}
 		g_list_free_full(values, (GDestroyNotify)free);
 
-		g_hash_table_destroy(sc->clusterStabilities);
+		g_hash_table_destroy(sc->clusterStabilities);*/
 
 	}
 
@@ -140,7 +126,7 @@ void hdbscan_clean(hdbscan* sc){
 		g_hash_table_iter_init (&iter, sc->hierarchy);
 
 		while (g_hash_table_iter_next (&iter, &key, &value)){
-			int32_t* label = (int32_t*)value;
+			int* label = (int*)value;
 			if(label != NULL)
 				free(label);
 			if(key != NULL)
@@ -151,10 +137,8 @@ void hdbscan_clean(hdbscan* sc){
 	}
 	
 	if(sc->clusterTable != NULL){
-
 		hdbscan_destroy_cluster_table(sc->clusterTable);
 		sc->clusterTable = NULL;
-
 	}
 
 	if(sc->clusters != NULL){
@@ -177,7 +161,7 @@ void hdbscan_destroy(hdbscan* sc){
 }
 
 
-int32_t hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean rowwise){
+int hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean rowwise){
 
 	if(sc == NULL){
 		printf("hdbscan_run: sc has not been initialised.\n");
@@ -185,33 +169,50 @@ int32_t hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean ro
 	}
 
 	//printf("hdbscan_run: Running hdbscan\n");
+	clock_t begin = clock();
 	sc->numPoints = hdbscan_get_dataset_size(rows, cols, rowwise);
-	//printf("hdbscan_run: numPoints set as %d\n", sc->numPoints);
+	double time_spent = (double) (clock() - begin) / CLOCKS_PER_SEC;
+	//printf("hdbscan_run: numPoints set as %d in %f\n", sc->numPoints, time_spent);
+
 	guint csize = sc->numPoints/2;
 	sc->clusters = g_ptr_array_sized_new(csize);
 
-	distance_compute(&sc->distanceFunction, dataset, rows, cols, sc->minPoints-1);
-	//printf("hdbscan_run: distance computed\n");
+	begin = clock();
+	distance_compute(&(sc->distanceFunction), dataset, rows, cols, sc->minPoints-1);
+	time_spent = (double) (clock() - begin) / CLOCKS_PER_SEC;
+	//printf("hdbscan_run: distance computed in %f\n", time_spent);
 
-	int32_t err = hdbscan_construct_mst(sc);
+	begin = clock();
+	int err = hdbscan_construct_mst(sc);
+	time_spent = (double) (clock() - begin) / CLOCKS_PER_SEC;
 	if(err == HDBSCAN_ERROR){
 		printf("Error: Could not construct the minimum spanning tree.\n");
 		return HDBSCAN_ERROR;
 	}
+	//printf("hdbscan_run: minimum spanning tree created in %f\n", time_spent);
 
-	//printf("hdbscan_run: minimum spanning tree created\n");
+	begin = clock();
 	graph_quicksort_by_edge_weight(sc->mst);
-	//printf("hdbscan_run: weights sorted\n");
+	time_spent = (double) (clock() - begin) / CLOCKS_PER_SEC;
+	//printf("hdbscan_run: weights sorted in %f\n", time_spent);
 
 	double pointNoiseLevels[sc->numPoints];
-	int32_t pointLastClusters[sc->numPoints];
+	int pointLastClusters[sc->numPoints];
 
+	begin = clock();
 	hdbscan_compute_hierarchy_and_cluster_tree(sc, 0, pointNoiseLevels, pointLastClusters);
-	//printf("hdbscan_run: hierarchy and cluster tree computed\n");
-	int32_t infiniteStability = hdbscan_propagate_tree(sc);
-	//printf("hdbscan_run: tree propagated\n");
+	time_spent = (double) (clock() - begin) / CLOCKS_PER_SEC;
+	printf("hdbscan_run: hierarchy and cluster tree computed in %f\n", time_spent);
+
+	begin = clock();
+	int infiniteStability = hdbscan_propagate_tree(sc);
+	time_spent = (double) (clock() - begin) / CLOCKS_PER_SEC;
+	//printf("hdbscan_run: tree propagated in %d\n", time_spent);
+
+	begin = clock();
 	hdbscan_find_prominent_clusters(sc, infiniteStability);
-	//printf("hdbscan_run: prominent clusters found\n");
+	time_spent = (double) (clock() - begin) / CLOCKS_PER_SEC;
+	//printf("hdbscan_run: prominent clusters found in %f\n", time_spent);
 
 	return HDBSCAN_SUCCESS;
 }
@@ -226,7 +227,7 @@ int32_t hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean ro
  * @param constraints An vector of constraints
  * @param clusterLabels an array of current cluster labels for points
  */
-void hdbscan_calculate_num_constraints_satisfied(hdbscan* sc, IntSet* newClusterLabels,	int32_t* currentClusterLabels){
+void hdbscan_calculate_num_constraints_satisfied(hdbscan* sc, gl_oset_t* newClusterLabels,	int* currentClusterLabels){
 
 	if(g_list_length(sc->constraints) == 0){
 		return;
@@ -234,22 +235,22 @@ void hdbscan_calculate_num_constraints_satisfied(hdbscan* sc, IntSet* newCluster
 
 }
 
-int32_t hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int32_t compactHierarchy, double* pointNoiseLevels, int32_t* pointLastClusters){
+int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy, double* pointNoiseLevels, int* pointLastClusters){
 
 	int64_t lineCount = 0; // Indicates the number of lines written into
 								// hierarchyFile.
 
 	//The current edge being removed from the MST:
-	int32_t currentEdgeIndex = sc->mst->esize - 1;
+	int currentEdgeIndex = sc->mst->edgeWeights->size - 1;
 
-	int32_t nextClusterLabel = 2;
+	int nextClusterLabel = 2;
 	boolean nextLevelSignificant = TRUE;
 	//The previous and current cluster numbers of each point in the data set:
-	int32_t numVertices = sc->mst->numVertices;
-	int32_t previousClusterLabels[numVertices];
-	int32_t currentClusterLabels[numVertices];
+	int numVertices = sc->mst->numVertices;
+	int previousClusterLabels[numVertices];
+	int currentClusterLabels[numVertices];
 
-	for(int32_t i = 0; i < numVertices; i++){
+	for(int i = 0; i < numVertices; i++){
 		previousClusterLabels[i] = 1;
 		currentClusterLabels[i] = 1;
 	}
@@ -257,28 +258,23 @@ int32_t hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int32_t compactH
 	//A list of clusters in the cluster tree, with the 0th cluster (noise) null:
 	g_ptr_array_add(sc->clusters, NULL);
 
-	//clusters.push_back(new Cluster(1, NULL, NAN, mst.getNumVertices()));
 	cluster* c = cluster_init(NULL, 1, NULL, NAN, numVertices);
 	g_ptr_array_add(sc->clusters, c);
 	
 	//Sets for the clusters and vertices that are affected by the edge(s) being removed:
-	IntSet* affectedClusterLabels = NULL;
-	guint affectedLabelsSize = 0;
-	IntSet* affectedVertices = NULL;
-	guint affectedVerticesSize = 0;
-	//int32_t dd = 0;
-	while (currentEdgeIndex >= 0) {
+	gl_oset_t affectedClusterLabels = gl_oset_nx_create_empty (GL_ARRAY_OSET, (gl_setelement_compar_fn) int_compare, NULL);
+	gl_oset_t affectedVertices = gl_oset_nx_create_empty (GL_ARRAY_OSET, (gl_setelement_compar_fn) int_compare, NULL);
 
-		double currentEdgeWeight = sc->mst->edgeWeights[currentEdgeIndex];
-		//int32_t cc = 0;
+	while (currentEdgeIndex >= 0) {
+		double currentEdgeWeight = *(double_array_list_data(sc->mst->edgeWeights, currentEdgeIndex));
+		//int cc = 0;
 		ClusterList* newClusters = NULL;
 		//Remove all edges tied with the current edge weight, and store relevant clusters and vertices:
+		//printf("hdbscan_compute_hierarchy_and_cluster_tree: 1\n");
+		while(currentEdgeIndex >= 0 && *(double_array_list_data(sc->mst->edgeWeights, currentEdgeIndex)) == currentEdgeWeight){
 
-		while(currentEdgeIndex >= 0 && sc->mst->edgeWeights[currentEdgeIndex] == currentEdgeWeight){
-			int32_t firstVertex = sc->mst->verticesA[currentEdgeIndex];
-
-			int32_t secondVertex = sc->mst->verticesB[currentEdgeIndex];
-
+			int firstVertex = *(int_array_list_data(sc->mst->verticesA, currentEdgeIndex));
+			int secondVertex = *(int_array_list_data(sc->mst->verticesB, currentEdgeIndex));
 			graph_remove_edge(sc->mst, firstVertex, secondVertex);
 
 			if (currentClusterLabels[firstVertex] == 0) {
@@ -286,51 +282,38 @@ int32_t hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int32_t compactH
 				continue;
 			}
 
-			affectedVertices = set_int_insert(affectedVertices, firstVertex, &affectedVerticesSize);
-			affectedVertices = set_int_insert(affectedVertices, secondVertex, &affectedVerticesSize);
-
-			affectedClusterLabels = set_int_insert(affectedClusterLabels, currentClusterLabels[firstVertex], &affectedLabelsSize);
+			gl_oset_nx_add(affectedVertices, firstVertex);
+			gl_oset_nx_add(affectedVertices, secondVertex);
+			gl_oset_nx_add(affectedClusterLabels, currentClusterLabels[firstVertex]);
 
 			currentEdgeIndex--;
 		}
 
-
 		//Check each cluster affected for a possible split:
-		while(affectedLabelsSize > 0){
-			ListNode* it = g_list_last(affectedClusterLabels);
+		while(affectedClusterLabels->count > 0){
 
-			int32_t examinedClusterLabel = *((int32_t *)it->data);
-			affectedClusterLabels = list_full_link_delete(affectedClusterLabels, it, free);
-			affectedLabelsSize--;
+			int examinedClusterLabel;
+			gl_oset_remove_at(affectedClusterLabels, affectedClusterLabels->count-1, &examinedClusterLabel);
 
-			IntSet* examinedVertices = NULL;
-			guint examinedSize = 0;
+			gl_oset_t examinedVertices = gl_oset_nx_create_empty (GL_ARRAY_OSET, (gl_setelement_compar_fn) int_compare, NULL);
 
 			//Get all affected vertices that are members of the cluster currently being examined:
-			it = g_list_first(affectedVertices);
-
-			while(it != NULL){
-				int32_t n = *((int32_t *)it->data);
+			size_t it = 0;
+			while(it < affectedVertices->count){
+				int n;
+				gl_oset_value_at(affectedVertices, it, &n);
 				if (currentClusterLabels[n] == examinedClusterLabel) {
-					examinedVertices = set_int_insert(examinedVertices, n, &examinedSize);
-
-					ListNode* tmp = g_list_next(it);
-					affectedVertices = list_full_link_delete(affectedVertices, it, free);
-					affectedVerticesSize--;
-					it = tmp;
+					gl_oset_nx_add(examinedVertices, n);
+					gl_oset_remove(affectedVertices, n);
 				} else{
-					it = g_list_next(it);
+					it++;
 				}
 			}
 
-			IntSet* firstChildCluster = NULL;
-			guint firstChildSize = 0;
+			gl_oset_t firstChildCluster = gl_oset_nx_create_empty (GL_ARRAY_OSET, (gl_setelement_compar_fn) int_compare, NULL);
+			gl_oset_t unexploredFirstChildClusterPoints = gl_oset_nx_create_empty (GL_ARRAY_OSET, (gl_setelement_compar_fn) int_compare, NULL);
 
-			IntList* unexploredFirstChildClusterPoints = NULL;
-			guint unexploredFirstChildSize = 0;
-
-			//guint unexploredSize = g_list_length(unexploredFirstChildClusterPoints); // Use this to track the size of the list without having to call the O(n)operation of length
-			int32_t numChildClusters = 0;
+			int numChildClusters = 0;
 
 			/* Check if the cluster has split or shrunk by exploring the graph from each affected
 			 * vertex.  If there are two or more valid child clusters (each has >= minClusterSize
@@ -339,187 +322,165 @@ int32_t hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int32_t compactH
 			 * split, otherwise, only spurious components are fully explored, in order to label
 			 * them noise.
 			 */
-			while (examinedSize > 0) {
-				//TODO Clean up this
-				IntSet* constructingSubCluster = NULL;
-				guint constructingSize = 0; //g_list_length(constructingSubCluster);
-
-				IntList* unexploredSubClusterPoints = NULL;
-				guint unexploredSubClusterPointsSize = 0;
+			while (examinedVertices->count > 0) {
+				gl_oset_t constructingSubCluster = gl_oset_nx_create_empty (GL_ARRAY_OSET, (gl_setelement_compar_fn) int_compare, NULL);
+				IntArrayList* unexploredSubClusterPoints = int_array_list_init();
 
 				boolean anyEdges = FALSE;
 				boolean incrementedChildCount = FALSE;
 
-				ListNode* itr = g_list_last(examinedVertices);
-				int32_t rootVertex = *((int32_t *)itr->data);
+				int rootVertex;
+				gl_oset_remove_at(examinedVertices, examinedVertices->count-1, &rootVertex);
+				//int_array_set_remove_last(examinedVertices);
 
-				constructingSubCluster = set_int_insert(constructingSubCluster, rootVertex, &constructingSize);
+				gl_oset_nx_add(constructingSubCluster, rootVertex);
+				int_array_list_append(unexploredSubClusterPoints, rootVertex);
 
-				unexploredSubClusterPoints = list_int_insert(unexploredSubClusterPoints, rootVertex);
-				unexploredSubClusterPointsSize++;
-
-				examinedVertices = list_full_link_delete(examinedVertices, itr, free);
-				examinedSize--;
 				//Explore this potential child cluster as long as there are unexplored points:
-				while (unexploredSubClusterPointsSize > 0) {
-					itr = g_list_first(unexploredSubClusterPoints);
-					int32_t vertexToExplore = *((int32_t *)itr->data);
-					unexploredSubClusterPoints = list_full_link_delete(unexploredSubClusterPoints, itr, free);
-					unexploredSubClusterPointsSize--;
+				while (unexploredSubClusterPoints->size > 0) {
+					int vertexToExplore = *(int_array_list_data(unexploredSubClusterPoints, (unexploredSubClusterPoints->size)-1));
+					int_array_list_pop(unexploredSubClusterPoints);
 
-					IntList* v = sc->mst->edges[vertexToExplore];
+					IntArrayList* v = sc->mst->edges[vertexToExplore];
 
-					itr = g_list_first(v);
-					while(itr != NULL){
-						if(itr->data != NULL){
-							int32_t neighbor = *((int32_t *)itr->data);
-							anyEdges = TRUE;
+					for(int i = 0; i < v->size; i++){
+						int neighbor = *(int_array_list_data(v, i));
+						anyEdges = TRUE;
+						bool p = gl_oset_nx_add(constructingSubCluster, neighbor);
 
-							int32_t s1 = constructingSize; 
-							constructingSubCluster = set_int_insert(constructingSubCluster, neighbor, &constructingSize);
-							// check that the insertion was successfully by comparing the previous and the current lengths
-							if(s1 < constructingSize){
-								unexploredSubClusterPoints = list_int_insert(unexploredSubClusterPoints, neighbor);
-								unexploredSubClusterPointsSize++;
-
-								ListNode* toDelete = g_list_find_custom(examinedVertices, &neighbor, (GCompareFunc)gint_compare);
-								if(toDelete != NULL){
-									examinedVertices = list_full_link_delete(examinedVertices, toDelete, free);
-									examinedSize--;
-								}
-							}
+						if(p){
+							int_array_list_append(unexploredSubClusterPoints, neighbor);
+							gl_oset_remove(examinedVertices, neighbor);
 						}
-
-						itr = g_list_next(itr);
 					}
 
 					//Check if this potential child cluster is a valid cluster:
-					if(incrementedChildCount == FALSE && constructingSize >= sc->minPoints && anyEdges == TRUE){
+					if(incrementedChildCount == FALSE && constructingSubCluster->count >= sc->minPoints && anyEdges == TRUE){
 						incrementedChildCount = TRUE;
 						numChildClusters++;
 
 						//If this is the first valid child cluster, stop exploring it:
-						if (firstChildSize == 0) {
-							itr = g_list_first(constructingSubCluster);
-
-							while(itr != NULL){
-								int32_t d = *((int32_t*)itr->data);
-								firstChildCluster = set_int_insert(firstChildCluster, d, &firstChildSize);
-
-								itr = g_list_next(itr);
+						if (firstChildCluster->count == 0) {
+							for(int i = 0; i < constructingSubCluster->count; i++){
+								int d;
+								gl_oset_value_at(constructingSubCluster, i, &d);
+								gl_oset_nx_add(firstChildCluster, d);
 							}
 
-							itr = g_list_first(unexploredSubClusterPoints);
-
-							while(itr != NULL){
-								int32_t d = *((int32_t*)itr->data);
-								unexploredFirstChildClusterPoints = list_int_insert(unexploredFirstChildClusterPoints, d);
-								unexploredFirstChildSize++;
-
-								itr = g_list_next(itr);
+							for(int i = 0; i < unexploredSubClusterPoints->size; i++){
+								int* d = int_array_list_data(unexploredSubClusterPoints, i);
+								gl_oset_nx_add(unexploredFirstChildClusterPoints, *d);
 							}
+							break;
 						}
 					}
 				}
 
 				//If there could be a split, and this child cluster is valid:
-				//guint constructingSize = g_list_length(constructingSubCluster);
-				if(numChildClusters >= 2 && constructingSize >= sc->minPoints && anyEdges == TRUE){
+				if(numChildClusters >= 2 && constructingSubCluster->count >= sc->minPoints && anyEdges == TRUE){
 					//Check this child cluster is not equal to the unexplored first child cluster:
-					it = g_list_last(firstChildCluster);
-					int32_t firstChildClusterMember = *((int32_t *)it->data);
-					//if (constructingSubCluster.find(firstChildClusterMember) != constructingSubCluster.end()) {
-					it = g_list_find_custom(constructingSubCluster, &firstChildClusterMember, gint_compare);
-					if(it != NULL){
+					int firstChildClusterMember;
+					gl_oset_value_at(firstChildCluster, firstChildCluster->count-1, &firstChildClusterMember);
+
+					if(gl_oset_search(constructingSubCluster, firstChildClusterMember)){
 						numChildClusters--;
 					}
 
 					//Otherwise, create a new cluster:
 					else {
-
-						cluster* examinedCluster = (sc->clusters->pdata)[examinedClusterLabel]; //g_list_nth_data(sc->clusters, examinedClusterLabel);
+						cluster* examinedCluster = (sc->clusters->pdata)[examinedClusterLabel];
 						cluster* newCluster = hdbscan_create_new_cluster(sc, constructingSubCluster, currentClusterLabels, examinedCluster, nextClusterLabel, currentEdgeWeight);
 
-						//printf("Otherwise, create a new cluster: %d of label %d\n", newCluster, newCluster->getLabel());
 						newClusters = g_list_append(newClusters, newCluster);
 						nextClusterLabel++;
 
+						/*printf("newCluster = [%d -> %f, %f, %d, %d, %ld, %f]\n",
+								newCluster->label, newCluster->birthLevel,
+								newCluster->deathLevel, newCluster->hasChildren,
+								newCluster->numPoints, newCluster->offset,
+								newCluster->stability);*/
 						g_ptr_array_add(sc->clusters, newCluster);
 
 					}
 				}
 
 				//If this child cluster is not valid cluster, assign it to noise:
-				else if(constructingSize < sc->minPoints || anyEdges == FALSE){
+				else if(constructingSubCluster->count < sc->minPoints || anyEdges == FALSE){
 					cluster* examinedCluster = (sc->clusters->pdata)[examinedClusterLabel];
 
 					cluster* newCluster = hdbscan_create_new_cluster(sc, constructingSubCluster, currentClusterLabels, examinedCluster, 0, currentEdgeWeight);
+					/*printf(
+							"\nhdbscan_create_new_cluster(points = %ld, parentCluster = %d, clusterLabel = %d, edgeWeight = %d)\n",
+							constructingSubCluster->count, numVertices,
+							examinedCluster != NULL ?
+									examinedCluster->label : 0, 0,
+							currentEdgeWeight);*/
 
-					it = g_list_first(constructingSubCluster);
-					while(it != NULL){
-						if(it->data != NULL){
-							int32_t point = *((int32_t*)it->data);
-							pointNoiseLevels[point] = currentEdgeWeight;
-							pointLastClusters[point] = examinedClusterLabel;
-						}
-						it = g_list_next(it);
+					/*printf("(sc->clusters->pdata)[examinedClusterLabel] = [%d -> %f, %f, %d, %d, %ld, %f]\n",
+							examinedCluster->label, examinedCluster->birthLevel,
+							examinedCluster->deathLevel, examinedCluster->hasChildren,
+							examinedCluster->numPoints, examinedCluster->offset,
+							examinedCluster->stability);*/
+
+					for (int i = 0; i < constructingSubCluster->count; i++) {
+						int point;
+						gl_oset_value_at(constructingSubCluster, i, &point);
+						pointNoiseLevels[point] = currentEdgeWeight;
+						pointLastClusters[point] = examinedClusterLabel;
 					}
 
 					cluster_destroy(newCluster);
 
 				}
-
-
 				/********************
 				 * Clean up constructing subcluster
 				 *******************/
-				list_int_clean(constructingSubCluster);
-				list_int_clean(unexploredSubClusterPoints);
+				gl_oset_free(constructingSubCluster);
+				int_array_list_delete(unexploredSubClusterPoints);
 			}
 
 			//Finish exploring and cluster the first child cluster if there was a split and it was not already clustered:
-			ListNode *p = g_list_first(firstChildCluster);
-			if (numChildClusters >= 2 && p != NULL && currentClusterLabels[*((int32_t *)p->data)] == examinedClusterLabel) {
-				//guint unexploredSize = g_list_length(unexploredFirstChildClusterPoints);
-				while(unexploredFirstChildSize > 0){
-					it = g_list_first(unexploredFirstChildClusterPoints);
-					int32_t vertexToExplore = *((int32_t *)it->data);
+			int dd;
+			gl_oset_value_at(firstChildCluster, 0, &dd);
+			if (numChildClusters >= 2 && currentClusterLabels[dd] == examinedClusterLabel) {
+				while(unexploredFirstChildClusterPoints->count > 0){
+					int vertexToExplore;
+					//= *(int_array_set_data(unexploredFirstChildClusterPoints, unexploredFirstChildClusterPoints->count-1));
+					//int_array_set_remove_last(unexploredFirstChildClusterPoints);
+					gl_oset_remove_at(unexploredFirstChildClusterPoints, unexploredFirstChildClusterPoints->count-1, &vertexToExplore);
 
-					unexploredFirstChildClusterPoints = list_full_link_delete(unexploredFirstChildClusterPoints, it, free);
-					unexploredFirstChildSize--;
+					IntArrayList* v = (sc->mst->edges)[vertexToExplore];
 
-					IntList* v = sc->mst->edges[vertexToExplore];
-					ListNode* itr = g_list_first(v);
-					while(itr != NULL){
-						int32_t neighbor = *((int32_t *)itr->data);
-
-						int32_t s1 = firstChildSize; //g_list_length(firstChildCluster);
-						firstChildCluster = set_int_insert(firstChildCluster, neighbor, &firstChildSize);
-						if (s1 < firstChildSize){//g_list_length(firstChildCluster)) {
-							unexploredFirstChildClusterPoints = list_int_insert(unexploredFirstChildClusterPoints, neighbor);
-							unexploredFirstChildSize++;
+					for (int i = 0; i < v->size; i++) {
+						int neighbor = *(int_array_list_data(v, i));
+						//int p = int_array_set_insert(firstChildCluster, neighbor);
+						if (gl_oset_nx_add(firstChildCluster, neighbor)) {
+							gl_oset_nx_add(unexploredFirstChildClusterPoints, neighbor);
 						}
-						itr = g_list_next(itr);
 					}
 				}
 
-				cluster* examinedCluster =(sc->clusters->pdata)[examinedClusterLabel];// g_list_nth_data(sc->clusters, examinedClusterLabel);
+				cluster* examinedCluster =(sc->clusters->pdata)[examinedClusterLabel];
 				cluster* newCluster = hdbscan_create_new_cluster(sc, firstChildCluster, currentClusterLabels, examinedCluster, nextClusterLabel, currentEdgeWeight);
 
 				newClusters = g_list_append(newClusters, newCluster);
 				nextClusterLabel++;
-
+				/*printf("newCluster = [%d -> %f, %f, %d, %d, %ld, %f]\n",
+						newCluster->label, newCluster->birthLevel,
+						newCluster->deathLevel, newCluster->hasChildren,
+						newCluster->numPoints, newCluster->offset,
+						newCluster->stability);*/
 				g_ptr_array_add(sc->clusters, newCluster);
 			}
-			list_int_clean(firstChildCluster);
-			list_int_clean(unexploredFirstChildClusterPoints);
-			list_int_clean(examinedVertices);
+			gl_oset_free(firstChildCluster);
+			gl_oset_free(unexploredFirstChildClusterPoints);
+			gl_oset_free(examinedVertices);
 		}
 
 		if (compactHierarchy == FALSE || nextLevelSignificant == TRUE || g_list_length(newClusters) > 0) {
 			lineCount++;
-			int32_t* newpl = (int32_t*)malloc(numVertices * sizeof(int32_t));
-			memcpy(newpl, previousClusterLabels, numVertices * sizeof(int32_t));
+			int* newpl = (int*)malloc(numVertices * sizeof(int));
+			memcpy(newpl, previousClusterLabels, numVertices * sizeof(int));
 
 			int64_t *l = (int64_t *) malloc(sizeof(int64_t));
 			*l = lineCount;
@@ -528,19 +489,18 @@ int32_t hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int32_t compactH
 
 		// Assign file offsets and calculate the number of constraints
 					// satisfied:
-		IntSet* newClusterLabels = NULL;
-		guint newClusterLabelsSize = 0;
+		gl_oset_t newClusterLabels = gl_oset_nx_create_empty (GL_ARRAY_OSET, (gl_setelement_compar_fn) int_compare, NULL);
+
 		ListNode* itr = g_list_first(newClusters);
 		while(itr != NULL){
 			cluster* newCluster = itr->data;
-
 			newCluster->offset = lineCount;
-			newClusterLabels = set_int_insert(newClusterLabels, lineCount, &newClusterLabelsSize);
-
+			gl_oset_nx_add(newClusterLabels, lineCount);
 			itr = g_list_next(itr);
 		}
+		//printf("hdbscan_compute_hierarchy_and_cluster_tree: 12\n");
 
-		if (newClusterLabelsSize > 0){
+		if (newClusterLabels->count > 0){
 			//calculateNumConstraintsSatisfied(newClusterLabels, currentClusterLabels);
 		}
 
@@ -548,6 +508,7 @@ int32_t hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int32_t compactH
 			previousClusterLabels[i] = currentClusterLabels[i];
 		}
 
+		//printf("hdbscan_compute_hierarchy_and_cluster_tree: 13\n");
 		if (g_list_length(newClusters) == 0){
 			nextLevelSignificant = FALSE;
 		} else{
@@ -555,10 +516,11 @@ int32_t hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int32_t compactH
 		}
 
 		g_list_free(newClusters);
-		list_int_clean(newClusterLabels);
+		gl_oset_free(newClusterLabels);
 	}
-	int32_t* labels = (int32_t*) malloc(numVertices * sizeof(int32_t));
-	memset(labels, 0, numVertices * sizeof(int32_t));
+
+	int* labels = (int*) malloc(numVertices * sizeof(int));
+	memset(labels, 0, numVertices * sizeof(int));
 	// Write out the final level of the hierarchy (all points noise):
 
 	int64_t *l = (int64_t *) malloc(sizeof(int64_t));
@@ -566,16 +528,16 @@ int32_t hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int32_t compactH
 	g_hash_table_insert(sc->hierarchy, l, labels);
 	lineCount++;
 
-	list_int_clean(affectedClusterLabels);
-	list_int_clean(affectedVertices);
+	gl_oset_free(affectedClusterLabels);
+	gl_oset_free(affectedVertices);
 
 	return HDBSCAN_SUCCESS;
 }
 
 void print_distances(hdbscan* sc){
-	for (int32_t i = 0; i < sc->numPoints; i++) {
+	for (int i = 0; i < sc->numPoints; i++) {
 		printf("[");
-		for (int32_t j = 0; j < sc->numPoints; j++) {
+		for (int j = 0; j < sc->numPoints; j++) {
 			printf("%f ", distance_get(&sc->distanceFunction, i, j));
 		}
 
@@ -584,68 +546,76 @@ void print_distances(hdbscan* sc){
 	printf("\n");
 }
 
-void print_graph_components(int32_t *nearestMRDNeighbors, int32_t *otherVertexIndices, double *nearestMRDDistances, int32_t ssize){
+void print_graph_components(IntArrayList *nearestMRDNeighbors, IntArrayList *otherVertexIndices, DoubleArrayList *nearestMRDDistances){
 	printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>nearestMRDNeighbors>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
-	for(int32_t i = 0; i < ssize; i++){
-		printf("%d ", nearestMRDNeighbors[i]);
+	for(int i = 0; i < nearestMRDNeighbors->size; i++){
+		printf("%d ", *(int_array_list_data(nearestMRDNeighbors, i)));
 	}
 
 	printf("\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>otherVertexIndices>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
-	for(int32_t i = 0; i < ssize; i++){
-		printf("%d ", otherVertexIndices[i]);
-
+	for(int i = 0; i < otherVertexIndices->size; i++){
+		printf("%d ", *(int_array_list_data(otherVertexIndices, i)));
 	}
 
 	printf("\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>nearestMRDDistances>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
-	for(int32_t i = 0; i < ssize; i++){
-		printf("%f \n", nearestMRDDistances[i]);
-
-	}
+	//for(int i = 0; i < nearestMRDDistances->size; i++){
+		//printf("%f \n", *(double_array_list_data(nearestMRDDistances, i)));
+	//}
 
 	printf("\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n\n\n");
 }
 
-int32_t hdbscan_construct_mst(hdbscan* sc){
+int hdbscan_construct_mst(hdbscan* sc){
 	double*  coreDistances = sc->distanceFunction.coreDistances;
 
-	int32_t selfEdgeCapacity = 0;
-	uint size = sc->numPoints;
+	int selfEdgeCapacity = 0;
+	const uint size = sc->numPoints;
 	if (sc->selfEdges == TRUE){
-		//printf("Self edges set to true\n");
 		selfEdgeCapacity = size;
 	}
 
 	//One bit is set (true) for each attached point, or unset (false) for unattached points:
 	boolean attachedPoints[size];
 
-	for(int32_t i = 0; i < size-1; i++){
+	for(int i = 0; i < size-1; i++){
 		attachedPoints[i] = FALSE;
 	}
 
 	//The MST is expanded starting with the last point in the data set:
-	int32_t currentPoint = size - 1;
+	int currentPoint = size - 1;
 	attachedPoints[size - 1] = TRUE;
+	//printf("hdbscan_construct_mst attachedPoints created in %f\n", time_spent);
 
 	//Each point has a current neighbor point in the tree, and a current nearest distance:
-	int32_t ssize = size - 1 + selfEdgeCapacity;
-	int32_t *nearestMRDNeighbors = (int32_t *) malloc(ssize * sizeof(int32_t));
+	int ssize = size - 1 + selfEdgeCapacity;
+	IntArrayList* nearestMRDNeighbors = int_array_list_init_full(ssize, 0);
 
-	//Create an array for vertices in the tree that each point attached to:
-	int32_t *otherVertexIndices = (int32_t *) malloc(ssize * sizeof(int32_t));
-
-	double *nearestMRDDistances = (double *) malloc(ssize * sizeof(double));//, numeric_limits<double>::max());
-
-	for(int32_t i = 0; i < ssize; i++){
-		nearestMRDDistances[i] = DBL_MAX;
-		nearestMRDNeighbors[i] = 0;
-		otherVertexIndices[i] = 0;
+	if(nearestMRDNeighbors == NULL){
+		printf("ERROR: hdbscan_construct_mst - Could not construct nearestMRDNeighbors");
+		return HDBSCAN_ERROR;
 	}
 
+	//Create an array for vertices in the tree that each point attached to:
+	IntArrayList* otherVertexIndices = int_array_list_init_full(ssize, 0);
+
+	if(otherVertexIndices == NULL){
+		printf("ERROR: hdbscan_construct_mst - Could not construct otherVertexIndices");
+		return HDBSCAN_ERROR;
+	}
+
+	DoubleArrayList* nearestMRDDistances = double_array_list_init_full(ssize, DBL_MAX);
+
+	if(nearestMRDDistances == NULL){
+		printf("ERROR: hdbscan_construct_mst - Could not construct nearestMRDDistances");
+		return HDBSCAN_ERROR;
+	}
+	//time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
+	//printf("hdbscan_construct_mst others created in %f\n", time_spent);
 
 //#pragma omp parallel for
 	//Continue attaching points to the MST until all points are attached:
 	for (uint numAttachedPoints = 1; numAttachedPoints < size; numAttachedPoints++) {
-		int32_t nearestMRDPoint = -1;
+		int nearestMRDPoint = -1;
 		double nearestMRDDistance = DBL_MAX;
 
 		//Iterate through all unattached points, updating distances using the current point:
@@ -670,42 +640,43 @@ int32_t hdbscan_construct_mst(hdbscan* sc){
 				mutualReachabiltiyDistance = coreDistances[neighbor];
 			}
 
-			if (mutualReachabiltiyDistance < nearestMRDDistances[neighbor]) {
-				nearestMRDDistances[neighbor] = mutualReachabiltiyDistance;
-				nearestMRDNeighbors[neighbor] = currentPoint;
+			double d = *(double_array_list_data(nearestMRDDistances, neighbor));
+			if (mutualReachabiltiyDistance < d) {
+				double_array_list_set_value_at(nearestMRDDistances, mutualReachabiltiyDistance, neighbor);
+				int_array_list_set_value_at(nearestMRDNeighbors, currentPoint, neighbor);
 			}
 
 			//Check if the unattached point being updated is the closest to the tree:
-			if (nearestMRDDistances[neighbor] <= nearestMRDDistance) {
-				nearestMRDDistance = nearestMRDDistances[neighbor];
+			d = *double_array_list_data(nearestMRDDistances, neighbor);
+			if (d <= nearestMRDDistance) {
+				nearestMRDDistance = d;
 				nearestMRDPoint = neighbor;
 			}
 		}
 
 		//Attach the closest point found in this iteration to the tree:
 		attachedPoints[nearestMRDPoint] = TRUE;
-		otherVertexIndices[numAttachedPoints] = numAttachedPoints;
+		int_array_list_set_value_at(otherVertexIndices, numAttachedPoints, numAttachedPoints);
 		currentPoint = nearestMRDPoint;
 		
 	}
 
+	//print_graph_components(nearestMRDNeighbors, otherVertexIndices, nearestMRDDistances);
 	//If necessary, attach self edges:
 	if (sc->selfEdges == TRUE) {
-//#ifdef USE_OPENMP
-//#pragma omp parallel for
-//#endif
 		for (uint i = size - 1; i < size * 2 - 1; i++) {
-			int32_t vertex = i - (size - 1);
-			nearestMRDNeighbors[i] = vertex;
-			otherVertexIndices[i] = vertex;
-			nearestMRDDistances[i] = coreDistances[vertex];
-			//printf("At %d coreDistances[%d] = %f\n", i, vertex, coreDistances[vertex]);
+			int vertex = i - (size - 1);
+			int_array_list_set_value_at(nearestMRDNeighbors, vertex, i);
+			int_array_list_set_value_at(otherVertexIndices, vertex, i);
+			double_array_list_set_value_at(nearestMRDDistances, coreDistances[vertex], i);
 		}
 	}
+	//time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
+	//printf("hdbscan_construct_mst points atached in %f\n", time_spent);
 
-
-	sc->mst = graph_init(NULL, size, nearestMRDNeighbors, ssize, otherVertexIndices, ssize, nearestMRDDistances, ssize);
-	//graph_print(sc->mst);
+	sc->mst = graph_init(NULL, size, nearestMRDNeighbors, otherVertexIndices, nearestMRDDistances);
+	//time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
+	//printf("hdbscan_construct_mst mst created in %f\n", time_spent);
 
 	if(sc->mst == NULL){
 		printf("Error: Could not initialise mst.\n");
@@ -717,32 +688,29 @@ int32_t hdbscan_construct_mst(hdbscan* sc){
 
 boolean hdbscan_propagate_tree(hdbscan* sc){
 
-	IntSet* clustersToExamine = NULL;
-	guint clustersToExamineSize = 0;
+	gl_oset_t clustersToExamine = gl_oset_nx_create_empty (GL_ARRAY_OSET, (gl_setelement_compar_fn) int_compare, NULL);
 	boolean addedToExaminationList[sc->clusters->len];
 	boolean infiniteStability = FALSE;
-	for(int32_t i = 0; i < sc->clusters->len; i++){
+	for(int i = 0; i < sc->clusters->len; i++){
 		addedToExaminationList[i] = FALSE;
 	}
 
+	//printf("THere are %d clusters\n", sc->clusters->len);
 	for(guint i = 0; i < sc->clusters->len; i++){
 
 		cluster* cl = (sc->clusters->pdata)[i];
-
 		if(cl != NULL && cl->hasChildren == FALSE){
-			clustersToExamine = set_int_insert(clustersToExamine, cl->label, &clustersToExamineSize);
+			//printf("[%d -> %f, %f, %d, %d, %ld, %f]\n", cl->label, cl->birthLevel, cl->deathLevel, cl->hasChildren, cl->numPoints, cl->offset, cl->stability);
+			gl_oset_nx_add(clustersToExamine, cl->label);
 			addedToExaminationList[cl->label] = TRUE;
 		}
 	}
+	//printf("\n\n[");
 
-	while(clustersToExamineSize > 0){
-		ListNode* last = g_list_last(clustersToExamine);
-		int x = *((int32_t *)last->data);
+	while(clustersToExamine->count > 0){
+		int x;
+		gl_oset_remove_at(clustersToExamine, clustersToExamine->count-1, &x);
 		cluster* currentCluster = (cluster*)(sc->clusters->pdata)[x];
-		clustersToExamine = list_full_link_delete(clustersToExamine, last, free);
-		clustersToExamineSize--;
-
-		//printf("Examining cluster %d\n", currentCluster->label);
 		cluster_propagate(currentCluster);
 		if(currentCluster->stability == DBL_MAX){
 			infiniteStability = TRUE;
@@ -751,12 +719,12 @@ boolean hdbscan_propagate_tree(hdbscan* sc){
 			cluster *parent = currentCluster->parent;
 
 			if(addedToExaminationList[parent->label] == FALSE){
-				clustersToExamine = set_int_insert(clustersToExamine, parent->label, &clustersToExamineSize);
+				gl_oset_nx_add(clustersToExamine, parent->label);
 				addedToExaminationList[parent->label] = TRUE;
 			}
 		}
 	}
-
+	//printf("]\n\n");
 	if(infiniteStability){
 		char *message =
 					"----------------------------------------------- WARNING -----------------------------------------------\n"
@@ -768,33 +736,35 @@ boolean hdbscan_propagate_tree(hdbscan* sc){
 					"-------------------------------------------------------------------------------------------------------";
 		printf(message);
 	}
-	g_list_free_full(clustersToExamine, free);
+	gl_oset_free(clustersToExamine);
 	return infiniteStability;
 }
 
-void hdbscan_find_prominent_clusters(hdbscan* sc, int32_t infiniteStability){
+void hdbscan_find_prominent_clusters(hdbscan* sc, int infiniteStability){
 	cluster* cl = (cluster *)(sc->clusters->pdata)[1];
 	ClusterList *solution = cl->propagatedDescendants;
 
 	LongIntListMap *significant = g_hash_table_new(g_int64_hash, g_int64_equal);
 	ListNode* node = g_list_first(solution);
 
-	int x = 0;
 	while(node != NULL){
 		cluster* c = (cluster *)node->data;
 
 		if(c != NULL){
-			IntList* clusterList = (IntList *)g_hash_table_lookup(significant, &c->offset);
+			IntArrayList* clusterList = (IntArrayList *)g_hash_table_lookup(significant, &c->offset);
 
-			clusterList = list_int_insert(clusterList, c->label);
+			if(clusterList == NULL){
+				clusterList = int_array_list_init();
+			}
+
+			int_array_list_append(clusterList, c->label);
 			g_hash_table_insert(significant, &c->offset, clusterList);
 		}
-		x++;
 		node = g_list_next(node);
 	}
 	
-	sc->clusterLabels = (int32_t *)malloc(sc->numPoints * sizeof(int32_t));
-	for (int32_t i = 0; i < sc->numPoints; i++) {
+	sc->clusterLabels = (int *)malloc(sc->numPoints * sizeof(int));
+	for (int i = 0; i < sc->numPoints; i++) {
 		(sc->clusterLabels)[i] = 0;
 	}
 
@@ -806,23 +776,23 @@ void hdbscan_find_prominent_clusters(hdbscan* sc, int32_t infiniteStability){
 	while (g_hash_table_iter_next (&iter, &key, &value)){
 		int64_t offset = *((int64_t *)key);
 		int64_t l = offset + 1;
-		IntList* clusterList = (IntList*)value;
-		int32_t* hpSecond = (int32_t *)g_hash_table_lookup(sc->hierarchy, &l);
+		IntArrayList* clusterList = (IntArrayList*)value;
+		int* hpSecond = (int *)g_hash_table_lookup(sc->hierarchy, &l);
 
-		for(int32_t i = 0; i < sc->numPoints; i++){
-			int32_t label = hpSecond[i];
-			ListNode* it = g_list_find_custom(clusterList, &label, gint_compare);
-			if(it != NULL){
+		for(int i = 0; i < sc->numPoints; i++){
+			int label = hpSecond[i];
+			int it = int_array_list_search(clusterList, label);
+			if(it != -1){
 				sc->clusterLabels[i] = label;
 			}
 		}
 	}
-	g_hash_table_iter_init (&iter, significant);
 
+	g_hash_table_iter_init (&iter, significant);
 	while (g_hash_table_iter_next (&iter, &key, &value)){
 
-		IntList* clusterList = (IntList*)value;
-		list_int_clean(clusterList);
+		IntArrayList* clusterList = (IntArrayList*)value;
+		int_array_list_delete(clusterList);
 	}
 
 	g_hash_table_destroy(significant);
@@ -842,8 +812,8 @@ int hdbscsan_calculate_outlier_scores(hdbscan* sc, double* pointNoiseLevels, int
 		return HDBSCAN_ERROR;
 	}
 
-	int i = 0;
-#pragma omp parallel for	
+	//int i = 0;
+//#pragma omp parallel for
 	for(uint i = 0; i < sc->numPoints; i++){
 		int tmp = pointLastClusters[i];
 		cluster* c = (cluster*)(sc->clusters->pdata)[tmp];
@@ -862,21 +832,25 @@ int hdbscsan_calculate_outlier_scores(hdbscan* sc, double* pointNoiseLevels, int
 
 	//Sort the outlier scores:
 	qsort(sc->outlierScores, numPoints, sizeof(outlier_score), outlier_score_compare);
+
+	return 1;
 }
 
-IntIntListMap* hdbscan_create_cluster_table(int32_t* labels, int32_t size){
-	IntIntListMap* clusterTable = g_hash_table_new(g_int_hash, g_int_equal);
+IntIntListMap* hdbscan_create_cluster_table(int* labels, int size){
+	IntIntListMap* clusterTable = g_hash_table_new(g_int_hash, g_int_equal); //g_hash_table_new(g_int_hash, g_int_equal);
+
 	
-	for(int32_t i = 0; i < size; i++){
-		int32_t *label = (int32_t *)malloc(sizeof(int32_t));
-		*label = labels[i];
-		IntPtrList* clusterList = (IntPtrList *)g_hash_table_lookup(clusterTable, label);
+	for(int i = 0; i < size; i++){
+		int *lb = labels + i;
+		IntArrayList* clusterList = (IntArrayList *)g_hash_table_lookup(clusterTable, lb);
 		
 		if(clusterList == NULL){
-			clusterList = g_ptr_array_new_full(size, free);
+			lb = (int *)malloc(sizeof(int));
+			*lb = labels[i];
+			clusterList = int_array_list_init_size(size);
+			g_hash_table_insert(clusterTable, lb, clusterList);
 		}
-		list_int_ptr_insert(clusterList, i);
-		g_hash_table_insert(clusterTable, label, clusterList);
+		int_array_list_append(clusterList, i);
 	}
 	
 	return clusterTable;
@@ -890,9 +864,8 @@ void hdbscan_destroy_cluster_table(IntIntListMap* table){
 	g_hash_table_iter_init (&iter, table);
 
 	while (g_hash_table_iter_next (&iter, &key, &value)){
-		int32_t label = *((int32_t *)key);
-		IntPtrList* clusterList = (IntPtrList*)value;						
-		g_ptr_array_free(clusterList, TRUE);
+		IntArrayList* clusterList = (IntArrayList*)value;
+		int_array_list_delete(clusterList);
 			
 		if(key != NULL){
 			free(key);

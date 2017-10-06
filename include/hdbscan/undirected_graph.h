@@ -12,8 +12,9 @@
 extern "C" {
 #endif
 
-#include <glib.h>
-#include "utils.h"
+#include "../containers/utils.h"
+#include "../containers/intlist.h"
+#include "../containers/doublelist.h"
 
 #define GRAPH_SUCCESS 1
 #define GRAPH_ERROR 0
@@ -28,11 +29,10 @@ namespace clustering {
 struct UndirectedGraph {
 
 	int32_t numVertices;
-	int32_t* verticesA;
-	int32_t* verticesB;
-	double* edgeWeights;
-	int32_t asize, bsize, esize;
-	IntList** edges;   				// This is an array of lists
+	IntArrayList* verticesA;
+	IntArrayList* verticesB;
+	DoubleArrayList* edgeWeights;
+	IntArrayList** edges;   				// This is an array of lists
 
 #ifdef __cplusplus
 public:
@@ -48,7 +48,7 @@ public:
 	 * @param verticesB An array of vertices corresponding to the array of edges
 	 * @param edgeWeights An array of edges corresponding to the arrays of vertices
 	 */
-	UndirectedGraph(int32_t numVertices, int32_t* verticesA, int32_t asize, int32_t* verticesB, int32_t bsize, double* edgeWeights, int32_t esize);
+	UndirectedGraph(int32_t numVertices, IntArrayList* verticesA, IntArrayList* verticesB, DoubleArrayList* edgeWeights);
 	UndirectedGraph();
 
 	// ------------------------------ PUBLIC METHODS ------------------------------
@@ -115,7 +115,7 @@ void graph_swap_edges(UndirectedGraph* g, int32_t indexOne, int32_t indexTwo);
  * @param verticesB An array of vertices corresponding to the array of edges
  * @param edgeWeights An array of edges corresponding to the arrays of vertices
  */
-UndirectedGraph* graph_init(UndirectedGraph* g, int32_t numVertices, int32_t* verticesA, int32_t asize, int32_t* verticesB, int32_t bsize, double* edgeWeights, int32_t esize) ;
+UndirectedGraph* graph_init(UndirectedGraph* g, int32_t numVertices, IntArrayList* verticesA, IntArrayList* verticesB, DoubleArrayList* edgeWeights) ;
 
 /**
  * Deallocate memory for UndirectedGraph components and for the graph itself
@@ -145,7 +145,7 @@ int32_t graph_get_second_vertex_at_index(UndirectedGraph* g, int32_t index);
 
 double graph_get_edge_weight_at_index(UndirectedGraph* g, int32_t index);
 
-IntList* graph_get_edge_list_for_vertex(UndirectedGraph* g, int32_t vertex);
+IntArrayList* graph_get_edge_list_for_vertex(UndirectedGraph* g, int32_t vertex);
 /**
  * Remove vb from edge list of va
  */

@@ -14,13 +14,15 @@ extern "C" {
 
 #include <glib.h>
 #include <float.h>
-
+//#include "gnulib/config.h"
 #include "cluster.h"
 #include "constraint.h"
 #include "distance.h"
 #include "outlier_score.h"
 #include "undirected_graph.h"
-#include "intset.h"
+#include "../gnulib/gl_array_oset.h"
+#include "../containers/intlist.h"
+#include "../containers/doublelist.h"
 
 #define FILE_BUFFER_SIZE = 32678
 #define HDBSCAN_SUCCESS 1
@@ -47,7 +49,7 @@ struct hdbscan {
 	outlier_score* outlierScores;
 	int32_t* clusterLabels;
 	LongIntListMap* hierarchy;
-	IntDoubleMap *clusterStabilities;
+	IntDoubleMap* clusterStabilities;
 	IntIntListMap* clusterTable;
 	boolean selfEdges;
 	uint minPoints, minClusterSize, numPoints;

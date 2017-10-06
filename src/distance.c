@@ -140,9 +140,7 @@ void do_euclidean(distance* dis, void* dataset) {
 
 	double sortedDistance[dis->rows];
 //#pragma omp parallel for private(sortedDistance)
-//#pragma omp parallel for ordered schedule(dynamic)
 	for (uint i = 0; i < dis->rows; i++) {
-//#pragma omp parallel for
 		for (uint j = 0; j < dis->rows; j++) {
 			double sum, diff = 0.0;
 			uint offset1;
@@ -174,7 +172,7 @@ void do_euclidean(distance* dis, void* dataset) {
 		}
 		//#pragma omp barrier
 		qsort(sortedDistance, dis->rows, sizeof(double), cmpdouble);
-
+		//printf("dis->coreDistances[%d] = %f and mnumNeighbors = %d\n", i, sortedDistance[dis->numNeighbors], dis->numNeighbors);
 		dis->coreDistances[i] = sortedDistance[dis->numNeighbors];
 	}
 

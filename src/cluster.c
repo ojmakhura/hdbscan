@@ -17,7 +17,7 @@ cluster* cluster_init(cluster* cl, int32_t label, cluster* parent, double birthL
 
 		cl->label = label;
 		cl->birthLevel = birthLevel;
-		cl->deathLevel = -1;
+		cl->deathLevel = 0;
 		cl->numPoints = numPoints;
 		cl->offset = 0;
 
@@ -32,7 +32,7 @@ cluster* cluster_init(cluster* cl, int32_t label, cluster* parent, double birthL
 		if (cl->parent != NULL)
 			cl->parent->hasChildren = TRUE;
 		cl->hasChildren = FALSE;
-		cl->virtualChildCluster = int_array_set_init();
+		cl->virtualChildCluster = gl_oset_nx_create_empty (GL_ARRAY_OSET, (gl_setelement_compar_fn) int_compare, NULL);
 		cl->propagatedDescendants = NULL;
 	}
 
@@ -43,7 +43,7 @@ void cluster_destroy(cluster* cl){
 //#ifdef __cplusplus
 	if(cl != NULL){
 		if(cl->virtualChildCluster){
-			int_array_set_delete(cl->virtualChildCluster);
+			gl_oset_free(cl->virtualChildCluster);
 		}
 
 		if(cl->propagatedDescendants){
@@ -126,11 +126,12 @@ void cluster_propagate(cluster* cl){
 }
 
 
-int cluster_add_points_to_virtual_child_cluster(cluster* cl, IntArraySetSet* points){
+int cluster_add_points_to_virtual_child_cluster(cluster* cl, gl_oset_t points){
 	
-	for(int32_t i = 0; i < points->size; i++){
-		int32_t d = (points->data)[i];
-		int_array_set_insert_sorted(cl->virtualChildCluster, d);
+	for(size_t i = 0; i < points->count; i++){
+		int32_t d;
+		gl_oset_value_at(points, i, &d);
+		gl_oset_nx_add(cl->virtualChildCluster, d);
 	}
 
 	/**ListNode* node = g_list_first(points);
@@ -149,9 +150,8 @@ int cluster_add_points_to_virtual_child_cluster(cluster* cl, IntArraySetSet* poi
 
 boolean cluster_virtual_child_contains_point(cluster* cl, int32_t point){
 	//ListNode* node = g_list_find_custom(cl->virtualChildCluster, &point, (GCompareFunc)gint_compare);
-	int32_t idx = int_array_set_search_sorted(cl->virtualChildCluster, point);
 
-	return (idx >= 0);
+	return gl_oset_search(cl->virtualChildCluster, point);
 }
 
 void cluster_add_virtual_child_constraints_satisfied(cluster* cl, int32_t numConstraints){

@@ -5,9 +5,9 @@
  *      Author: ojmakh
  */
 #include "hdbscan/undirected_graph.h"
+//#include <omp.h>
 
-UndirectedGraph* graph_init(UndirectedGraph* g, int32_t numVertices, int32_t* verticesA,
-		int32_t asize, int32_t* verticesB, int32_t bsize, double* edgeWeights, int32_t esize) {
+UndirectedGraph* graph_init(UndirectedGraph* g, int32_t numVertices, IntArrayList* verticesA, IntArrayList* verticesB, DoubleArrayList* edgeWeights) {
 	if(g == NULL)
 		g = (UndirectedGraph*)malloc(sizeof(UndirectedGraph));
 
@@ -16,48 +16,32 @@ UndirectedGraph* graph_init(UndirectedGraph* g, int32_t numVertices, int32_t* ve
 		return NULL;
 	}
 
-	g->asize = asize;
-	g->bsize = bsize;
-	g->esize = esize;
-
-	/*printf("********************************************************************************\n");
-	for(int i = 0; i < asize; i++){
-		printf("%d \n", verticesA[i]);
-	}
-	printf("********************************************************************************\n");*/
-
 	g->numVertices = numVertices;
 	g->verticesA = verticesA;
 	g->verticesB = verticesB;
 	g->edgeWeights = edgeWeights;
-	g->edges = NULL;
-	g->edges = (IntList**) malloc(numVertices * sizeof(IntList*));
+	g->edges = (IntArrayList**) malloc(numVertices * sizeof(IntArrayList*));
 
 	if(g->edges == NULL){
 		printf("Graph Init: Could not allocate memory for edges.\n");
 		return NULL;
 	}
 
+//#pragma omp parallel for
 	for(int32_t i = 0; i < numVertices; i++){
-		IntList* list = NULL;
-		g->edges[i] = list;
+		g->edges[i] = int_array_list_init();
 	}
 
-	//graph_print(g);
-	for (unsigned int i = 0; i < esize; i++) {
+	for (unsigned int i = 0; i < g->verticesA->size; i++) {
 
-		int vertexOne = (g->verticesA)[i];
-		int vertexTwo = (g->verticesB)[i];
+		int vertexOne = *(int_array_list_data(g->verticesA, i));
+		int vertexTwo = *(int_array_list_data(g->verticesB, i));
 
-		g->edges[vertexOne] = list_int_insert(g->edges[vertexOne], vertexTwo);
-		//printf("vertexTwo = %d, vertexOne = %d\n", vertexTwo, vertexOne);
+		int_array_list_append(g->edges[vertexOne], vertexTwo);
 		if (vertexOne != vertexTwo) {
-			g->edges[vertexTwo] = list_int_insert(g->edges[vertexTwo], vertexOne);
+			int_array_list_append(g->edges[vertexTwo], vertexOne);
 		}
-
 	}
-
-	//graph_print(g);
 
 	return g;
 }
@@ -73,25 +57,25 @@ void graph_clean(UndirectedGraph* g) {
 	if(g != NULL){
 
 		if (g->verticesA != NULL) {
-			free(g->verticesA);
+			int_array_list_delete(g->verticesA);
 			g->verticesA = NULL;
 		}
 
 		if (g->verticesB != NULL) {
-			free(g->verticesB);
+			int_array_list_delete(g->verticesB);
 			g->verticesB = NULL;
 		}
 
 		if (g->edgeWeights != NULL) {
-			free(g->edgeWeights);
+			double_array_list_delete(g->edgeWeights);
 			g->edgeWeights = NULL;
 		}
 
 		if (g->edges != NULL) {
 
 			for (int32_t i = 0; i < g->numVertices; i++) {
-				IntList* list = g->edges[i];
-				list_int_clean(list);
+				IntArrayList* list = g->edges[i];
+				int_array_list_delete(list);
 			}
 			free(g->edges);
 			g->edges = NULL;
@@ -104,14 +88,15 @@ void graph_clean(UndirectedGraph* g) {
  * iterative and in-place.
  */
 void graph_quicksort_by_edge_weight(UndirectedGraph* g) {
-	if (g->esize <= 1)
+	int32_t esize = g->edgeWeights->size;
+	if (esize <= 1)
 		return;
 
-	int startIndexStack[g->esize/2];
-	int endIndexStack[g->esize/2];
+	int startIndexStack[esize/2];
+	int endIndexStack[esize/2];
 
 	(startIndexStack)[0] = 0;
-	(endIndexStack)[0] = g->esize - 1;
+	(endIndexStack)[0] = esize - 1;
 	int stackTop = 0;
 
 	while (stackTop >= 0) {
@@ -143,9 +128,9 @@ int32_t graph_select_pivot_index(UndirectedGraph* g, int32_t startIndex, int32_t
 	if (startIndex - endIndex <= 1)
 		return startIndex;
 
-	double first = g->edgeWeights[startIndex];
-	double middle = g->edgeWeights[startIndex + (endIndex - startIndex) / 2];
-	double last = g->edgeWeights[endIndex];
+	double first = *(double_array_list_data(g->edgeWeights, startIndex));
+	double middle = *(double_array_list_data(g->edgeWeights, startIndex + (endIndex - startIndex) / 2));
+	double last = *(double_array_list_data(g->edgeWeights, endIndex));
 
 	if (first <= middle) {
 		if (middle <= last)
@@ -166,27 +151,34 @@ int32_t graph_select_pivot_index(UndirectedGraph* g, int32_t startIndex, int32_t
 
 void graph_swap_edges(UndirectedGraph* g, int32_t indexOne, int32_t indexTwo){
 	if (indexOne != indexTwo){
-		int32_t tempVertexA = g->verticesA[indexOne];
-		int32_t tempVertexB = g->verticesB[indexOne];
-		double tempEdgeDistance = g->edgeWeights[indexOne];
+		int32_t tempVertexA = *(int_array_list_data(g->verticesA, indexOne));
+		int32_t tempVertexB = *(int_array_list_data(g->verticesB, indexOne));
+		double tempEdgeDistance = *(double_array_list_data(g->edgeWeights, indexOne));
 
-		g->verticesA[indexOne] = g->verticesA[indexTwo];
-		g->verticesB[indexOne] = g->verticesB[indexTwo];
-		g->edgeWeights[indexOne] = g->edgeWeights[indexTwo];
+		//g->verticesA[indexOne] = g->verticesA[indexTwo];
+		int_array_list_set_value_at(g->verticesA, *(int_array_list_data(g->verticesA, indexTwo)), indexOne);
+		//g->verticesB[indexOne] = g->verticesB[indexTwo];
+		int_array_list_set_value_at(g->verticesB, *(int_array_list_data(g->verticesB, indexTwo)), indexOne);
+		//g->edgeWeights[indexOne] = g->edgeWeights[indexTwo];
+		double_array_list_set_value_at(g->edgeWeights, *(double_array_list_data(g->edgeWeights, indexTwo)), indexOne);
 
-		g->verticesA[indexTwo] = tempVertexA;
-		g->verticesB[indexTwo] = tempVertexB;
-		g->edgeWeights[indexTwo] = tempEdgeDistance;
+		//g->verticesA[indexTwo] = tempVertexA;
+		int_array_list_set_value_at(g->verticesA, tempVertexA, indexTwo);
+		//g->verticesB[indexTwo] = tempVertexB;
+		int_array_list_set_value_at(g->verticesB, tempVertexB, indexTwo);
+		//g->edgeWeights[indexTwo] = tempEdgeDistance;
+		double_array_list_set_value_at(g->edgeWeights, tempEdgeDistance, indexTwo);
 	}
 }
 
 int32_t graph_partition(UndirectedGraph* g, int32_t startIndex, int32_t endIndex, int32_t pivotIndex) {
-	double pivotValue = g->edgeWeights[pivotIndex];
+	double pivotValue = *(double_array_list_data(g->edgeWeights, pivotIndex));//g->edgeWeights[pivotIndex];
 	graph_swap_edges(g, pivotIndex, endIndex);
 	int32_t lowIndex = startIndex;
 
 	for (int32_t i = startIndex; i < endIndex; i++) {
-		if (g->edgeWeights[i] < pivotValue) {
+		double c = *(double_array_list_data(g->edgeWeights, i));
+		if (c < pivotValue) {
 			graph_swap_edges(g, i, lowIndex);
 			lowIndex++;
 		}
@@ -205,27 +197,17 @@ void graph_quicksort(UndirectedGraph* g, int32_t startIndex, int32_t endIndex) {
 	}
 }
 
-IntList* do_remove(IntList* list, int32_t data){
-	ListNode* node = g_list_find_custom(list, &data, (GCompareFunc)gint_compare);
-	if(node != NULL){
-		list = list_full_link_delete(list, node, (GDestroyNotify)free);
-	}
-
-	return list;
-}
-
 void graph_remove_edge(UndirectedGraph* g, int32_t va, int32_t vb){
 	// get the edge list for va
 	// find position for vb in the edge list for va
 
-	g->edges[va] = do_remove(g->edges[va], vb);
+	int_array_list_remove(g->edges[va], vb);
 
 	/**
 	 * Have to repeat for the opposite in case va=vb in which case calling this method twice
 	 * would miss the second time.
 	 */
-	//printf("in graph_remove_edge removing %d from edge %d\n", va, vb);
-	g->edges[vb] = do_remove(g->edges[vb], va);
+	int_array_list_remove(g->edges[vb], va);
 
 }
 
@@ -233,41 +215,36 @@ void graph_print(UndirectedGraph* g) {
 
 	printf(
 			"numVertices: %d, verticesA.length: %d,  verticesB.length: %d, edgeWeights.length: %d, edges.length: %d\n",
-			g->numVertices, g->asize, g->bsize, g->esize, g->numVertices);
+			g->numVertices, g->verticesA->size, g->verticesB->size, g->edgeWeights->size, g->numVertices);
 	printf("\nVertices A\n");
 
-	for (int i = 0; i < g->asize; i++) {
-		int vertex = g->verticesA[i];
+	for (int i = 0; i < g->verticesA->size; i++) {
+		int vertex = *(int_array_list_data(g->verticesA, i));
 		printf("%d, ", vertex);
 	}
 
 	printf("\n\nVertices B\n");
-	for (int i = 0; i < g->bsize; i++) {
-		int vertex = g->verticesB[i];
+	for (int i = 0; i < g->verticesB->size; i++) {
+		int vertex = *(int_array_list_data(g->verticesB, i));
 		printf("%d, ", vertex);
 	}
 
 	printf("\n\nedgeWeights\n");
-    for (int i = 0; i < g->esize; i++) {
-		printf("%f, ", g->edgeWeights[i]);
+    for (int i = 0; i < g->edgeWeights->size; i++) {
+		printf("%f, ", *(double_array_list_data(g->edgeWeights, i)));
 	}
 
 	printf("\n\nEdges\n");
 
 	for(uint i = 0; i < g->numVertices; i++){
-		IntList* edge = g->edges[i];
+		IntArrayList* edge = g->edges[i];
 
 		//printf("Edge length is %d\n", g_list_length(edge));
 		printf("[");
+		int32_t* ldata = edge->data;
 
-		ListNode* node = g_list_first(edge);
-
-		while(node != NULL){
-			if(node->data != NULL){
-				printf("%d, ", *((int32_t *)node->data));
-			}
-
-			node = g_list_next(node);
+		for(int32_t i = 0; i < edge->size; i++){
+			printf("%d, ", ldata[i]);
 		}
 
 		printf("]\n");

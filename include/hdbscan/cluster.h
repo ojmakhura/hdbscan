@@ -12,8 +12,8 @@
 extern "C" {
 #endif
 
-#include <glib.h>
-#include "utils.h"
+#include "../containers/utils.h"
+#include "../gnulib/gl_array_oset.h"
 
 #define CLUSTER_SUCCESS 1
 #define CLUSTER_ERROR	0
@@ -34,7 +34,7 @@ struct Cluster {
 	double propagatedLowestChildDeathLevel;
 	int32_t numConstraintsSatisfied;
 	int32_t propagatedNumConstraintsSatisfied;
-	IntArraySet* virtualChildCluster;
+	gl_oset_t virtualChildCluster;
 	struct Cluster* parent;
 	ClusterList* propagatedDescendants;
 	boolean hasChildren;
@@ -74,7 +74,7 @@ public:
 	void propagate();
 
 
-	void addPointsToVirtualChildCluster(IntArraySet* points);
+	void addPointsToVirtualChildCluster(gl_oset_t points);
 
 
 	boolean virtualChildClusterContaintsPoint(int32_t point);
@@ -161,7 +161,7 @@ int cluster_detach_points(cluster* cl, int32_t numPoints, double level);
  */
 void cluster_propagate(cluster* cl);
 
-int32_t cluster_add_points_to_virtual_child_cluster(cluster* cl, IntSet* points);
+int32_t cluster_add_points_to_virtual_child_cluster(cluster* cl, gl_oset_t points);
 
 boolean cluster_virtual_child_contains_point(cluster* cl, int32_t point);
 
