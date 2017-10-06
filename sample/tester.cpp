@@ -543,7 +543,7 @@ void dummy_tester(){
 	
 	for(int i = 0; i < 10000; i++){
 		printf("***********************************************************************************\n");
-		hdbscan scan(8, DATATYPE_DOUBLE);
+		hdbscan scan(4, DATATYPE_DOUBLE);
 		scan.run(dataset, rows, cols, TRUE);
 		
 		
