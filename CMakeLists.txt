@@ -45,8 +45,8 @@ OPTION (USE_OpenMP "Use OpenMP" ON)
 IF(USE_OpenMP)
   FIND_PACKAGE(OpenMP)
   IF(OPENMP_FOUND)
-    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS} -fPIC")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -fPIC")
   ENDIF()
 ENDIF()
 
@@ -55,7 +55,7 @@ add_subdirectory(src)
 add_subdirectory(sample)
 
 # Add all targets to the build-tree export set
-export(TARGETS hdbscan gnulib listlib FILE "${PROJECT_BINARY_DIR}/HdbscanTargets.cmake")
+export(TARGETS hdbscan FILE "${PROJECT_BINARY_DIR}/HdbscanTargets.cmake")
  
 # Export the package for use from the build-tree
 # (this registers the build-tree with a global CMake-registry)

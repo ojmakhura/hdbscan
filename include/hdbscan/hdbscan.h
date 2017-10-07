@@ -136,6 +136,10 @@ public:
 	 */
 	void calculateOutlierScores(double* pointNoiseLevels, int* pointLastClusters, boolean infiniteStability);
 
+	/**
+	 * 
+	 **/
+	void createClusterTable(); 
 	void clean();
 #endif
 

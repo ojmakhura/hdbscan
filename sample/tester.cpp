@@ -547,7 +547,6 @@ void dummy_tester(){
 		hdbscan scan(4, DATATYPE_DOUBLE);
 		scan.run(dataset, rows, cols, TRUE);
 		
-		
 		scan.clusterTable = hdbscan_create_cluster_table(scan.clusterLabels, scan.numPoints);
 					
 		GHashTableIter iter;

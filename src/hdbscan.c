@@ -199,10 +199,10 @@ int hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean rowwis
 	double pointNoiseLevels[sc->numPoints];
 	int pointLastClusters[sc->numPoints];
 
-	begin = clock();
+	//begin = clock();
 	hdbscan_compute_hierarchy_and_cluster_tree(sc, 0, pointNoiseLevels, pointLastClusters);
-	time_spent = (double) (clock() - begin) / CLOCKS_PER_SEC;
-	printf("hdbscan_run: hierarchy and cluster tree computed in %f\n", time_spent);
+	//time_spent = (double) (clock() - begin) / CLOCKS_PER_SEC;
+	//printf("hdbscan_run: hierarchy and cluster tree computed in %f\n", time_spent);
 
 	begin = clock();
 	int infiniteStability = hdbscan_propagate_tree(sc);

@@ -112,6 +112,10 @@ void hdbscan::calculateOutlierScores(double* pointNoiseLevels, int* pointLastClu
 	// TODO
 }
 
+void hdbscan::createClusterTable(){
+	this->clusterTable = hdbscan_create_cluster_table(clusterLabels, numPoints);
+}
+
 void hdbscan::clean(){
 	hdbscan_destroy(this);
 }
