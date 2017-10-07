@@ -101,7 +101,7 @@ double l2_norm(double const* u, uint n) {
 	}
 	return sqrt(accum);
 }
-
+static inline
 double get_diff(distance* dis, void* dataset, uint i, uint j, uint k){
 	double diff = 0;
 	double num1 = 0, num2 = 0;
@@ -139,7 +139,7 @@ double get_diff(distance* dis, void* dataset, uint i, uint j, uint k){
 void do_euclidean(distance* dis, void* dataset) {
 
 	double sortedDistance[dis->rows];
-//#pragma omp parallel for private(sortedDistance)
+#pragma omp parallel for private(sortedDistance)
 	for (uint i = 0; i < dis->rows; i++) {
 		for (uint j = 0; j < dis->rows; j++) {
 			double sum, diff = 0.0;
@@ -202,6 +202,44 @@ void distance_compute(distance* dis, void* dataset, int rows, int cols, int numN
 	dis->numNeighbors = numNeighbors;
 
 	setDimenstions(dis, rows, cols);
-	do_euclidean(dis, dataset);
+	//do_euclidean(dis, dataset);
+	
+	double sortedDistance[dis->rows];
+#pragma omp parallel for private(sortedDistance)
+	for (uint i = 0; i < dis->rows; i++) {
+		for (uint j = 0; j < dis->rows; j++) {
+			double sum, diff = 0.0;
+			uint offset1;
+			sum = 0;
+
+            for (uint k = 0; ((k < dis->cols) && (i != j)); k++) {
+    			diff = get_diff(dis, dataset, i, j, k);
+    			sum += (diff * diff);
+            }
+
+			sum = sqrt(sum);
+
+			int c;
+			if (j > i) {
+				// Calculate the linearised upper triangular matrix offset
+				offset1 = i * dis->rows + j;
+				c = offset1 - triangular(i + 1);
+
+				dis->distances[c] = sum;
+			} else if (i == j) {
+				c = -1;
+			} else {
+				offset1 = j * dis->rows + i;
+				c = offset1 - triangular(j + 1);
+			}
+
+			sortedDistance[j] = sum;
+
+		}
+		//#pragma omp barrier
+		qsort(sortedDistance, dis->rows, sizeof(double), cmpdouble);
+		//printf("dis->coreDistances[%d] = %f and mnumNeighbors = %d\n", i, sortedDistance[dis->numNeighbors], dis->numNeighbors);
+		dis->coreDistances[i] = sortedDistance[dis->numNeighbors];
+	}
 }
 

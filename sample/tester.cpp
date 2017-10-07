@@ -4,6 +4,7 @@
  *  Created on: 7 Oct 2016
  *      Author: ojmakh
  */
+ #include "config.h"
 #include "hdbscan/hdbscan.hpp"
 #include "dataset.h"
 
@@ -541,7 +542,7 @@ void dummy_tester(){
 			22.8386819,79.47603878};
 
 	
-	for(int i = 0; i < 10000; i++){
+	//for(int i = 0; i < 10000; i++){
 		printf("***********************************************************************************\n");
 		hdbscan scan(4, DATATYPE_DOUBLE);
 		scan.run(dataset, rows, cols, TRUE);
@@ -572,7 +573,7 @@ void dummy_tester(){
 		}
 		printf("]\n\n");
 		printf("***********************************************************************************\n");
-	}
+	//}
 
 }
 

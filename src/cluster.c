@@ -4,7 +4,9 @@
  *  Created on: 13 Sep 2017
  *      Author: ojmakh
  */
+#include "config.h"
 #include "hdbscan/cluster.h"
+
 #include <float.h>
 
 cluster* cluster_init(cluster* cl, int32_t label, cluster* parent, double birthLevel, int32_t numPoints){

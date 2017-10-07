@@ -15,7 +15,7 @@
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "gnulib/config.h"
+#include "config.h"
 
 /* Specification.  */
 #include "gnulib/gl_array_oset.h"

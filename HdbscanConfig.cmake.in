@@ -2,7 +2,6 @@
 # It defines the following variables
 #  HDBSCAN_INCLUDE_DIRS - include directories for hdbscan
 #  HDBSCAN_LIBRARIES    - libraries to link against
-#  HDBSCAN_EXECUTABLE   - the bar executable
  
 # Compute paths
 get_filename_component(HDBSCAN_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
@@ -14,5 +13,5 @@ if(NOT TARGET hdbscan AND NOT hdbscan_BINARY_DIR)
 endif()
  
 # These are IMPORTED targets created by HdbscanTargets.cmake
-set(HDBSCAN_LIBRARIES hdbscan)
+set(HDBSCAN_LIBRARIES hdbscan gnulib listlib)
 set(HDBSCAN_EXECUTABLE hdbscan_csample hdbscan_cppsample)

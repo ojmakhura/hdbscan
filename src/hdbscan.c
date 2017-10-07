@@ -4,7 +4,7 @@
  *  Created on: 13 Sep 2017
  *      Author: ojmakh
  */
-#include "gnulib/config.h"
+#include "config.h"
 #include "hdbscan/hdbscan.h"
 #include <time.h>
 
@@ -26,7 +26,7 @@ uint hdbscan_get_dataset_size(uint rows, uint cols, boolean rowwise){
  * @param edgeWeight The edge weight at which to remove the points from their previous Cluster
  */
 cluster* hdbscan_create_new_cluster(hdbscan* sc, gl_oset_t points, int* clusterLabels, cluster* parentCluster, int clusterLabel, double edgeWeight){
-
+#pragma omp parallel for
 	for(int i = 0; i < points->count; i++){
 		int d ;
 		gl_oset_value_at(points, i, &d);
@@ -249,7 +249,7 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 	int numVertices = sc->mst->numVertices;
 	int previousClusterLabels[numVertices];
 	int currentClusterLabels[numVertices];
-
+#pragma omp parallel for
 	for(int i = 0; i < numVertices; i++){
 		previousClusterLabels[i] = 1;
 		currentClusterLabels[i] = 1;
@@ -265,6 +265,7 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 	gl_oset_t affectedClusterLabels = gl_oset_nx_create_empty (GL_ARRAY_OSET, (gl_setelement_compar_fn) int_compare, NULL);
 	gl_oset_t affectedVertices = gl_oset_nx_create_empty (GL_ARRAY_OSET, (gl_setelement_compar_fn) int_compare, NULL);
 
+//#pragma omp parallel
 	while (currentEdgeIndex >= 0) {
 		double currentEdgeWeight = *(double_array_list_data(sc->mst->edgeWeights, currentEdgeIndex));
 		//int cc = 0;
@@ -576,7 +577,7 @@ int hdbscan_construct_mst(hdbscan* sc){
 
 	//One bit is set (true) for each attached point, or unset (false) for unattached points:
 	boolean attachedPoints[size];
-
+#pragma omp parallel for
 	for(int i = 0; i < size-1; i++){
 		attachedPoints[i] = FALSE;
 	}
@@ -619,7 +620,7 @@ int hdbscan_construct_mst(hdbscan* sc){
 		double nearestMRDDistance = DBL_MAX;
 
 		//Iterate through all unattached points, updating distances using the current point:
-
+#pragma omp parallel for
 		for (unsigned int neighbor = 0; neighbor < size; neighbor++) {
 			
 			if (currentPoint == neighbor) {
@@ -664,6 +665,7 @@ int hdbscan_construct_mst(hdbscan* sc){
 	//print_graph_components(nearestMRDNeighbors, otherVertexIndices, nearestMRDDistances);
 	//If necessary, attach self edges:
 	if (sc->selfEdges == TRUE) {
+//#pragma omp parallel for
 		for (uint i = size - 1; i < size * 2 - 1; i++) {
 			int vertex = i - (size - 1);
 			int_array_list_set_value_at(nearestMRDNeighbors, vertex, i);
@@ -691,6 +693,8 @@ boolean hdbscan_propagate_tree(hdbscan* sc){
 	gl_oset_t clustersToExamine = gl_oset_nx_create_empty (GL_ARRAY_OSET, (gl_setelement_compar_fn) int_compare, NULL);
 	boolean addedToExaminationList[sc->clusters->len];
 	boolean infiniteStability = FALSE;
+
+#pragma omp parallel for
 	for(int i = 0; i < sc->clusters->len; i++){
 		addedToExaminationList[i] = FALSE;
 	}

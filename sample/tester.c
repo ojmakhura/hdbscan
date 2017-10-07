@@ -5,7 +5,7 @@
  *      Author: junior
  */
 
-#include "gnulib/config.h"
+#include "config.h"
 #include "hdbscan/hdbscan.h"
 #include "dataset.h"
 #include <time.h>
@@ -562,7 +562,7 @@ int main(int argc, char** argv){
 				printf("SUCCESS: hdbscan clustring completed\n");
 
 				//printf("Number total number of clusters is %d\n\n", scan->clusters->len);
-				scan->clusterTable = hdbscan_create_cluster_table(scan->clusterLabels, scan->numPoints);
+				/*scan->clusterTable = hdbscan_create_cluster_table(scan->clusterLabels, scan->numPoints);
 					
 				GHashTableIter iter;
 				gpointer key;
@@ -579,7 +579,7 @@ int main(int argc, char** argv){
 						printf("%d ", *dpointer);
 					}
 					printf("]\n");
-				}
+				}*/
 
 				printf("\n\nCluster labels = [");
 				for(uint i = 0; i < scan->numPoints; i++){

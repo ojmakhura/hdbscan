@@ -117,7 +117,7 @@ public:
 
 	ClusterList* getPropagatedDescendants();
 
-	//IntArraySetSet* getVirtualChildCluster();
+	gl_oset_t getVirtualChildCluster();
 
 	 boolean hasKids();
 

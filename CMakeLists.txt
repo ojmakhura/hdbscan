@@ -35,12 +35,6 @@ foreach(p LIB BIN INCLUDE CMAKE)
   endif()
 endforeach()
 
-#include_directories( "${HDBSCAN_INCLUDE_DIR}")
-#include_directories( "${GNULIB_INCLUDE_DIR}")
-#include_directories( "${LISTLIB_INCLUDE_DIR}")
-#include_directories("${PROJECT_BINARY_DIR}") 
-#include_directories(${GLIB2_INCLUDE_DIRS})
-
 #ensure we have pkg-config in the system
 find_package(PkgConfig)
 
@@ -61,7 +55,7 @@ add_subdirectory(src)
 add_subdirectory(sample)
 
 # Add all targets to the build-tree export set
-export(TARGETS hdbscan FILE "${PROJECT_BINARY_DIR}/HdbscanTargets.cmake")
+export(TARGETS hdbscan gnulib listlib FILE "${PROJECT_BINARY_DIR}/HdbscanTargets.cmake")
  
 # Export the package for use from the build-tree
 # (this registers the build-tree with a global CMake-registry)
@@ -69,6 +63,9 @@ export(PACKAGE hdbscan)
 
 # Create the HdbscanConfig.cmake and HdbscanConfigVersion files
 file(RELATIVE_PATH REL_INCLUDE_DIR "${INSTALL_CMAKE_DIR}" "${INSTALL_INCLUDE_DIR}")
+
+# ... for the config.h
+configure_file(config.h.in "${GNULIB_INCLUDE_DIR}/config.h" @ONLY)
 
 # ... for the build tree
 set(CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}")

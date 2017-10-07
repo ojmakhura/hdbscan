@@ -7,6 +7,7 @@
 
 
 #ifdef __cplusplus
+#include "config.h"
 #include "hdbscan/hdbscan.hpp"
 namespace clustering {
 

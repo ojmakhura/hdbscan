@@ -17,7 +17,7 @@
 
 #ifndef _GL_ARRAY_OSET_H
 #define _GL_ARRAY_OSET_H
-#include "config.h"
+//#include "config.h"
 #include "gl_oset.h"
 
 #ifdef __cplusplus

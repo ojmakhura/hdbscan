@@ -1,3 +1,7 @@
+
+# The generated config.h
+modules/gnulib/include/config.h
+
 # Compiled Object files
 *.slo
 *.lo
