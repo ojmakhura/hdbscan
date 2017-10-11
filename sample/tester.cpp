@@ -4,7 +4,7 @@
  *  Created on: 7 Oct 2016
  *      Author: ojmakh
  */
- #include "config.h"
+//#include "config.h"
 #include "hdbscan/hdbscan.hpp"
 #include "dataset.h"
 

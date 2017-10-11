@@ -14,7 +14,7 @@ extern "C" {
 
 #include <glib.h>
 #include <float.h>
-//#include "gnulib/config.h"
+#include "config.h"
 #include "cluster.h"
 #include "constraint.h"
 #include "distance.h"

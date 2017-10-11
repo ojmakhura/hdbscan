@@ -5,7 +5,7 @@
  *      Author: junior
  */
 
-#include "config.h"
+//#include "config.h"
 #include "hdbscan/hdbscan.h"
 #include "dataset.h"
 #include <time.h>
