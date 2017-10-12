@@ -543,7 +543,7 @@ int main(int argc, char** argv){
 	for(int i = 0; i < 1000; i++){
 		printf("***********************************************************************************\n");
 		//clock_t begin = clock();
-		hdbscan* scan = hdbscan_init(NULL, 4, DATATYPE_DOUBLE);
+		hdbscan* scan = hdbscan_init(NULL, atoi(argv[1]), DATATYPE_DOUBLE);
 
 		if(scan == NULL){
 			printf("ERROR: Could not initialise hdbscan\n");
@@ -562,7 +562,7 @@ int main(int argc, char** argv){
 				printf("SUCCESS: hdbscan clustring completed\n");
 
 				//printf("Number total number of clusters is %d\n\n", scan->clusters->len);
-				/*scan->clusterTable = hdbscan_create_cluster_table(scan->clusterLabels, scan->numPoints);
+				scan->clusterTable = hdbscan_create_cluster_table(scan->clusterLabels, scan->numPoints);
 					
 				GHashTableIter iter;
 				gpointer key;
@@ -579,7 +579,7 @@ int main(int argc, char** argv){
 						printf("%d ", *dpointer);
 					}
 					printf("]\n");
-				}*/
+				}
 
 				printf("\n\nCluster labels = [");
 				for(uint i = 0; i < scan->numPoints; i++){

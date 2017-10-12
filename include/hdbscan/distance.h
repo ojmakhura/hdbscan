@@ -116,6 +116,7 @@ void distance_clean(distance* d);
  * Computes the euclidean distance between two points, d = sqrt((x1-y1)^2 + (x2-y2)^2 + ... + (xn-yn)^2).
  */
 void distance_euclidean(void* dataset, distance* dis, uint rows, uint cols);
+//double (*get_diff)(distance* dis, void* dataset, uint i, uint j, uint k);
 
 double distance_get(distance* dis, uint row, uint col);
 void distance_compute(distance* dis, void* dataset, int rows, int cols, int numNeighbors);

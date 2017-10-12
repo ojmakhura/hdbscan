@@ -11,6 +11,44 @@
 
 #include "hdbscan/distance.h"
 
+double (*get_diff)(distance* dis, void* dataset, uint i, uint j, uint k);
+
+double get_double_diff(distance* dis, void* dataset, uint i, uint j, uint k){
+	double* dt = (double*)dataset;
+    double num1 = dt[i * dis->cols + k];
+    double num2 = dt[j * dis->cols + k];
+	return (double)(num1 - num2);
+}
+
+double get_int_diff(distance* dis, void* dataset, uint i, uint j, uint k){
+	int* dt = (int*)dataset;
+    int num1 = dt[i * dis->cols + k];
+    int num2 = dt[j * dis->cols + k];
+	return (double)(num1 - num2);
+}
+
+double get_float_diff(distance* dis, void* dataset, uint i, uint j, uint k){
+	float* dt = (float*)dataset;
+    float num1 = dt[i * dis->cols + k];
+    float num2 = dt[j * dis->cols + k];
+    
+	return (double)(num1 - num2);
+}
+
+double get_long_diff(distance* dis, void* dataset, uint i, uint j, uint k){
+	long* dt = (long*)dataset;
+    long num1 = dt[i * dis->cols + k];
+    long num2 = dt[j * dis->cols + k];
+	return (double)(num1 - num2);
+}
+
+double get_short_diff(distance* dis, void* dataset, uint i, uint j, uint k){
+	short* dt = (short*)dataset;
+    short num1 = dt[i * dis->cols + k];
+    short num2 = dt[j * dis->cols + k];
+	return (double)(num1 - num2);
+}
+
 int cmpint(const void * ptr_a, const void * ptr_b) {
 
 	int a, b;
@@ -61,6 +99,25 @@ distance* distance_init(distance* dis, calculator cal, uint datatype) {
 		dis->coreDistances = NULL;
 		dis->distances = NULL;
 		dis->datatype = datatype;
+		
+		if(dis->datatype == DATATYPE_FLOAT){
+			get_diff = get_float_diff;
+			
+		} else if(dis->datatype == DATATYPE_DOUBLE){
+			get_diff = get_double_diff;
+			
+		}else if(dis->datatype == DATATYPE_INT){
+			
+			get_diff = get_int_diff;
+
+		}	else if(dis->datatype == DATATYPE_LONG){
+			
+			get_diff = get_long_diff;
+
+		}else if(dis->datatype == DATATYPE_SHORT){
+			
+			get_diff = get_short_diff;			
+		}
 	}
 	return dis;
 }
@@ -101,7 +158,10 @@ double l2_norm(double const* u, uint n) {
 	}
 	return sqrt(accum);
 }
-static inline
+
+
+
+/*static inline
 double get_diff(distance* dis, void* dataset, uint i, uint j, uint k){
 	double diff = 0;
 	double num1 = 0, num2 = 0;
@@ -132,7 +192,7 @@ double get_diff(distance* dis, void* dataset, uint i, uint j, uint k){
 	diff = num1 - num2;
 	return diff;
 }
-
+*/
 /**
  *
  */

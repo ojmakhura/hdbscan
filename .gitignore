@@ -1,3 +1,5 @@
+# the build directory
+build
 
 # The generated config.h
 modules/gnulib/include/config.h

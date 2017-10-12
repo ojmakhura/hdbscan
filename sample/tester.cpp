@@ -11,7 +11,7 @@
 using namespace std;
 using namespace clustering;
 
-void dummy_tester(){
+void dummy_tester(int minPts){
 	//for(int j = 0; j < 4; j++){
 	//printf("Iteration %d\n\n", j);
 	double d2[] = {
@@ -544,7 +544,7 @@ void dummy_tester(){
 	
 	//for(int i = 0; i < 10000; i++){
 		printf("***********************************************************************************\n");
-		hdbscan scan(4, DATATYPE_DOUBLE);
+		hdbscan scan(minPts, DATATYPE_DOUBLE);
 		scan.run(dataset, rows, cols, TRUE);
 		
 		scan.clusterTable = hdbscan_create_cluster_table(scan.clusterLabels, scan.numPoints);
@@ -578,7 +578,7 @@ void dummy_tester(){
 
 int main(int argc, char** argv) {
 	//dummy_tester();
-	dummy_tester();
+	dummy_tester(atoi(argv[1]));
 
 
 	return 0;
