@@ -35,6 +35,8 @@ foreach(p LIB BIN INCLUDE CMAKE)
   endif()
 endforeach()
 
+find_package(GSL REQUIRED) 
+
 #ensure we have pkg-config in the system
 find_package(PkgConfig)
 

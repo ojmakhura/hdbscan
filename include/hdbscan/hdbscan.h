@@ -14,6 +14,7 @@ extern "C" {
 
 #include <glib.h>
 #include <float.h>
+#include <gsl/gsl_statistics.h>
 #include "config.h"
 #include "cluster.h"
 #include "constraint.h"
@@ -27,6 +28,23 @@ extern "C" {
 #define FILE_BUFFER_SIZE = 32678
 #define HDBSCAN_SUCCESS 1
 #define HDBSCAN_ERROR	0
+
+typedef GHashTable StringDoubleMap;
+
+
+static char MEAN_CR[] = "mean_cr";
+static char SD_CR[] = "sd_cr";
+static char VARIANCE_CR[] = "variance_cr";
+static char MAX_CR[] = "max_cr";
+static char KURTOSIS_CR[] = "kurtosis_cr";
+static char SKEW_CR[] = "skew_cr";
+static char MEAN_DR[] = "mean_dr";
+static char SD_DR[] = "sd_dr";
+static char VARIANCE_DR[] = "variance_dr";
+static char MAX_DR[] = "max_dr";
+static char KURTOSIS_DR[] = "kurtosis_dr";
+static char SKEW_DR[] = "skew_dr";
+static char COUNT[] = "count";
 
 /**
  * Implementation of the HDBSCAN* algorithm, which is broken into several methods.
@@ -53,6 +71,8 @@ struct hdbscan {
 	IntIntListMap* clusterTable;
 	boolean selfEdges;
 	uint minPoints, minClusterSize, numPoints;
+	
+	
 #ifdef __cplusplus
 
 public:
@@ -229,11 +249,40 @@ int hdbscsan_calculate_outlier_scores(hdbscan* sc, double* pointNoiseLevels, int
 IntIntListMap* hdbscan_create_cluster_table(int32_t* labels, int32_t size);
 
 /**
+ * Create a hash table that maps the different statistical values to their values.
+ * The statistical value names are declared in the hdbscan.h header file. They are in the form
+ * of NAME_{CR, DR}, where name is the name of the value and CR is for the value calculated using
+ * the core distance values and DR is for 
+ * 
+ */ 
+StringDoubleMap* hdbscan_calculate_stats(IntDoubleListMap* distanceMap);
+
+/**
  * 
  * 
  */
-void hdbscan_destroy_cluster_table(IntIntListMap* table);
+int32_t hdbscan_analyse_stats(StringDoubleMap* stats); 
 
+/**
+ *
+ */
+IntDoubleListMap* hdbscan_get_min_max_distances(hdbscan* sc, IntIntListMap* clusterTable);
+
+/**
+ * 
+ * Destroy the hash tables
+ */
+void hdbscan_destroy_cluster_table(IntIntListMap* table);
+void hdbscan_destroy_distance_map_table(IntDoubleListMap* table);
+void hdbscan_destroy_stats_map(StringDoubleMap* statsMap);
+
+/**
+ * Printing the hash tables
+ * 
+ */ 
+void hdbscan_print_cluster_table(IntIntListMap* table);
+void hdbscan_print_distance_map_table(IntDoubleListMap* table);
+void hdbscan_print_stats_map(StringDoubleMap* statsMap);
 #ifdef __cplusplus
 };
 }

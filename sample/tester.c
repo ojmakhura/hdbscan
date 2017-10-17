@@ -563,24 +563,17 @@ int main(int argc, char** argv){
 
 				//printf("Number total number of clusters is %d\n\n", scan->clusters->len);
 				scan->clusterTable = hdbscan_create_cluster_table(scan->clusterLabels, scan->numPoints);
-					
-				GHashTableIter iter;
-				gpointer key;
-				gpointer value;
-				g_hash_table_iter_init (&iter, scan->clusterTable);
-
-				while (g_hash_table_iter_next (&iter, &key, &value)){
-					int32_t label = *((int32_t *)key);
-					IntArrayList* clusterList = (IntArrayList*)value;
-					printf("%d -> [", label);
-					
-					for(int j = 0; j < clusterList->size; j++){
-						int32_t *dpointer = int_array_list_data(clusterList, j);
-						printf("%d ", *dpointer);
-					}
-					printf("]\n");
-				}
-
+				hdbscan_print_cluster_table(scan->clusterTable);
+				
+				IntDoubleListMap* dMap = hdbscan_get_min_max_distances(scan, scan->clusterTable);
+				hdbscan_print_distance_map_table(dMap);
+				StringDoubleMap* stats = hdbscan_calculate_stats(dMap);
+				hdbscan_print_stats_map(stats);
+								
+				printf("Clustering validity : %d\n", hdbscan_analyse_stats(stats));
+				
+				hdbscan_destroy_distance_map_table(dMap);
+				hdbscan_destroy_stats_map(stats);
 				printf("\n\nCluster labels = [");
 				for(uint i = 0; i < scan->numPoints; i++){
 					printf("%d ", scan->clusterLabels[i]);
@@ -588,6 +581,9 @@ int main(int argc, char** argv){
 				printf("]\n\n");
 			}
 		}
+		
+		
+		
 		hdbscan_clean(scan);
 		printf("***********************************************************************************\n\n");
 		exit(0);
