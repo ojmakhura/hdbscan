@@ -159,40 +159,6 @@ double l2_norm(double const* u, uint n) {
 	return sqrt(accum);
 }
 
-
-
-/*static inline
-double get_diff(distance* dis, void* dataset, uint i, uint j, uint k){
-	double diff = 0;
-	double num1 = 0, num2 = 0;
-
-	if(dis->datatype == DATATYPE_FLOAT){
-		float* dt = (float*)dataset;
-		num1 = (double)(dt[i * dis->cols + k]);
-		num2 = (double)(dt[j * dis->cols + k]);
-	} else if(dis->datatype == DATATYPE_DOUBLE){
-		double* dt = (double*)dataset;
-    	num1 = dt[i * dis->cols + k];
-    	num2 = dt[j * dis->cols + k];
-	}else if(dis->datatype == DATATYPE_INT){
-		int* dt = (int*)dataset;
-    	num1 = (double)(dt[i * dis->cols + k]);
-    	num2 = (double)(dt[j * dis->cols + k]);
-
-	}	else if(dis->datatype == DATATYPE_LONG){
-		long* dt = (long*)dataset;
-    	num1 = (double)(dt[i * dis->cols + k]);
-    	num2 = (double)(dt[j * dis->cols + k]);
-
-	}else if(dis->datatype == DATATYPE_SHORT){
-		short* dt = (short*)dataset;
-    	num1 = (double)(dt[i * dis->cols + k]);
-    	num2 = (double)(dt[j * dis->cols + k]);
-	}
-	diff = num1 - num2;
-	return diff;
-}
-*/
 /**
  *
  */
@@ -230,9 +196,7 @@ void do_euclidean(distance* dis, void* dataset) {
 			sortedDistance[j] = sum;
 
 		}
-		//#pragma omp barrier
 		qsort(sortedDistance, dis->rows, sizeof(double), cmpdouble);
-		//printf("dis->coreDistances[%d] = %f and mnumNeighbors = %d\n", i, sortedDistance[dis->numNeighbors], dis->numNeighbors);
 		dis->coreDistances[i] = sortedDistance[dis->numNeighbors];
 	}
 
@@ -258,11 +222,10 @@ void setDimenstions(distance* dis, int rows, int cols){
     dis->distances = (double *)malloc(sub * sizeof(double));
     dis->coreDistances = (double *)malloc(dis->rows * sizeof(double));
 }
+
 void distance_compute(distance* dis, void* dataset, int rows, int cols, int numNeighbors){
 	dis->numNeighbors = numNeighbors;
-
 	setDimenstions(dis, rows, cols);
-	//do_euclidean(dis, dataset);
 	
 	double sortedDistance[dis->rows];
 #pragma omp parallel for private(sortedDistance)
@@ -296,9 +259,7 @@ void distance_compute(distance* dis, void* dataset, int rows, int cols, int numN
 			sortedDistance[j] = sum;
 
 		}
-		//#pragma omp barrier
 		qsort(sortedDistance, dis->rows, sizeof(double), cmpdouble);
-		//printf("dis->coreDistances[%d] = %f and mnumNeighbors = %d\n", i, sortedDistance[dis->numNeighbors], dis->numNeighbors);
 		dis->coreDistances[i] = sortedDistance[dis->numNeighbors];
 	}
 }
