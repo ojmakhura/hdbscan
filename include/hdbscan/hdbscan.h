@@ -10,6 +10,7 @@
 
 #ifdef __cplusplus
 extern "C" {
+
 #endif
 
 #include <glib.h>
@@ -68,7 +69,7 @@ struct hdbscan {
 	int32_t* clusterLabels;
 	LongIntListMap* hierarchy;
 	IntDoubleMap* clusterStabilities;
-	IntIntListMap* clusterTable;
+	//IntIntListMap* clusterTable;
 	boolean selfEdges;
 	uint minPoints, minClusterSize, numPoints;
 	
@@ -155,11 +156,7 @@ public:
 	 * @param infiniteStability true if there are any clusters with infinite stability, false otherwise
 	 */
 	void calculateOutlierScores(double* pointNoiseLevels, int* pointLastClusters, boolean infiniteStability);
-
-	/**
-	 * 
-	 **/
-	void createClusterTable(); 
+	
 	void clean();
 #endif
 

@@ -112,13 +112,187 @@ void hdbscan::calculateOutlierScores(double* pointNoiseLevels, int* pointLastClu
 	// TODO
 }
 
-void hdbscan::createClusterTable(){
-	this->clusterTable = hdbscan_create_cluster_table(clusterLabels, numPoints);
-	
-}
 
 void hdbscan::clean(){
 	hdbscan_destroy(this);
 }
+
+map_t createClusterTable(int32_t* labels, int32_t size){
+	
+	map_t clusterTable;
+	
+	for(int32_t i = 0; i < size; i++){
+		int32_t label = labels[i];
+		vector<int32_t>& dd = clusterTable[label];
+		clusterTable[label].push_back(i);
+	}
+	
+	return clusterTable;
+	
+}
+
+
+map_d getMinMaxDistances(hdbscan& scan, map_t& clusterTable){
+	//map<int32_t, vector<double>> disMap;
+	double* core = scan.distanceFunction.coreDistances;	
+	//double zero = 0.00000000000;
+	
+	map_d pm;
+	double zero = 0.00000000000;
+
+	for(map_t::iterator it = clusterTable.begin(); it != clusterTable.end(); ++it){
+		vector<int> idc = it->second;
+
+		for(size_t i = 0; i < idc.size(); i++){
+
+			// min and max core distances
+			if(pm[it->first].size() == 0){
+				pm[it->first].push_back(core[idc[i]]);
+				pm[it->first].push_back(core[idc[i]]);
+			} else{
+				// min core distance
+				if(pm[it->first][0] > core[idc[i]] && (core[idc[i]] < zero || core[idc[i]] > zero)){
+					pm[it->first][0] = core[idc[i]];
+				}
+
+				//max core distance
+				if(pm[it->first][1] < core[idc[i]]){
+					pm[it->first][1] = core[idc[i]];
+				}
+			}
+
+			// Calculating min and max distances
+			for(size_t j = i+1; j < idc.size(); j++){
+				double d = distance_get(&scan.distanceFunction, i, j);
+
+				if(pm[it->first].size() == 2){
+					pm[it->first].push_back(d);
+					pm[it->first].push_back(d);
+				} else{
+					// min distance
+					if(pm[it->first][2] > d && (d < zero || d > zero)){
+						pm[it->first][2] = d;
+					}
+
+					// max distance
+					if(pm[it->first][3] < d){
+						pm[it->first][3] = d;
+					}
+				}
+			}
+		}
+	}
+	
+	return pm;
+}
+
+map<string, double> calculateStats(map_d& distanceMap){
+	map<string, double> statsMap;
+	
+	double cr[distanceMap.size()];
+	double dr[distanceMap.size()];
+	int c = 0;
+	
+	for(map_d::iterator it = distanceMap.begin(); it != distanceMap.end(); ++it){			
+		cr[c] = (it->second)[1]/(it->second)[0];
+		dr[c] = (it->second)[3]/(it->second)[2];
+		c++;
+	}
+	
+	// Calculating core distance statistics
+	statsMap[MEAN_CR] = gsl_stats_mean(cr, 1, c);
+	statsMap[SD_CR] = gsl_stats_sd(cr, 1, c);	
+	statsMap[VARIANCE_CR] = gsl_stats_variance(cr, 1, c);
+	statsMap[MAX_CR] = gsl_stats_max(cr, 1, c);
+	statsMap[KURTOSIS_CR] = gsl_stats_kurtosis(cr, 1, c);
+	statsMap[SKEW_CR] = gsl_stats_skew(cr, 1, c);
+	
+	// calculating intra distance statistics
+	statsMap[MEAN_DR] = gsl_stats_mean(dr, 1, c);
+	statsMap[SD_DR] = gsl_stats_sd(dr, 1, c);
+	statsMap[VARIANCE_DR] = gsl_stats_variance(dr, 1, c);
+	statsMap[MAX_DR] = gsl_stats_max(dr, 1, c);	
+	statsMap[KURTOSIS_DR] = gsl_stats_kurtosis(dr, 1, c);
+	statsMap[SKEW_DR] = gsl_stats_skew(dr, 1, c);
+	
+	statsMap[COUNT] = c;
+	
+	return statsMap;
+}
+
+
+int32_t analyseStats(map<string, double>& stats){
+	int32_t validity = -1;
+	double skew_cr = stats[SKEW_CR];	
+	double skew_dr = stats[SKEW_DR];	
+	double kurtosis_cr = stats[KURTOSIS_CR];	
+	double kurtosis_dr = stats[KURTOSIS_DR];	
+	
+	if((skew_dr > 0.0 ) && (kurtosis_dr > 0.0 )){
+		validity = 2;
+	} else if(skew_dr < 0.0 && kurtosis_dr > 0.0){
+		validity = 1;
+	} else if(skew_dr > 0.0 && kurtosis_dr < 0.0){
+		validity = 0;
+	} else{
+		validity = -1;
+	}
+
+	if((skew_cr > 0.0 ) && (kurtosis_cr > 0.0 )){
+		validity += 2;
+	} else if(skew_cr < 0.0 && kurtosis_cr > 0.0){
+		validity += 1;
+	} else if(skew_cr > 0.0 && kurtosis_cr < 0.0){
+		validity += 0;
+	} else{
+		validity += -1;
+	}
+	return validity;
+}
+
+void printClusterTable(map_t& table){
+	
+	for(map_t::iterator it = table.begin(); it != table.end(); it++){
+	
+		int32_t label = it->first;
+		vector<int>& clusterList = it->second;
+		printf("%d -> [", label);
+					
+		for(int j = 0; j < clusterList.size(); j++){
+			printf("%d ", clusterList[j]);
+		}
+		printf("]\n");
+	}
+}
+
+void printDistanceMapTable(map_d& distancesMap){
+
+	printf("\n///////////////////////////////////////////////////////////////////////////////////////\n");
+	
+	for(map_d::iterator it = distancesMap.begin(); it != distancesMap.end(); it++){
+		int32_t label = it->first;
+		printf("%d -> [", label);
+		vector<double>& list = it->second;
+		
+		for(int i = 0; i < list.size(); i++){
+			printf("%f ", list[i]);
+		}
+		
+		printf("]\n");
+	}
+	printf("///////////////////////////////////////////////////////////////////////////////////////\n\n");
+}
+
+void printStatsMap(map<string, double>& table){
+	
+	printf("///////////////////////////////////////////////////////////////////////////////////////\n");
+	
+	for(map<string, double>::iterator it = table.begin(); it != table.end(); it++){
+		string label = it->first;
+		printf("%s : %f\n", label.c_str(), it->second);
+	}
+	printf("///////////////////////////////////////////////////////////////////////////////////////\n\n");
+}
+
 };
 #endif

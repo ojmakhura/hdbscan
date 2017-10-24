@@ -547,24 +547,16 @@ void dummy_tester(int minPts){
 		hdbscan scan(minPts, DATATYPE_DOUBLE);
 		scan.run(dataset, rows, cols, TRUE);
 		
-		scan.clusterTable = hdbscan_create_cluster_table(scan.clusterLabels, scan.numPoints);
-					
-		GHashTableIter iter;
-		gpointer key;
-		gpointer value;
-		g_hash_table_iter_init (&iter, scan.clusterTable);
-
-		while (g_hash_table_iter_next (&iter, &key, &value)){
-			int32_t label = *((int32_t *)key);
-			IntArrayList* clusterList = (IntArrayList*)value;
-			printf("%d -> [", label);
-				
-			for(int j = 0; j < clusterList->size; j++){
-				int32_t *dpointer = int_array_list_data(clusterList, j);
-				printf("%d ", *dpointer);
-			}
-			printf("]\n");
-		}
+		map_t clusterTable = createClusterTable(scan.clusterLabels, scan.numPoints);		
+		printClusterTable(clusterTable);
+		
+		map_d dMap = getMinMaxDistances(scan, clusterTable);
+		printDistanceMapTable(dMap);
+		
+		map<string, double> stats = calculateStats(dMap);
+		printStatsMap(stats);
+		
+		printf("Clustering validity : %d\n", analyseStats(stats));
 				
 		printf("\n\nCluster labels = [");
 		for(uint i = 0; i < scan.numPoints; i++){

@@ -65,7 +65,6 @@ hdbscan* hdbscan_init(hdbscan* sc, uint minPoints, uint datatype){
 		sc->clusters = NULL;
 		sc->coreDistances = NULL;
 		sc->outlierScores = NULL;
-		sc->clusterTable = NULL;
 
 	}
 	return sc;
@@ -136,11 +135,6 @@ void hdbscan_clean(hdbscan* sc){
 
 	}
 	
-	if(sc->clusterTable != NULL){
-		hdbscan_destroy_cluster_table(sc->clusterTable);
-		sc->clusterTable = NULL;
-	}
-
 	if(sc->clusters != NULL){
 
 		for(guint i = 0; i < sc->clusters->len; i++){
