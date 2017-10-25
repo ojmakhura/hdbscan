@@ -52,8 +52,8 @@ IF(USE_OpenMP)
   ENDIF()
 ENDIF()
 
-SET(CMAKE_C_FLAGS "-g3 -Wall -c -fmessage-length=0 -fPIC")
-SET(CMAKE_CXX_FLAGS "-g3 -Wall -c -fmessage-length=0 -fPIC")
+SET(CMAKE_C_FLAGS "-g3 -Wall -fmessage-length=0 -fPIC")
+SET(CMAKE_CXX_FLAGS "-g3 -Wall -fmessage-length=0 -fPIC")
 
 add_subdirectory(modules)
 add_subdirectory(src)
