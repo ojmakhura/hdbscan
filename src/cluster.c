@@ -51,10 +51,10 @@ void cluster_destroy(cluster* cl){
 		if(cl->propagatedDescendants){
 			ListNode* node = g_list_first(cl->propagatedDescendants);
 
-			while(node != NULL){
+			/*while(node != NULL){
 				node->data = NULL;
 				node = g_list_next(node);
-			}
+			}*/
 			//printf("cl->propagatedDescendants has %d clusters\n", g_list_length(cl->propagatedDescendants));
 			g_list_free(cl->propagatedDescendants);
 		}
