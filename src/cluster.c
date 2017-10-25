@@ -42,25 +42,18 @@ cluster* cluster_init(cluster* cl, int32_t label, cluster* parent, double birthL
 }
 
 void cluster_destroy(cluster* cl){
-//#ifdef __cplusplus
 	if(cl != NULL){
-		if(cl->virtualChildCluster){
+		if(cl->virtualChildCluster != NULL){
 			gl_oset_free(cl->virtualChildCluster);
+			cl->virtualChildCluster = NULL;
 		}
 
-		if(cl->propagatedDescendants){
-			ListNode* node = g_list_first(cl->propagatedDescendants);
-
-			/*while(node != NULL){
-				node->data = NULL;
-				node = g_list_next(node);
-			}*/
-			//printf("cl->propagatedDescendants has %d clusters\n", g_list_length(cl->propagatedDescendants));
+		if(cl->propagatedDescendants != NULL){
 			g_list_free(cl->propagatedDescendants);
+			cl->propagatedDescendants = NULL;
 		}
 		free(cl);
 	}
-//#endif
 }
 
 
@@ -107,7 +100,14 @@ void cluster_propagate(cluster* cl){
 			//printf("other one:\n ");
 			cl->parent->propagatedNumConstraintsSatisfied += cl->propagatedNumConstraintsSatisfied;
 			cl->parent->propagatedStability += cl->propagatedStability;
-			cl->parent->propagatedDescendants = g_list_concat(cl->parent->propagatedDescendants, cl->propagatedDescendants);
+			
+			ListNode* node = g_list_first(cl->propagatedDescendants);
+
+			while(node != NULL){
+				cl->parent->propagatedDescendants = g_list_append(cl->parent->propagatedDescendants, node->data);
+				node = g_list_next(node);
+			}
+			//cl->parent->propagatedDescendants = g_list_concat(cl->parent->propagatedDescendants, cl->propagatedDescendants);
 		}
 
 		else if (cl->numConstraintsSatisfied == cl->propagatedNumConstraintsSatisfied) {
@@ -121,7 +121,14 @@ void cluster_propagate(cluster* cl){
 			else {
 				cl->parent->propagatedNumConstraintsSatisfied += cl->propagatedNumConstraintsSatisfied;
 				cl->parent->propagatedStability += cl->propagatedStability;
-				cl->parent->propagatedDescendants = g_list_concat(cl->parent->propagatedDescendants, cl->propagatedDescendants);
+				
+				ListNode* node = g_list_first(cl->propagatedDescendants);
+
+				while(node != NULL){
+					cl->parent->propagatedDescendants = g_list_append(cl->parent->propagatedDescendants, node->data);
+					node = g_list_next(node);
+				}
+				//cl->parent->propagatedDescendants = g_list_concat(cl->parent->propagatedDescendants, cl->propagatedDescendants);
 			}
 		}
 	}
