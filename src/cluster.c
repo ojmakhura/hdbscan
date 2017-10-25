@@ -56,7 +56,7 @@ void cluster_destroy(cluster* cl){
 				node = g_list_next(node);
 			}
 			//printf("cl->propagatedDescendants has %d clusters\n", g_list_length(cl->propagatedDescendants));
-			//g_list_free(cl->propagatedDescendants);
+			g_list_free(cl->propagatedDescendants);
 		}
 		free(cl);
 	}
