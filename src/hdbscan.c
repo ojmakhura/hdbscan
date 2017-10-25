@@ -98,22 +98,27 @@ void hdbscan_clean(hdbscan* sc){
 		}
 	}
 
-	if(sc->clusterStabilities != NULL){
+	if(sc->clusterStabilities != NULL){		
 
-		/*DoubleArrayList *values = g_hash_table_get_values(sc->clusterStabilities);
+		GHashTableIter iter;
+		gpointer key;
+		gpointer value;
+		g_hash_table_iter_init (&iter, sc->clusterStabilities);
 
-		ListNode* node = g_list_first(values);
-
-		while(node != NULL){
-
-			DoubleList* stabilities = node->data;
-			g_list_free_full(stabilities, (GDestroyNotify)free);
-			node = g_list_next(node);
+		while (g_hash_table_iter_next (&iter, &key, &value)){
+			int* label = (int*)value;
+			if(label != NULL){
+				free(label);
+			}
+			
+			double* stability = (double*)key;
+			if(stability != NULL){				
+				free(stability);
+			}
 		}
-		g_list_free_full(values, (GDestroyNotify)free);
-
-		g_hash_table_destroy(sc->clusterStabilities);*/
-
+		g_hash_table_destroy(sc->clusterStabilities);
+		
+		sc->clusterStabilities = NULL;
 	}
 
 
