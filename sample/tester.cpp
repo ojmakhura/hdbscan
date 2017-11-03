@@ -547,7 +547,7 @@ void dummy_tester(int minPts){
 		hdbscan scan(minPts, DATATYPE_DOUBLE);
 		scan.run(dataset, rows, cols, TRUE);
 		
-		map_t clusterTable = createClusterTable(scan.clusterLabels, scan.numPoints);		
+		map_t clusterTable = createClusterTable(scan.clusterLabels, 0, scan.numPoints);		
 		printClusterTable(clusterTable);
 		
 		map_d dMap = getMinMaxDistances(scan, clusterTable);

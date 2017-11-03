@@ -22,7 +22,7 @@ namespace clustering {
 	/**
 	 * 
 	 **/
-	map_t createClusterTable(int32_t* labels, int32_t size); 	
+	map_t createClusterTable(int32_t* labels, int32_t begin, int32_t end); 	
 	map_d getMinMaxDistances(hdbscan& scan, map_t& clusterTable);
 	map<string, double> calculateStats(map_d& distanceMap);	
 

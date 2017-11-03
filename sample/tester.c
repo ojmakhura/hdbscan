@@ -562,7 +562,7 @@ int main(int argc, char** argv){
 				printf("SUCCESS: hdbscan clustring completed\n");
 
 				//printf("Number total number of clusters is %d\n\n", scan->clusters->len);
-				IntIntListMap* clusterTable = hdbscan_create_cluster_table(scan->clusterLabels, scan->numPoints);
+				IntIntListMap* clusterTable = hdbscan_create_cluster_table(scan->clusterLabels, 0, scan->numPoints);
 				hdbscan_print_cluster_table(clusterTable);
 				
 				IntDoubleListMap* dMap = hdbscan_get_min_max_distances(scan, clusterTable);

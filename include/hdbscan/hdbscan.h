@@ -243,7 +243,7 @@ int hdbscsan_calculate_outlier_scores(hdbscan* sc, double* pointNoiseLevels, int
 /**
  * Given an array of labels, create a hash table where the keys are the labels and the values are the indices.
  **/
-IntIntListMap* hdbscan_create_cluster_table(int32_t* labels, int32_t size);
+IntIntListMap* hdbscan_create_cluster_table(int32_t* labels, int32_t begin, int32_t end);
 
 /**
  * Create a hash table that maps the different statistical values to their values.

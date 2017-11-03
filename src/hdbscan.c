@@ -839,10 +839,10 @@ int hdbscsan_calculate_outlier_scores(hdbscan* sc, double* pointNoiseLevels, int
 	return 1;
 }
 
-IntIntListMap* hdbscan_create_cluster_table(int* labels, int size){
+IntIntListMap* hdbscan_create_cluster_table(int* labels, int32_t begin, int32_t end){
 	IntIntListMap* clusterTable = g_hash_table_new(g_int_hash, g_int_equal); 
-	
-	for(int i = 0; i < size; i++){
+	int32_t size = end - begin;
+	for(int i = begin; i < end; i++){
 		int *lb = labels + i;
 		IntArrayList* clusterList = (IntArrayList *)g_hash_table_lookup(clusterTable, lb);
 		

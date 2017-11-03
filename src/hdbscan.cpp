@@ -117,11 +117,11 @@ void hdbscan::clean(){
 	hdbscan_destroy(this);
 }
 
-map_t createClusterTable(int32_t* labels, int32_t size){
+map_t createClusterTable(int32_t* labels, int32_t begin, int32_t end){
 	
 	map_t clusterTable;
 	
-	for(int32_t i = 0; i < size; i++){
+	for(int32_t i = begin; i < end; i++){
 		int32_t label = labels[i];
 		vector<int32_t>& dd = clusterTable[label];
 		clusterTable[label].push_back(i);
