@@ -167,51 +167,28 @@ int hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean rowwis
 		return HDBSCAN_ERROR;
 	}
 
-	//printf("hdbscan_run: Running hdbscan\n");
-	clock_t begin = clock();
 	sc->numPoints = hdbscan_get_dataset_size(rows, cols, rowwise);
-	double time_spent = (double) (clock() - begin) / CLOCKS_PER_SEC;
-	//printf("hdbscan_run: numPoints set as %d in %f\n", sc->numPoints, time_spent);
 
 	guint csize = sc->numPoints/2;
 	sc->clusters = g_ptr_array_sized_new(csize);
 
-	begin = clock();
 	distance_compute(&(sc->distanceFunction), dataset, rows, cols, sc->minPoints-1);
-	time_spent = (double) (clock() - begin) / CLOCKS_PER_SEC;
-	//printf("hdbscan_run: distance computed in %f\n", time_spent);
 
-	begin = clock();
 	int err = hdbscan_construct_mst(sc);
-	time_spent = (double) (clock() - begin) / CLOCKS_PER_SEC;
 	if(err == HDBSCAN_ERROR){
 		printf("Error: Could not construct the minimum spanning tree.\n");
 		return HDBSCAN_ERROR;
 	}
-	//printf("hdbscan_run: minimum spanning tree created in %f\n", time_spent);
-
-	begin = clock();
+	
 	graph_quicksort_by_edge_weight(sc->mst);
-	time_spent = (double) (clock() - begin) / CLOCKS_PER_SEC;
-	//printf("hdbscan_run: weights sorted in %f\n", time_spent);
 
 	double pointNoiseLevels[sc->numPoints];
 	int pointLastClusters[sc->numPoints];
 
-	//begin = clock();
 	hdbscan_compute_hierarchy_and_cluster_tree(sc, 0, pointNoiseLevels, pointLastClusters);
-	//time_spent = (double) (clock() - begin) / CLOCKS_PER_SEC;
-	//printf("hdbscan_run: hierarchy and cluster tree computed in %f\n", time_spent);
-
-	begin = clock();
 	int infiniteStability = hdbscan_propagate_tree(sc);
-	time_spent = (double) (clock() - begin) / CLOCKS_PER_SEC;
-	//printf("hdbscan_run: tree propagated in %d\n", time_spent);
 
-	begin = clock();
 	hdbscan_find_prominent_clusters(sc, infiniteStability);
-	time_spent = (double) (clock() - begin) / CLOCKS_PER_SEC;
-	//printf("hdbscan_run: prominent clusters found in %f\n", time_spent);
 
 	return HDBSCAN_SUCCESS;
 }
@@ -270,7 +247,6 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 		//int cc = 0;
 		ClusterList* newClusters = NULL;
 		//Remove all edges tied with the current edge weight, and store relevant clusters and vertices:
-		//printf("hdbscan_compute_hierarchy_and_cluster_tree: 1\n");
 		while(currentEdgeIndex >= 0 && *(double_array_list_data(sc->mst->edgeWeights, currentEdgeIndex)) == currentEdgeWeight){
 
 			int firstVertex = *(int_array_list_data(sc->mst->verticesA, currentEdgeIndex));
@@ -331,7 +307,6 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 
 				int rootVertex;
 				gl_oset_remove_at(examinedVertices, examinedVertices->count-1, &rootVertex);
-				//int_array_set_remove_last(examinedVertices);
 
 				gl_oset_nx_add(constructingSubCluster, rootVertex);
 				int_array_list_append(unexploredSubClusterPoints, rootVertex);
@@ -698,18 +673,15 @@ boolean hdbscan_propagate_tree(hdbscan* sc){
 		addedToExaminationList[i] = FALSE;
 	}
 
-	//printf("THere are %d clusters\n", sc->clusters->len);
 	for(guint i = 0; i < sc->clusters->len; i++){
 
 		cluster* cl = (sc->clusters->pdata)[i];
 		if(cl != NULL && cl->hasChildren == FALSE){
-			//printf("[%d -> %f, %f, %d, %d, %ld, %f]\n", cl->label, cl->birthLevel, cl->deathLevel, cl->hasChildren, cl->numPoints, cl->offset, cl->stability);
+			
 			gl_oset_nx_add(clustersToExamine, cl->label);
 			addedToExaminationList[cl->label] = TRUE;
 		}
 	}
-	//printf("\n\n[");
-
 	while(clustersToExamine->count > 0){
 		int x;
 		gl_oset_remove_at(clustersToExamine, clustersToExamine->count-1, &x);
@@ -726,8 +698,7 @@ boolean hdbscan_propagate_tree(hdbscan* sc){
 				addedToExaminationList[parent->label] = TRUE;
 			}
 		}
-	}
-	//printf("]\n\n");
+	};
 	if(infiniteStability){
 		char *message =
 					"----------------------------------------------- WARNING -----------------------------------------------\n"
@@ -965,56 +936,56 @@ StringDoubleMap* hdbscan_calculate_stats(IntDoubleListMap* distanceMap){
 	// Calculating core distance statistics
 	double* x = (double *)malloc(sizeof(double));
 	*x = gsl_stats_mean(cr, 1, c);
-	g_hash_table_insert(statsMap, MEAN_CR, x);
+	g_hash_table_insert(statsMap, strdup(get_mean_cr()), x);
 	
 	x = (double *)malloc(sizeof(double));
 	*x = gsl_stats_sd(cr, 1, c);	
-	g_hash_table_insert(statsMap, SD_CR, x);
+	g_hash_table_insert(statsMap, strdup(get_sd_cr()), x);
 		
 	x = (double *)malloc(sizeof(double));
 	*x = gsl_stats_variance(cr, 1, c);	
-	g_hash_table_insert(statsMap, VARIANCE_CR, x);
+	g_hash_table_insert(statsMap, strdup(get_variance_cr()), x);
 	
 	x = (double *)malloc(sizeof(double));
 	*x = gsl_stats_max(cr, 1, c);
-	g_hash_table_insert(statsMap, MAX_CR, x);
+	g_hash_table_insert(statsMap, strdup(get_max_cr()), x);
 	
 	x = (double *)malloc(sizeof(double));
 	*x = gsl_stats_kurtosis(cr, 1, c);
-	g_hash_table_insert(statsMap, KURTOSIS_CR, x);
+	g_hash_table_insert(statsMap, strdup(get_kurtosis_cr()), x);
 	
 	x = (double *)malloc(sizeof(double));
 	*x = gsl_stats_skew(cr, 1, c);
-	g_hash_table_insert(statsMap, SKEW_CR, x);
+	g_hash_table_insert(statsMap, strdup(get_skew_cr()), x);
 	
 	// calculating intra distance statistics
 	x = (double *)malloc(sizeof(double));
 	*x = gsl_stats_mean(dr, 1, c);
-	g_hash_table_insert(statsMap, MEAN_DR, x);
+	g_hash_table_insert(statsMap, strdup(get_mean_dr()), x);
 	
 	x = (double *)malloc(sizeof(double));
 	*x = gsl_stats_sd(dr, 1, c);
-	g_hash_table_insert(statsMap, SD_DR, x);
+	g_hash_table_insert(statsMap, strdup(get_sd_dr()), x);
 	
 	x = (double *)malloc(sizeof(double));
 	*x = gsl_stats_variance(dr, 1, c);
-	g_hash_table_insert(statsMap, VARIANCE_DR, x);
+	g_hash_table_insert(statsMap, strdup(get_variance_dr()), x);
 	
 	x = (double *)malloc(sizeof(double));
 	*x = gsl_stats_max(dr, 1, c);
-	g_hash_table_insert(statsMap, MAX_DR, x);
+	g_hash_table_insert(statsMap, strdup(get_max_dr()), x);
 	
 	x = (double *)malloc(sizeof(double));
 	*x = gsl_stats_kurtosis(dr, 1, c);
-	g_hash_table_insert(statsMap, KURTOSIS_DR, x);
+	g_hash_table_insert(statsMap, strdup(get_kurtosis_dr()), x);
 	
 	x = (double *)malloc(sizeof(double));
 	*x = gsl_stats_skew(dr, 1, c);
-	g_hash_table_insert(statsMap, SKEW_DR, x);
+	g_hash_table_insert(statsMap, strdup(get_skew_dr()), x);
 	
 	x = (double *)malloc(sizeof(double));
 	*x = c;
-	g_hash_table_insert(statsMap, COUNT, x);
+	g_hash_table_insert(statsMap, strdup(get_count()), x);
 	
 	return statsMap;
 }
@@ -1022,16 +993,16 @@ StringDoubleMap* hdbscan_calculate_stats(IntDoubleListMap* distanceMap){
 int32_t hdbscan_analyse_stats(StringDoubleMap* stats){
 	int32_t validity = -1;
 	
-	double* value = (double *)g_hash_table_lookup(stats, SKEW_CR);
+	double* value = (double *)g_hash_table_lookup(stats, get_skew_cr());
 	double skew_cr = *value;
 	
-	value = (double *)g_hash_table_lookup(stats, SKEW_DR);
+	value = (double *)g_hash_table_lookup(stats, get_skew_dr());
 	double skew_dr = *value;
 	
-	value = (double *)g_hash_table_lookup(stats, KURTOSIS_CR);
+	value = (double *)g_hash_table_lookup(stats, get_kurtosis_cr());
 	double kurtosis_cr = *value;
 	
-	value = (double *)g_hash_table_lookup(stats, KURTOSIS_DR);
+	value = (double *)g_hash_table_lookup(stats, get_kurtosis_dr());
 	double kurtosis_dr = *value;	
 	
 	if((skew_dr > 0.0 ) && (kurtosis_dr > 0.0 )){
@@ -1065,7 +1036,7 @@ void hdbscan_destroy_stats_map(StringDoubleMap* statsMap){
 	
 	while (g_hash_table_iter_next (&iter, &key, &value)){
 		double* x = (double*)value;
-		free(value);
+		free(x);
 	}
 	
 	g_hash_table_destroy(statsMap);

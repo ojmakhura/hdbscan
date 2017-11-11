@@ -123,7 +123,6 @@ map_t createClusterTable(int32_t* labels, int32_t begin, int32_t end){
 	
 	for(int32_t i = begin; i < end; i++){
 		int32_t label = labels[i];
-		vector<int32_t>& dd = clusterTable[label];
 		clusterTable[label].push_back(i);
 	}
 	
@@ -200,22 +199,22 @@ map<string, double> calculateStats(map_d& distanceMap){
 	}
 	
 	// Calculating core distance statistics
-	statsMap[MEAN_CR] = gsl_stats_mean(cr, 1, c);
-	statsMap[SD_CR] = gsl_stats_sd(cr, 1, c);	
-	statsMap[VARIANCE_CR] = gsl_stats_variance(cr, 1, c);
-	statsMap[MAX_CR] = gsl_stats_max(cr, 1, c);
-	statsMap[KURTOSIS_CR] = gsl_stats_kurtosis(cr, 1, c);
-	statsMap[SKEW_CR] = gsl_stats_skew(cr, 1, c);
+	statsMap[get_mean_cr()] = gsl_stats_mean(cr, 1, c);
+	statsMap[get_sd_cr()] = gsl_stats_sd(cr, 1, c);	
+	statsMap[get_variance_cr()] = gsl_stats_variance(cr, 1, c);
+	statsMap[get_max_cr()] = gsl_stats_max(cr, 1, c);
+	statsMap[get_kurtosis_cr()] = gsl_stats_kurtosis(cr, 1, c);
+	statsMap[get_skew_cr()] = gsl_stats_skew(cr, 1, c);
 	
 	// calculating intra distance statistics
-	statsMap[MEAN_DR] = gsl_stats_mean(dr, 1, c);
-	statsMap[SD_DR] = gsl_stats_sd(dr, 1, c);
-	statsMap[VARIANCE_DR] = gsl_stats_variance(dr, 1, c);
-	statsMap[MAX_DR] = gsl_stats_max(dr, 1, c);	
-	statsMap[KURTOSIS_DR] = gsl_stats_kurtosis(dr, 1, c);
-	statsMap[SKEW_DR] = gsl_stats_skew(dr, 1, c);
+	statsMap[get_mean_dr()] = gsl_stats_mean(dr, 1, c);
+	statsMap[get_sd_dr()] = gsl_stats_sd(dr, 1, c);
+	statsMap[get_variance_dr()] = gsl_stats_variance(dr, 1, c);
+	statsMap[get_max_dr()] = gsl_stats_max(dr, 1, c);	
+	statsMap[get_kurtosis_dr()] = gsl_stats_kurtosis(dr, 1, c);
+	statsMap[get_skew_dr()] = gsl_stats_skew(dr, 1, c);
 	
-	statsMap[COUNT] = c;
+	statsMap[get_count()] = c;
 	
 	return statsMap;
 }
@@ -223,10 +222,10 @@ map<string, double> calculateStats(map_d& distanceMap){
 
 int32_t analyseStats(map<string, double>& stats){
 	int32_t validity = -1;
-	double skew_cr = stats[SKEW_CR];	
-	double skew_dr = stats[SKEW_DR];	
-	double kurtosis_cr = stats[KURTOSIS_CR];	
-	double kurtosis_dr = stats[KURTOSIS_DR];	
+	double skew_cr = stats[get_skew_cr()];	
+	double skew_dr = stats[get_skew_dr()];	
+	double kurtosis_cr = stats[get_kurtosis_cr()];	
+	double kurtosis_dr = stats[get_kurtosis_dr()];	
 	
 	if((skew_dr > 0.0 ) && (kurtosis_dr > 0.0 )){
 		validity = 2;
@@ -258,7 +257,7 @@ void printClusterTable(map_t& table){
 		vector<int>& clusterList = it->second;
 		printf("%d -> [", label);
 					
-		for(int j = 0; j < clusterList.size(); j++){
+		for(size_t j = 0; j < clusterList.size(); j++){
 			printf("%d ", clusterList[j]);
 		}
 		printf("]\n");
@@ -274,7 +273,7 @@ void printDistanceMapTable(map_d& distancesMap){
 		printf("%d -> [", label);
 		vector<double>& list = it->second;
 		
-		for(int i = 0; i < list.size(); i++){
+		for(size_t i = 0; i < list.size(); i++){
 			printf("%f ", list[i]);
 		}
 		

@@ -13,6 +13,7 @@ extern "C" {
 
 #endif
 
+#include <string.h>
 #include <glib.h>
 #include <float.h>
 #include <gsl/gsl_statistics.h>
@@ -33,20 +34,77 @@ extern "C" {
 typedef GHashTable StringDoubleMap;
 
 
-static char MEAN_CR[] = "mean_cr";
-static char SD_CR[] = "sd_cr";
-static char VARIANCE_CR[] = "variance_cr";
-static char MAX_CR[] = "max_cr";
-static char KURTOSIS_CR[] = "kurtosis_cr";
-static char SKEW_CR[] = "skew_cr";
-static char MEAN_DR[] = "mean_dr";
-static char SD_DR[] = "sd_dr";
-static char VARIANCE_DR[] = "variance_dr";
-static char MAX_DR[] = "max_dr";
-static char KURTOSIS_DR[] = "kurtosis_dr";
-static char SKEW_DR[] = "skew_dr";
-static char COUNT[] = "count";
+/**
+ * Core distance funtions
+ */  
+inline const char* get_mean_cr(){
+	return "mean_cr";
+}
 
+inline const char* get_sd_cr(){
+	return "sd_cr";
+}
+
+inline const char* get_variance_cr(){
+	return "variance_cr";
+}
+
+inline const char* get_max_cr(){
+	return "max_cr";
+}
+
+inline const char* get_kurtosis_cr(){
+	return "kurtosis_cr";
+}
+
+inline const char* get_skew_cr(){
+	return "skew_cr";
+}
+/**
+ * intra cluster distance funtions
+ */  
+inline const char* get_mean_dr(){
+	return "mean_dr";
+}
+
+inline const char* get_sd_dr(){
+	return "sd_dr";
+}
+
+inline const char* get_variance_dr(){
+	return "variance_dr";
+}
+
+inline const char* get_max_dr(){
+	return "max_dr";
+}
+
+inline const char* get_kurtosis_dr(){
+	return "kurtosis_dr";
+}
+
+inline const char* get_skew_dr(){
+	return "skew_dr";
+}
+
+inline const char* get_count(){
+	return "count";
+}
+/*
+char MEAN_CR[] = "mean_cr";
+char SD_CR[] = "sd_cr";
+char VARIANCE_CR[] = "variance_cr";
+char MAX_CR[] = "max_cr";
+char KURTOSIS_CR[] = "kurtosis_cr";
+char SKEW_CR[] = "skew_cr";
+char MEAN_DR[] = "mean_dr";
+char SD_DR[] = "sd_dr";
+char VARIANCE_DR[] = "variance_dr";
+char MAX_DR[] = "max_dr";
+char KURTOSIS_DR[] = "kurtosis_dr";
+char SKEW_DR[] = "skew_dr";
+char COUNT[] = "count";
+*/
 /**
  * Implementation of the HDBSCAN* algorithm, which is broken into several methods.
  * @author zjullion

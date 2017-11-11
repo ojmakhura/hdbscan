@@ -101,9 +101,6 @@ int32_t double_array_list_remove_at(DoubleArrayList* list, double data, int32_t 
 }
 
 int32_t double_array_list_remove(DoubleArrayList* list, double data){
-	int32_t rep = -1;
-
-	double* ldata = (double *)list->data;
 	int32_t idx = double_array_list_search(list, data);
 	return double_array_list_remove_at(list, data, idx);
 }
