@@ -924,18 +924,39 @@ StringDoubleMap* hdbscan_calculate_stats(IntDoubleListMap* distanceMap){
 	double cr[g_hash_table_size(distanceMap)];
 	double dr[g_hash_table_size(distanceMap)];
 	int c = 0;
+	double maxcr, maxdr;
+	
+	double sumcr = 0;
+	double sumdr = 0;
 	
 	while (g_hash_table_iter_next (&iter, &key, &value)){
 		DoubleArrayList* dl = (DoubleArrayList*)value;
 		double* ddata = dl->data;		
 		cr[c] = ddata[1]/ddata[0];
 		dr[c] = ddata[3]/ddata[2];
+		
+		sumcr += cr[c];
+		sumdr += dr[c];
+		
+		if(c == 0){
+			maxcr = cr[c];
+			maxdr = dr[c];
+		} else{				
+			if(cr[c] > maxcr){
+				maxcr = cr[c];
+			}
+			
+			if(dr[c] > maxdr){
+				maxdr = dr[c];
+			}
+		}
+		
 		c++;
 	}
 	
 	// Calculating core distance statistics
 	double* x = (double *)malloc(sizeof(double));
-	*x = gsl_stats_mean(cr, 1, c);
+	*x = sumcr / c;
 	g_hash_table_insert(statsMap, strdup(get_mean_cr()), x);
 	
 	x = (double *)malloc(sizeof(double));
@@ -947,7 +968,7 @@ StringDoubleMap* hdbscan_calculate_stats(IntDoubleListMap* distanceMap){
 	g_hash_table_insert(statsMap, strdup(get_variance_cr()), x);
 	
 	x = (double *)malloc(sizeof(double));
-	*x = gsl_stats_max(cr, 1, c);
+	*x = maxcr; 
 	g_hash_table_insert(statsMap, strdup(get_max_cr()), x);
 	
 	x = (double *)malloc(sizeof(double));
@@ -960,7 +981,7 @@ StringDoubleMap* hdbscan_calculate_stats(IntDoubleListMap* distanceMap){
 	
 	// calculating intra distance statistics
 	x = (double *)malloc(sizeof(double));
-	*x = gsl_stats_mean(dr, 1, c);
+	*x = sumdr / c;
 	g_hash_table_insert(statsMap, strdup(get_mean_dr()), x);
 	
 	x = (double *)malloc(sizeof(double));
@@ -972,7 +993,7 @@ StringDoubleMap* hdbscan_calculate_stats(IntDoubleListMap* distanceMap){
 	g_hash_table_insert(statsMap, strdup(get_variance_dr()), x);
 	
 	x = (double *)malloc(sizeof(double));
-	*x = gsl_stats_max(dr, 1, c);
+	*x = maxdr;
 	g_hash_table_insert(statsMap, strdup(get_max_dr()), x);
 	
 	x = (double *)malloc(sizeof(double));
