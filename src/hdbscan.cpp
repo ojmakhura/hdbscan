@@ -52,6 +52,10 @@ void hdbscan::constructMST(){
 	hdbscan_construct_mst(this);
 }
 
+void hdbscan::reRun(int32_t minPts){
+	hdbscan_rerun(this, minPts);
+}
+
 /**
  * Computes the hierarchy and cluster tree from the minimum spanning tree, writing both to file,
  * and returns the cluster tree.  Additionally, the level at which each point becomes noise is
