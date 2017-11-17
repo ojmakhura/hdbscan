@@ -218,25 +218,6 @@ int hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean rowwis
 	sc->numPoints = hdbscan_get_dataset_size(rows, cols, rowwise);	
 	distance_compute(&(sc->distanceFunction), dataset, rows, cols, sc->minPoints-1);
 
-	/*
-
-	int err = hdbscan_construct_mst(sc);
-	if(err == HDBSCAN_ERROR){
-		printf("Error: Could not construct the minimum spanning tree.\n");
-		return HDBSCAN_ERROR;
-	}
-	
-	graph_quicksort_by_edge_weight(sc->mst);
-
-	double pointNoiseLevels[sc->numPoints];
-	int pointLastClusters[sc->numPoints];
-
-	hdbscan_compute_hierarchy_and_cluster_tree(sc, 0, pointNoiseLevels, pointLastClusters);
-	int infiniteStability = hdbscan_propagate_tree(sc);
-
-	hdbscan_find_prominent_clusters(sc, infiniteStability);
-	*/ 
-
 	return hdbscan_do_run(sc);
 }
 
