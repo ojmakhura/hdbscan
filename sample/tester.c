@@ -22,6 +22,7 @@ int main(int argc, char** argv){
 	} 
 	printf("SUCCESS: hdbscan fully initialised\n");
 	
+	// This lil loop demonstrates how to use the rerun function
 	for(int i = 0; i < 10; i++){
 		if(!rerun_){
 			begin = clock();
@@ -32,7 +33,7 @@ int main(int argc, char** argv){
 			rerun_ = true;
 		} else{
 			begin = clock();
-			//hdbscan_rerun(scan, atoi(argv[1]) + i);
+			hdbscan_rerun(scan, atoi(argv[1]) + i);
 			end = clock();
 			time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 			printf("hdbscan rerun Process took %f\n", time_spent);

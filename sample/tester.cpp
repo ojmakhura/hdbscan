@@ -16,9 +16,7 @@ void dummy_tester(int minPts){
 	scan.run(dataset, rows, cols, TRUE);
 	bool rerun = false;
 	for(int i = 0; i < 10; i++){
-		printf("***********************************************************************************\n");
-		//hdbscan scan(minPts, DATATYPE_DOUBLE);
-		//scan.run(dataset, rows, cols, TRUE);
+		printf("%d ------- ***********************************************************************************\n", scan.minPoints);
 		
 		if(rerun){
 			scan.reRun(minPts + i);
