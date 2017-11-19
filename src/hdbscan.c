@@ -1069,44 +1069,6 @@ int32_t hdbscan_analyse_stats(StringDoubleMap* stats){
 }
 
 void hdbscan_destroy_stats_map(StringDoubleMap* statsMap){
-	/*double* x = g_hash_table_lookup(statsMap, strdup(get_mean_cr()));
-	free(x);
-	x = g_hash_table_lookup(statsMap, strdup(get_sd_cr()));
-	free(x);
-	x = g_hash_table_lookup(statsMap, strdup(get_variance_cr()));
-	free(x);
-	x = g_hash_table_lookup(statsMap, strdup(get_max_cr()));
-	free(x);
-	x = g_hash_table_lookup(statsMap, strdup(get_kurtosis_cr()));
-	free(x);
-	x = g_hash_table_lookup(statsMap, strdup(get_skew_cr()));
-	free(x);
-	// calculating intra distance statistics
-	x = g_hash_table_lookup(statsMap, strdup(get_mean_dr()));
-	free(x);
-	x = g_hash_table_lookup(statsMap, strdup(get_sd_dr()));
-	free(x);
-	x = g_hash_table_lookup(statsMap, strdup(get_variance_dr()));
-	free(x);
-	x = g_hash_table_lookup(statsMap, strdup(get_max_dr()));
-	free(x);
-	x = g_hash_table_lookup(statsMap, strdup(get_kurtosis_dr()));
-	free(x);
-	x = g_hash_table_lookup(statsMap, strdup(get_skew_dr()));
-	free(x);
-	x = g_hash_table_lookup(statsMap, strdup(get_count()));
-	free(x);
-	*/
-	/*GHashTableIter iter;
-	gpointer key;
-	gpointer value;
-	g_hash_table_iter_init (&iter, statsMap);
-	
-	while (g_hash_table_iter_next (&iter, &key, &value)){
-		//double* x = (double*)value;
-		free(key);
-	}*/
-	
 	g_hash_table_destroy(statsMap);
 	statsMap = NULL;
 }
