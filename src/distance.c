@@ -227,10 +227,9 @@ void distance_compute(distance* dis, void* dataset, int rows, int cols, int numN
 	dis->numNeighbors = numNeighbors;
 	setDimenstions(dis, rows, cols);
 	
-	double sortedDistance[dis->rows];
-#pragma omp parallel for private(sortedDistance)
+#pragma omp parallel for 
 	for (uint i = 0; i < dis->rows; i++) {
-		for (uint j = 0; j < dis->rows; j++) {
+		for (uint j = i; j < dis->rows; j++) {
 			double sum, diff = 0.0;
 			uint offset1;
 			sum = 0;
@@ -255,12 +254,20 @@ void distance_compute(distance* dis, void* dataset, int rows, int cols, int numN
 				offset1 = j * dis->rows + i;
 				c = offset1 - triangular(j + 1);
 			}
-
-			sortedDistance[j] = sum;
-
 		}
-		qsort(sortedDistance, dis->rows, sizeof(double), cmpdouble);
-		dis->coreDistances[i] = sortedDistance[dis->numNeighbors];
 	}
+	distance_get_core_distances(dis);
 }
 
+void distance_get_core_distances(distance *dis){
+	
+	double sortedDistance[dis->rows];
+#pragma omp parallel for private(sortedDistance)
+	for (uint i = 0; i < dis->rows; i++) {
+		for (uint j = 0; j < dis->rows; j++) {
+			sortedDistance[j] = distance_get(dis, i, j);
+		}	
+		qsort(sortedDistance, dis->rows, sizeof(double), cmpdouble);
+		dis->coreDistances[i] = sortedDistance[dis->numNeighbors];	
+	}
+}

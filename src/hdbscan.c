@@ -70,17 +70,18 @@ hdbscan* hdbscan_init(hdbscan* sc, uint minPoints, uint datatype){
 	return sc;
 }
 
-void hdbscan_clean(hdbscan* sc){
+void hdbscan_minimal_clean(hdbscan* sc){
 
 	if(sc->clusterLabels != NULL){
 		free(sc->clusterLabels);
+		sc->clusterLabels = NULL;
 	}
+	
 	
 	if(sc->outlierScores != NULL){
 		free(sc->outlierScores);
+		sc->outlierScores = NULL;
 	}
-
-	distance_clean(&sc->distanceFunction);
 	
 	if(sc->mst != NULL){
 		graph_destroy(sc->mst);
@@ -96,6 +97,7 @@ void hdbscan_clean(hdbscan* sc){
 			constraint_destroy(c);
 			node = g_list_next(node);
 		}
+		sc->constraints = NULL;
 	}
 
 	if(sc->clusterStabilities != NULL){		
@@ -137,7 +139,7 @@ void hdbscan_clean(hdbscan* sc){
 				free(key);
 		}
 		g_hash_table_destroy(sc->hierarchy);
-
+		sc->hierarchy = NULL;
 	}
 	
 	if(sc->clusters != NULL){
@@ -149,7 +151,13 @@ void hdbscan_clean(hdbscan* sc){
 
 		g_ptr_array_free(sc->clusters, TRUE);
 	}
+	sc->clusters = NULL;
+}
 
+void hdbscan_clean(hdbscan* sc){
+
+	distance_clean(&sc->distanceFunction);
+	hdbscan_minimal_clean(sc);
 }
 
 void hdbscan_destroy(hdbscan* sc){
@@ -159,21 +167,10 @@ void hdbscan_destroy(hdbscan* sc){
 	}
 }
 
-
-int hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean rowwise){
-
-	if(sc == NULL){
-		printf("hdbscan_run: sc has not been initialised.\n");
-		return HDBSCAN_ERROR;
-	}
-
-	sc->numPoints = hdbscan_get_dataset_size(rows, cols, rowwise);
+int hdbscan_do_run(hdbscan* sc){
 
 	guint csize = sc->numPoints/2;
 	sc->clusters = g_ptr_array_sized_new(csize);
-
-	distance_compute(&(sc->distanceFunction), dataset, rows, cols, sc->minPoints-1);
-
 	int err = hdbscan_construct_mst(sc);
 	if(err == HDBSCAN_ERROR){
 		printf("Error: Could not construct the minimum spanning tree.\n");
@@ -189,8 +186,39 @@ int hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean rowwis
 	int infiniteStability = hdbscan_propagate_tree(sc);
 
 	hdbscan_find_prominent_clusters(sc, infiniteStability);
-
 	return HDBSCAN_SUCCESS;
+}
+
+int hdbscan_rerun(hdbscan* sc, int32_t minPts){
+	// clean the hdbscan
+	hdbscan_minimal_clean(sc);
+	
+	sc->selfEdges = TRUE;
+	sc->hierarchy = g_hash_table_new(g_int64_hash, g_int64_equal);
+	sc->clusterStabilities = g_hash_table_new(g_int_hash, g_int_equal);
+	sc->dataSet = NULL;
+	sc->constraints = NULL;
+	sc->clusterLabels = NULL;
+	sc->clusters = NULL;
+	sc->coreDistances = NULL;
+	sc->outlierScores = NULL;
+	sc->minPoints = minPts;
+	sc->distanceFunction.numNeighbors = minPts-1;
+	distance_get_core_distances(&(sc->distanceFunction));
+	return hdbscan_do_run(sc);
+}
+
+int hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean rowwise){
+
+	if(sc == NULL){
+		printf("hdbscan_run: sc has not been initialised.\n");
+		return HDBSCAN_ERROR;
+	}
+
+	sc->numPoints = hdbscan_get_dataset_size(rows, cols, rowwise);	
+	distance_compute(&(sc->distanceFunction), dataset, rows, cols, sc->minPoints-1);
+
+	return hdbscan_do_run(sc);
 }
 
 
@@ -381,6 +409,7 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 
 				//If this child cluster is not valid cluster, assign it to noise:
 				else if(constructingSubCluster->count < sc->minPoints || anyEdges == FALSE){
+					
 					cluster* examinedCluster = (sc->clusters->pdata)[examinedClusterLabel];
 
 					cluster* newCluster = hdbscan_create_new_cluster(sc, constructingSubCluster, currentClusterLabels, examinedCluster, 0, currentEdgeWeight);
@@ -559,7 +588,6 @@ int hdbscan_construct_mst(hdbscan* sc){
 	//The MST is expanded starting with the last point in the data set:
 	int currentPoint = size - 1;
 	attachedPoints[size - 1] = TRUE;
-	//printf("hdbscan_construct_mst attachedPoints created in %f\n", time_spent);
 
 	//Each point has a current neighbor point in the tree, and a current nearest distance:
 	int ssize = size - 1 + selfEdgeCapacity;
@@ -584,8 +612,6 @@ int hdbscan_construct_mst(hdbscan* sc){
 		printf("ERROR: hdbscan_construct_mst - Could not construct nearestMRDDistances");
 		return HDBSCAN_ERROR;
 	}
-	//time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
-	//printf("hdbscan_construct_mst others created in %f\n", time_spent);
 
 //#pragma omp parallel for
 	//Continue attaching points to the MST until all points are attached:
@@ -636,7 +662,6 @@ int hdbscan_construct_mst(hdbscan* sc){
 		
 	}
 
-	//print_graph_components(nearestMRDNeighbors, otherVertexIndices, nearestMRDDistances);
 	//If necessary, attach self edges:
 	if (sc->selfEdges == TRUE) {
 //#pragma omp parallel for
@@ -647,13 +672,8 @@ int hdbscan_construct_mst(hdbscan* sc){
 			double_array_list_set_value_at(nearestMRDDistances, coreDistances[vertex], i);
 		}
 	}
-	//time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
-	//printf("hdbscan_construct_mst points atached in %f\n", time_spent);
 
 	sc->mst = graph_init(NULL, size, nearestMRDNeighbors, otherVertexIndices, nearestMRDDistances);
-	//time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
-	//printf("hdbscan_construct_mst mst created in %f\n", time_spent);
-
 	if(sc->mst == NULL){
 		printf("Error: Could not initialise mst.\n");
 		return HDBSCAN_ERROR;
@@ -916,7 +936,7 @@ void hdbscan_destroy_distance_map_table(IntDoubleListMap* table){
 }
 
 StringDoubleMap* hdbscan_calculate_stats(IntDoubleListMap* distanceMap){
-	StringDoubleMap* statsMap = g_hash_table_new(g_str_hash, g_str_equal);
+	StringDoubleMap* statsMap = g_hash_table_new_full(g_str_hash, g_str_equal, free, free);
 	GHashTableIter iter;
 	gpointer key;
 	gpointer value;
@@ -1193,17 +1213,6 @@ IntArrayList* hdbscan_sort_by_distance(IntIntListMap* clusterTable, IntArrayList
 }
 
 void hdbscan_destroy_stats_map(StringDoubleMap* statsMap){
-	
-	GHashTableIter iter;
-	gpointer key;
-	gpointer value;
-	g_hash_table_iter_init (&iter, statsMap);
-	
-	while (g_hash_table_iter_next (&iter, &key, &value)){
-		double* x = (double*)value;
-		free(x);
-	}
-	
 	g_hash_table_destroy(statsMap);
 	statsMap = NULL;
 }

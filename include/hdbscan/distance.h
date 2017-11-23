@@ -77,6 +77,7 @@ public:
 	 *
 	 */
     double getDistance(uint row, uint col);
+    void getCoreDistances(int32_t numNeighbors);
 
 private:
 
@@ -92,7 +93,7 @@ private:
 	/**
 	 * Computes the euclidean distance between two points, d = sqrt((x1-y1)^2 + (x2-y2)^2 + ... + (xn-yn)^2).
 	 */
-	void doEuclidean(void* dataset, int minPoints);
+	void doEuclidean(void* dataset, int32_t numNeighbors);
 
 
 #endif
@@ -120,6 +121,12 @@ void distance_euclidean(void* dataset, distance* dis, uint rows, uint cols);
 
 double distance_get(distance* dis, uint row, uint col);
 void distance_compute(distance* dis, void* dataset, int rows, int cols, int numNeighbors);
+
+/**
+ * 
+ * 
+ */
+void distance_get_core_distances(distance *dis);
 
 #ifdef __cplusplus
 };

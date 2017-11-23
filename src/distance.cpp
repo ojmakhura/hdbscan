@@ -19,6 +19,10 @@ Distance::~Distance(){
 	distance_clean(this);
 }
 
+void Distance::getCoreDistances(int32_t numNeighbors){
+	this->numNeighbors = numNeighbors;
+	distance_get_core_distances(this);
+}
 };
 #endif
 

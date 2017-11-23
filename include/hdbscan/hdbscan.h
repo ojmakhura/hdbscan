@@ -130,6 +130,7 @@ public:
 	 *
 	 */
 	void run(void* dataset, uint rows, uint cols, boolean rowwise);
+	void reRun(int32_t minPts);
 
 	/**
 	 * Calculates the core distances for each point in the data set, given some value for k.
@@ -209,6 +210,10 @@ public:
 
 typedef struct hdbscan hdbscan;
 
+/**
+ * Initialise hdbcsan parameters
+ * 
+ */ 
 hdbscan* hdbscan_init(hdbscan* sc, uint minPoints, uint datatype);
 
 /**
@@ -223,12 +228,24 @@ void hdbscan_destroy(hdbscan* sc);
 void hdbscan_clean(hdbscan* sc);
 
 /**
- *
+ * Cluster the dataset 
  */
 int hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean rowwise);
 
 /**
- *
+ * hdbscan_rerun
+ * @param sc
+ * @param minPts
+ * 
+ * In case you need to re-cluster with a differnt minPts without changing the dataset.
+ * This function will do that by just recalculating the core distances from the existing
+ * distances.
+ * 
+ */ 
+int hdbscan_rerun(hdbscan* sc, int32_t minPts);
+
+/**
+ * Create the minimum spanning tree
  */
 int hdbscan_construct_mst(hdbscan* sc);
 
@@ -299,13 +316,12 @@ IntIntListMap* hdbscan_create_cluster_table(int32_t* labels, int32_t begin, int3
 StringDoubleMap* hdbscan_calculate_stats(IntDoubleListMap* distanceMap);
 
 /**
- * 
- * 
+ * Create a hash table for statistical values describing the clustering results
  */
 int32_t hdbscan_analyse_stats(StringDoubleMap* stats); 
 
 /**
- *
+ * Get the minimum and maximum core and intra-cluster distances
  */
 IntDoubleListMap* hdbscan_get_min_max_distances(hdbscan* sc, IntIntListMap* clusterTable);
 
@@ -331,6 +347,11 @@ void hdbscan_quicksort(IntArrayList *clusters, DoubleArrayList *sortData, size_t
 void hdbscan_destroy_cluster_table(IntIntListMap* table);
 void hdbscan_destroy_distance_map_table(IntDoubleListMap* table);
 void hdbscan_destroy_stats_map(StringDoubleMap* statsMap);
+
+/**
+ * Clean hdbscan without cleaning the distances
+ */ 
+//inline void hdbscan_minimal_clean(hdbscan* sc);
 
 /**
  * Printing the hash tables

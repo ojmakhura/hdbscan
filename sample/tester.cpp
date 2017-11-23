@@ -12,11 +12,15 @@ using namespace std;
 using namespace clustering;
 
 void dummy_tester(int minPts){
-	
-	//for(int i = 0; i < 10000; i++){
-		printf("***********************************************************************************\n");
-		hdbscan scan(minPts, DATATYPE_DOUBLE);
-		scan.run(dataset, rows, cols, TRUE);
+	hdbscan scan(minPts, DATATYPE_DOUBLE);
+	scan.run(dataset, rows, cols, TRUE);
+	bool rerun = false;
+	for(int i = 0; i < 10; i++){
+		printf("%d ------- ***********************************************************************************\n", scan.minPoints);
+		
+		if(rerun){
+			scan.reRun(minPts + i);
+		}
 		
 		map_t clusterTable = createClusterTable(scan.clusterLabels, 0, scan.numPoints);		
 		printClusterTable(clusterTable);
@@ -35,7 +39,10 @@ void dummy_tester(int minPts){
 		}
 		printf("]\n\n");
 		printf("***********************************************************************************\n");
-	//}
+		if(!rerun){
+			rerun = true;
+		}
+	}
 
 }
 
