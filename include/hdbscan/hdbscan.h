@@ -90,21 +90,7 @@ inline const char* get_skew_dr(){
 inline const char* get_count(){
 	return "count";
 }
-/*
-char MEAN_CR[] = "mean_cr";
-char SD_CR[] = "sd_cr";
-char VARIANCE_CR[] = "variance_cr";
-char MAX_CR[] = "max_cr";
-char KURTOSIS_CR[] = "kurtosis_cr";
-char SKEW_CR[] = "skew_cr";
-char MEAN_DR[] = "mean_dr";
-char SD_DR[] = "sd_dr";
-char VARIANCE_DR[] = "variance_dr";
-char MAX_DR[] = "max_dr";
-char KURTOSIS_DR[] = "kurtosis_dr";
-char SKEW_DR[] = "skew_dr";
-char COUNT[] = "count";
-*/
+
 /**
  * Implementation of the HDBSCAN* algorithm, which is broken into several methods.
  * @author zjullion
@@ -322,6 +308,21 @@ int32_t hdbscan_analyse_stats(StringDoubleMap* stats);
  *
  */
 IntDoubleListMap* hdbscan_get_min_max_distances(hdbscan* sc, IntIntListMap* clusterTable);
+
+/**
+ * Sorts the clusters using the distances in the distanceMap.
+ */
+void hdbscan_sort_by_distance(IntIntListMap* clusterTable, IntDoubleListMap* distanceMap, IntArrayList *clusters);
+
+/**
+ * Sorts clusters according to how long the cluster is
+ */
+void hdbscan_sort_by_distance(IntIntListMap* clusterTable, IntArrayList *clusters); 
+
+/**
+ * Uses quick sort algorithm to sort clusters based on the data
+ */ 
+void hdbscan_quicksort(IntArrayList *clusters, DoubleArrayList *sortData, size_t left, size_t right);
 
 /**
  * 

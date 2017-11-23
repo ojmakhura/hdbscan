@@ -1048,6 +1048,150 @@ int32_t hdbscan_analyse_stats(StringDoubleMap* stats){
 	return validity;
 }
 
+
+
+void hdbscan_quicksort(IntArrayList *clusters, DoubleArrayList *sortData, size_t left, size_t right){
+	
+	double *d_data = (double *)sortData->data;
+	int32_t *c_data = (int32_t *)clusters->data; 
+	int i = left, j = right;
+    int32_t c_temp;
+    double d_temp;
+    double pivot = d_data[(left + right) / 2];
+    
+    /* Partition */
+    while(i <= j){
+		while(d_data[i] < pivot){
+			i++;
+		}
+		
+		while(d_data[j] > pivot){
+			j--;
+		}
+		
+		if(i <= j){
+			c_temp = c_data[i];			
+			d_temp = d_data[i];
+			
+			c_data[i] = c_data[j];
+			d_data[i] = d_data[j];
+			
+			c_data[j] = c_temp;
+			d_data[j] = d_temp;
+			
+			j++;
+			i--;
+		}
+	}
+
+
+	/* recursion */
+    if(left < j){
+		quickSort(clusters, sortData, left, j);
+	}
+	
+	if(i > right){
+		quickSort(clusters, sortData, i, right);
+	}
+}
+
+/**
+ * Sorts the clusters using the distances in the distanceMap.
+ */
+IntArrayList* hdbscan_sort_by_distance(IntDoubleListMap* distanceMap, IntArrayList *clusters, int32_t distanceType){
+	
+	if(){
+	}
+	
+	DoubleArrayList *distances;
+	if(clusters == NULL){
+		clusters = int_array_list_init(g_hash_table_size(clusterTable));
+		distances = double_array_list_init(g_hash_table_size(clusterTable));
+	} else{
+		distances = double_array_list_init(clusters->size);
+	}
+	
+	int32_t empty = (clusters->size() == 0);
+	
+	if(empty){     /// If clusters had nothing in it, we will use the whole hash table 
+		GHashTableIter iter;
+		gpointer key;
+		gpointer value;
+		g_hash_table_iter_init (&iter, distanceMap);
+
+		while (g_hash_table_iter_next (&iter, &key, &value)){
+			int32_t* k = (int32_t *)key;
+			IntArrayList *lst = (IntArrayList *)value;
+			double rd = lst->size;
+			
+			int_array_list_append(clusters, *k);
+			double_array_list_append(distances, lst->size);			
+		}
+	} else { /// else we just need to get the lengths from the hash table
+		int32_t *data = clusters->data;
+		
+#pragma omp parallel for
+		for(int32_t i = 0; i < clusters.size; i++){
+			int32_t key = data[i];
+			IntArrayList *lst = (IntArrayList *)g_hash_table_lookup(distanceMap, &key);
+			double_array_list_append(distances, lst->size);
+		}
+	}
+	
+	// sort
+	hdbscan_quicksort(clusters, lengths, 0, clusters->size);
+	double_array_list_delete(lengths);
+	
+	return clusters;
+}
+
+/**
+ * Sorts clusters according to how long the cluster is
+ */
+IntArrayList* hdbscan_sort_by_distance(IntIntListMap* clusterTable, IntArrayList *clusters){
+	
+	DoubleArrayList *lengths;
+	if(clusters == NULL){
+		clusters = int_array_list_init(g_hash_table_size(clusterTable));
+		lengths = double_array_list_init(g_hash_table_size(clusterTable));
+	} else{
+		lengths = double_array_list_init(clusters->size);
+	}
+	
+	int32_t empty = (clusters->size() == 0);
+	
+	if(empty){     /// If clusters had nothing in it, we will use the whole hash table 
+		GHashTableIter iter;
+		gpointer key;
+		gpointer value;
+		g_hash_table_iter_init (&iter, clusterTable);
+
+		while (g_hash_table_iter_next (&iter, &key, &value)){
+			int32_t* k = (int32_t *)key;
+			IntArrayList *lst = (IntArrayList *)value;
+			double rd = lst->size;
+			
+			int_array_list_append(clusters, *k);
+			double_array_list_append(lengths, lst->size);			
+		}
+	} else { /// else we just need to get the lengths from the hash table
+		int32_t *data = clusters->data;
+		
+#pragma omp parallel for
+		for(int32_t i = 0; i < clusters.size; i++){
+			int32_t key = data[i];
+			IntArrayList *lst = (IntArrayList *)g_hash_table_lookup(clusterTable, &key);
+			double_array_list_append(lengths, lst->size);
+		}
+	}
+	
+	// sort
+	hdbscan_quicksort(clusters, lengths, 0, clusters->size);
+	double_array_list_delete(lengths);
+	
+	return clusters;
+}
+
 void hdbscan_destroy_stats_map(StringDoubleMap* statsMap){
 	
 	GHashTableIter iter;
