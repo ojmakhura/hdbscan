@@ -1104,34 +1104,41 @@ void hdbscan_quicksort(IntArrayList *clusters, DoubleArrayList *sortData, size_t
 		}
 	}
 
-
+#pragma omp parallel sections
+{
 	/* recursion */
+#pragma omp section
+{
     if(left < j){
-		quickSort(clusters, sortData, left, j);
-	}
-	
-	if(i > right){
-		quickSort(clusters, sortData, i, right);
+		hdbscan_quicksort(clusters, sortData, left, j);
 	}
 }
+
+#pragma omp section
+{	
+	if(i > right){
+		hdbscan_quicksort(clusters, sortData, i, right);
+	}
+}
+}
+}
+
+
 
 /**
  * Sorts the clusters using the distances in the distanceMap.
  */
-IntArrayList* hdbscan_sort_by_distance(IntDoubleListMap* distanceMap, IntArrayList *clusters, int32_t distanceType){
-	
-	if(){
-	}
-	
+IntArrayList* hdbscan_sort_by_similarity(IntDoubleListMap* distanceMap, StringDoubleMap* stats, IntArrayList *clusters, int32_t distanceType){
+
 	DoubleArrayList *distances;
 	if(clusters == NULL){
-		clusters = int_array_list_init(g_hash_table_size(clusterTable));
-		distances = double_array_list_init(g_hash_table_size(clusterTable));
+		clusters = int_array_list_init(g_hash_table_size(distanceMap));
+		distances = double_array_list_init(g_hash_table_size(distanceMap));
 	} else{
 		distances = double_array_list_init(clusters->size);
 	}
 	
-	int32_t empty = (clusters->size() == 0);
+	int32_t empty = (clusters->size == 0);
 	
 	if(empty){     /// If clusters had nothing in it, we will use the whole hash table 
 		GHashTableIter iter;
@@ -1141,26 +1148,40 @@ IntArrayList* hdbscan_sort_by_distance(IntDoubleListMap* distanceMap, IntArrayLi
 
 		while (g_hash_table_iter_next (&iter, &key, &value)){
 			int32_t* k = (int32_t *)key;
-			IntArrayList *lst = (IntArrayList *)value;
-			double rd = lst->size;
-			
+			DoubleArrayList *lst = (DoubleArrayList *)value;
 			int_array_list_append(clusters, *k);
-			double_array_list_append(distances, lst->size);			
+			double *ddata = (double *)lst->data;
+			
+			double similarity = 0;
+			if(distanceType == 0){
+				double rc = ddata[1]/ddata[0];
+				const char* maxCrStr = get_max_cr();
+				double *rcm = (double *)g_hash_table_lookup(stats, maxCrStr);
+				similarity = ((*rcm - rc) / (*rcm)) * 100;
+			} else if(distanceType == 1){
+				double rd = ddata[3]/ddata[2];
+				const char* maxDrStr = get_max_dr();
+				double *rdm = (double *)g_hash_table_lookup(res->stats, maxDrStr);
+				 similarity = ((*rdm - rd) / (*rdm)) * 100;
+			}
+			
+			double_array_list_append(distances, similarity);			
 		}
 	} else { /// else we just need to get the lengths from the hash table
 		int32_t *data = clusters->data;
 		
 #pragma omp parallel for
-		for(int32_t i = 0; i < clusters.size; i++){
+		for(int32_t i = 0; i < clusters->size; i++){
 			int32_t key = data[i];
 			IntArrayList *lst = (IntArrayList *)g_hash_table_lookup(distanceMap, &key);
+			
 			double_array_list_append(distances, lst->size);
 		}
 	}
 	
 	// sort
-	hdbscan_quicksort(clusters, lengths, 0, clusters->size);
-	double_array_list_delete(lengths);
+	hdbscan_quicksort(clusters, distances, 0, clusters->size);
+	double_array_list_delete(distances);
 	
 	return clusters;
 }
@@ -1168,7 +1189,7 @@ IntArrayList* hdbscan_sort_by_distance(IntDoubleListMap* distanceMap, IntArrayLi
 /**
  * Sorts clusters according to how long the cluster is
  */
-IntArrayList* hdbscan_sort_by_distance(IntIntListMap* clusterTable, IntArrayList *clusters){
+IntArrayList* hdbscan_sort_by_length(IntIntListMap* clusterTable, IntArrayList *clusters){
 	
 	DoubleArrayList *lengths;
 	if(clusters == NULL){
