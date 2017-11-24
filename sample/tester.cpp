@@ -25,11 +25,11 @@ void dummy_tester(int minPts){
 		map_t clusterTable = createClusterTable(scan.clusterLabels, 0, scan.numPoints);		
 		printClusterTable(clusterTable);
 		
-		map_d dMap = getMinMaxDistances(scan, clusterTable);
+		map<int32_t, distance_values> dMap = getMinMaxDistances(scan, clusterTable);
+		clustering_stats stats;
+		calculateStats(dMap, stats);
 		printDistanceMapTable(dMap);
-		
-		map<string, double> stats = calculateStats(dMap);
-		printStatsMap(stats);
+		printStats(stats);
 		
 		printf("Clustering validity : %d\n", analyseStats(stats));
 				
@@ -38,10 +38,12 @@ void dummy_tester(int minPts){
 			printf("%d ", scan.clusterLabels[i]);
 		}
 		printf("]\n\n");
+		
 		printf("***********************************************************************************\n");
 		if(!rerun){
 			rerun = true;
 		}
+		break;
 	}
 
 }

@@ -47,13 +47,15 @@ int main(int argc, char** argv){
 			printf("SUCCESS: hdbscan clustring completed\n");
 			//printf("Number total number of clusters is %d\n\n", scan->clusters->len);
 			IntIntListMap* clusterTable = hdbscan_create_cluster_table(scan->clusterLabels, 0, scan->numPoints);
-			hdbscan_print_cluster_table(clusterTable);
+			//hdbscan_print_cluster_table(clusterTable);
 				
-			IntDoubleListMap* dMap = hdbscan_get_min_max_distances(scan, clusterTable);
+			IntDistancesMap* dMap = hdbscan_get_min_max_distances(scan, clusterTable);
+			clustering_stats stats;
+			hdbscan_calculate_stats(dMap, &stats);
+			
 			hdbscan_print_distance_map_table(dMap);
-			StringDoubleMap* stats = hdbscan_calculate_stats(dMap);
-			hdbscan_print_stats_map(stats);								
-			printf("Clustering validity : %d\n", hdbscan_analyse_stats(stats));
+			hdbscan_print_stats(&stats);								
+			printf("Clustering validity : %d\n", hdbscan_analyse_stats(&stats));
 				
 			printf("\n\nCluster labels = [");
 			for(uint i = 0; i < scan->numPoints; i++){
@@ -61,12 +63,12 @@ int main(int argc, char** argv){
 			}
 			printf("]\n\n");
 			hdbscan_destroy_distance_map_table(dMap);
-			hdbscan_destroy_stats_map(stats);
+			//hdbscan_destroy_stats_map(stats);
 			hdbscan_destroy_cluster_table(clusterTable);
 		}
 		
 		printf("***********************************************************************************\n\n");
-		//break;
+		break;
 	}
 	
 	hdbscan_destroy(scan);

@@ -31,65 +31,11 @@ extern "C" {
 #define HDBSCAN_SUCCESS 1
 #define HDBSCAN_ERROR	0
 
+#define CORE_DISTANCE_TYPE	0
+#define INTRA_DISTANCE_TYPE	1
+
 typedef GHashTable StringDoubleMap;
-
-
-/**
- * Core distance funtions
- */  
-inline const char* get_mean_cr(){
-	return "mean_cr";
-}
-
-inline const char* get_sd_cr(){
-	return "sd_cr";
-}
-
-inline const char* get_variance_cr(){
-	return "variance_cr";
-}
-
-inline const char* get_max_cr(){
-	return "max_cr";
-}
-
-inline const char* get_kurtosis_cr(){
-	return "kurtosis_cr";
-}
-
-inline const char* get_skew_cr(){
-	return "skew_cr";
-}
-/**
- * intra cluster distance funtions
- */  
-inline const char* get_mean_dr(){
-	return "mean_dr";
-}
-
-inline const char* get_sd_dr(){
-	return "sd_dr";
-}
-
-inline const char* get_variance_dr(){
-	return "variance_dr";
-}
-
-inline const char* get_max_dr(){
-	return "max_dr";
-}
-
-inline const char* get_kurtosis_dr(){
-	return "kurtosis_dr";
-}
-
-inline const char* get_skew_dr(){
-	return "skew_dr";
-}
-
-inline const char* get_count(){
-	return "count";
-}
+typedef GHashTable IntDistancesMap;
 
 /**
  * Implementation of the HDBSCAN* algorithm, which is broken into several methods.
@@ -102,6 +48,31 @@ inline const char* get_count(){
 namespace clustering {
 #endif
 
+typedef struct distance_values{
+	double min_cr;
+	double max_cr;
+	double cr_confidence;
+	
+	double max_dr;
+	double min_dr;
+	double dr_confidence;
+} distance_values;
+
+struct stats_values{
+	double mean;
+	double standardDev;
+	double variance;
+	double max;
+	double kurtosis;
+	double skewness;
+};
+
+typedef struct _clustering_stats{
+	int32_t count;
+	struct stats_values coreDistanceValues;
+	struct stats_values intraDistanceValues;
+} clustering_stats;
+
 struct hdbscan {
 	distance distanceFunction;
 	double* dataSet;
@@ -113,7 +84,6 @@ struct hdbscan {
 	int32_t* clusterLabels;
 	LongIntListMap* hierarchy;
 	IntDoubleMap* clusterStabilities;
-	//IntIntListMap* clusterTable;
 	boolean selfEdges;
 	uint minPoints, minClusterSize, numPoints;
 	
@@ -313,22 +283,24 @@ IntIntListMap* hdbscan_create_cluster_table(int32_t* labels, int32_t begin, int3
  * the core distance values and DR is for 
  * 
  */ 
-StringDoubleMap* hdbscan_calculate_stats(IntDoubleListMap* distanceMap);
+void hdbscan_calculate_stats(IntDistancesMap* distanceMap, clustering_stats* stats);
+
+void hdbscan_calculate_stats_helper(double* cr, double* dr, clustering_stats* stats);
 
 /**
  * Create a hash table for statistical values describing the clustering results
  */
-int32_t hdbscan_analyse_stats(StringDoubleMap* stats); 
+int32_t hdbscan_analyse_stats(clustering_stats* stats); 
 
 /**
  * Get the minimum and maximum core and intra-cluster distances
  */
-IntDoubleListMap* hdbscan_get_min_max_distances(hdbscan* sc, IntIntListMap* clusterTable);
+IntDistancesMap* hdbscan_get_min_max_distances(hdbscan* sc, IntIntListMap* clusterTable);
 
 /**
  * Sorts the clusters using the distances in the distanceMap.
  */
-IntArrayList* hdbscan_sort_by_similarity(IntDoubleListMap* distanceMap, StringDoubleMap* stats, IntArrayList *clusters, int32_t distanceType);
+IntArrayList* hdbscan_sort_by_similarity(IntDoubleListMap* distanceMap, clustering_stats* stats, IntArrayList *clusters, int32_t distanceType);
 
 /**
  * Sorts clusters according to how long the cluster is
@@ -345,21 +317,15 @@ void hdbscan_quicksort(IntArrayList *clusters, DoubleArrayList *sortData, size_t
  * Destroy the hash tables
  */
 void hdbscan_destroy_cluster_table(IntIntListMap* table);
-void hdbscan_destroy_distance_map_table(IntDoubleListMap* table);
-void hdbscan_destroy_stats_map(StringDoubleMap* statsMap);
-
-/**
- * Clean hdbscan without cleaning the distances
- */ 
-//inline void hdbscan_minimal_clean(hdbscan* sc);
+void hdbscan_destroy_distance_map_table(IntDistancesMap* table);
 
 /**
  * Printing the hash tables
  * 
  */ 
 void hdbscan_print_cluster_table(IntIntListMap* table);
-void hdbscan_print_distance_map_table(IntDoubleListMap* table);
-void hdbscan_print_stats_map(StringDoubleMap* statsMap);
+void hdbscan_print_distance_map_table(IntDistancesMap* table);
+void hdbscan_print_stats(clustering_stats* stats);
 #ifdef __cplusplus
 };
 }

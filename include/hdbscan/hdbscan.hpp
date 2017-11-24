@@ -23,20 +23,20 @@ namespace clustering {
 	 * 
 	 **/
 	map_t createClusterTable(int32_t* labels, int32_t begin, int32_t end); 	
-	map_d getMinMaxDistances(hdbscan& scan, map_t& clusterTable);
-	map<string, double> calculateStats(map_d& distanceMap);	
+	map<int32_t, distance_values> getMinMaxDistances(hdbscan& scan, map_t& clusterTable);
+	void calculateStats(map<int32_t, distance_values>& distanceMap, clustering_stats& stats);	
 
 	/**
 	 * 
 	 * 
 	 */
-	int32_t analyseStats(map<string, double>& stats); 
+	int32_t analyseStats(clustering_stats& stats); 
 	
 	void printClusterTable(map_t& table);
 
-	void printDistanceMapTable(map_d& distancesMap);
+	void printDistanceMapTable(map<int32_t, distance_values>& distancesMap);
 
-	void printStatsMap(map<string, double>& table);
+	void printStats(clustering_stats& stats);
 };
 #endif
 #endif /* HDBSCAN_HPP_ */

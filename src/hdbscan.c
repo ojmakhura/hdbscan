@@ -849,8 +849,8 @@ IntIntListMap* hdbscan_create_cluster_table(int* labels, int32_t begin, int32_t 
 	return clusterTable;
 }
 
-IntDoubleListMap* hdbscan_get_min_max_distances(hdbscan* sc, IntIntListMap* clusterTable){
-	IntDoubleListMap* distanceMap = g_hash_table_new(g_int_hash, g_int_equal);
+IntDistancesMap* hdbscan_get_min_max_distances(hdbscan* sc, IntIntListMap* clusterTable){
+	IntDistancesMap* distanceMap = g_hash_table_new_full(g_int_hash, g_int_equal, free, free);
 	double* core = sc->distanceFunction.coreDistances;	
 	double zero = 0.00000000000;
 	
@@ -864,50 +864,48 @@ IntDoubleListMap* hdbscan_get_min_max_distances(hdbscan* sc, IntIntListMap* clus
 		int32_t* idxList = (int32_t* )clusterLabels->data;
 		
 		for(int i = 0; i < clusterLabels->size; i++){
-			DoubleArrayList* dl = g_hash_table_lookup(distanceMap, (int32_t *)key);
+			distance_values* dl = g_hash_table_lookup(distanceMap, (int32_t *)key);
 			int32_t index = idxList[i];
 			int32_t *k = NULL;
 			
 			if(dl == NULL){
-				dl = double_array_list_init_size(4);
+				dl = (distance_values *)malloc(sizeof(distance_values));
 				
 				k = (int32_t *)malloc(sizeof(int32_t));
 				*k = *((int32_t *)key);
-				double_array_list_append(dl, core[index]);
-				double_array_list_append(dl, core[index]);
+				dl->min_cr = core[index];
+				dl->max_cr = core[index];
+				dl->cr_confidence = 0.0;
+				
+				dl->min_dr = DBL_MAX;
+				dl->max_dr = DBL_MIN;
+				dl->dr_confidence = 0.0;
+				
 				g_hash_table_insert(distanceMap, k, dl);
 			} else{
-				double* ddata = dl->data;
-				
-				if(ddata[0] > core[index] && (core[index] < zero || core[index] > zero)){
-					ddata[0] = core[index];
+				if(dl->min_cr > core[index] && (core[index] < zero || core[index] > zero)){
+					dl->min_cr = core[index];
 				}
 								
 				//max core distance
-				if(ddata[1] < core[index]){
-					ddata[1] = core[index];
+				if(dl->max_cr < core[index]){
+					dl->max_cr = core[index];
 				}
 			}
 			
 			// Calculating min and max distances
 			for(size_t j = i+1; j < clusterLabels->size; j++){
-				double d = distance_get(&(sc->distanceFunction), i, j);
-
-				if(dl->size == 2){
-					double_array_list_append(dl, d);
-					double_array_list_append(dl, d);
-				} else{
-					double* ddata = dl->data;
-					// min distance
-					if(ddata[2] > d && (d < zero || d > zero)){
-						ddata[2] = d;
-					}
-
-					// max distance
-					if(ddata[3] < d){
-						ddata[3] = d;
-					}
+				double d = distance_get(&(sc->distanceFunction), index, idxList[j]);
+				
+				if(dl->min_dr > d && (d < zero || d > zero)){
+					dl->min_dr = d;
 				}
+
+				// max distance
+				if(dl->max_dr < d){
+					dl->max_dr = d;
+				}
+				
 			}			
 		}
 	}
@@ -915,136 +913,75 @@ IntDoubleListMap* hdbscan_get_min_max_distances(hdbscan* sc, IntIntListMap* clus
 	return distanceMap;
 }
 
-void hdbscan_destroy_distance_map_table(IntDoubleListMap* table){
-	
-	GHashTableIter iter;
-	gpointer key;
-	gpointer value;
-	g_hash_table_iter_init (&iter, table);
-
-	while (g_hash_table_iter_next (&iter, &key, &value)){
-		DoubleArrayList* dl = g_hash_table_lookup(table, (int32_t *)key);
-		double_array_list_delete(dl);
-		
-		if(key != NULL){
-			free(key);
-		}
-	}
+void hdbscan_destroy_distance_map_table(IntDistancesMap* table){
 	
 	g_hash_table_destroy(table);
 	table = NULL;	
 }
+void hdbscan_calculate_stats_helper(double* cr, double* dr, clustering_stats* stats){
+// Calculating core distance statistics	
+	stats->coreDistanceValues.mean = stats->coreDistanceValues.mean / stats->count;
+	stats->coreDistanceValues.standardDev = gsl_stats_sd(cr, 1, stats->count);
+	stats->coreDistanceValues.variance = gsl_stats_variance(cr, 1, stats->count);
+	stats->coreDistanceValues.kurtosis = gsl_stats_kurtosis(cr, 1, stats->count);
+	stats->coreDistanceValues.skewness = gsl_stats_skew(cr, 1, stats->count);
+	stats->coreDistanceValues.mean = gsl_stats_mean(cr, 1, stats->count);
+	stats->coreDistanceValues.max = gsl_stats_max(cr, 1, stats->count);
+	
+	// calculating intra distance statistics
+	stats->intraDistanceValues.mean = stats->intraDistanceValues.mean / stats->count;
+	stats->intraDistanceValues.standardDev = gsl_stats_sd(dr, 1, stats->count);
+	stats->intraDistanceValues.variance = gsl_stats_variance(dr, 1, stats->count);
+	stats->intraDistanceValues.kurtosis = gsl_stats_kurtosis(dr, 1, stats->count);
+	stats->intraDistanceValues.skewness = gsl_stats_skew(dr, 1, stats->count);
+	stats->intraDistanceValues.mean = gsl_stats_mean(dr, 1, stats->count);
+	stats->intraDistanceValues.max = gsl_stats_max(dr, 1, stats->count);
+}
 
-StringDoubleMap* hdbscan_calculate_stats(IntDoubleListMap* distanceMap){
-	StringDoubleMap* statsMap = g_hash_table_new_full(g_str_hash, g_str_equal, free, free);
+void hdbscan_calculate_stats(IntDistancesMap* distanceMap, clustering_stats* stats){
+	
 	GHashTableIter iter;
 	gpointer key;
 	gpointer value;
 	g_hash_table_iter_init (&iter, distanceMap);
+	
 	double cr[g_hash_table_size(distanceMap)];
 	double dr[g_hash_table_size(distanceMap)];
-	int c = 0;
-	double maxcr, maxdr;
 	
-	double sumcr = 0;
-	double sumdr = 0;
-	
+	int c = 0;	
 	while (g_hash_table_iter_next (&iter, &key, &value)){
-		DoubleArrayList* dl = (DoubleArrayList*)value;
-		double* ddata = dl->data;		
-		cr[c] = ddata[1]/ddata[0];
-		dr[c] = ddata[3]/ddata[2];
-		
-		sumcr += cr[c];
-		sumdr += dr[c];
-		
-		if(c == 0){
-			maxcr = cr[c];
-			maxdr = dr[c];
-		} else{				
-			if(cr[c] > maxcr){
-				maxcr = cr[c];
-			}
+		distance_values* dl = (distance_values*)value;
+		cr[c] = dl->max_cr/dl->min_cr;
+		dr[c] = dl->max_dr/dl->min_dr;
 			
-			if(dr[c] > maxdr){
-				maxdr = dr[c];
-			}
-		}
-		
 		c++;
 	}
 	
-	// Calculating core distance statistics
-	double* x = (double *)malloc(sizeof(double));
-	*x = sumcr / c;
-	g_hash_table_insert(statsMap, strdup(get_mean_cr()), x);
-	
-	x = (double *)malloc(sizeof(double));
-	*x = gsl_stats_sd(cr, 1, c);	
-	g_hash_table_insert(statsMap, strdup(get_sd_cr()), x);
+	stats->count = c;	
+	hdbscan_calculate_stats_helper(cr, dr, stats);
 		
-	x = (double *)malloc(sizeof(double));
-	*x = gsl_stats_variance(cr, 1, c);	
-	g_hash_table_insert(statsMap, strdup(get_variance_cr()), x);
+	/// update the distanceMap confidences
+	c = 0;
+	g_hash_table_iter_init (&iter, distanceMap);
+	while (g_hash_table_iter_next (&iter, &key, &value)){
+		distance_values* dl = (distance_values*)value;
+		double rc = cr[c];
+		double rd = dr[c];
+		
+		dl->cr_confidence = ((stats->coreDistanceValues.max - rc) / stats->coreDistanceValues.max) * 100;
+		dl->dr_confidence = ((stats->intraDistanceValues.max - rd) / stats->intraDistanceValues.max) * 100;
+		c++;
+	}
 	
-	x = (double *)malloc(sizeof(double));
-	*x = maxcr; 
-	g_hash_table_insert(statsMap, strdup(get_max_cr()), x);
-	
-	x = (double *)malloc(sizeof(double));
-	*x = gsl_stats_kurtosis(cr, 1, c);
-	g_hash_table_insert(statsMap, strdup(get_kurtosis_cr()), x);
-	
-	x = (double *)malloc(sizeof(double));
-	*x = gsl_stats_skew(cr, 1, c);
-	g_hash_table_insert(statsMap, strdup(get_skew_cr()), x);
-	
-	// calculating intra distance statistics
-	x = (double *)malloc(sizeof(double));
-	*x = sumdr / c;
-	g_hash_table_insert(statsMap, strdup(get_mean_dr()), x);
-	
-	x = (double *)malloc(sizeof(double));
-	*x = gsl_stats_sd(dr, 1, c);
-	g_hash_table_insert(statsMap, strdup(get_sd_dr()), x);
-	
-	x = (double *)malloc(sizeof(double));
-	*x = gsl_stats_variance(dr, 1, c);
-	g_hash_table_insert(statsMap, strdup(get_variance_dr()), x);
-	
-	x = (double *)malloc(sizeof(double));
-	*x = maxdr;
-	g_hash_table_insert(statsMap, strdup(get_max_dr()), x);
-	
-	x = (double *)malloc(sizeof(double));
-	*x = gsl_stats_kurtosis(dr, 1, c);
-	g_hash_table_insert(statsMap, strdup(get_kurtosis_dr()), x);
-	
-	x = (double *)malloc(sizeof(double));
-	*x = gsl_stats_skew(dr, 1, c);
-	g_hash_table_insert(statsMap, strdup(get_skew_dr()), x);
-	
-	x = (double *)malloc(sizeof(double));
-	*x = c;
-	g_hash_table_insert(statsMap, strdup(get_count()), x);
-	
-	return statsMap;
 }
 
-int32_t hdbscan_analyse_stats(StringDoubleMap* stats){
+int32_t hdbscan_analyse_stats(clustering_stats* stats){
 	int32_t validity = -1;
 	
-	double* value = (double *)g_hash_table_lookup(stats, get_skew_cr());
-	double skew_cr = *value;
-	
-	value = (double *)g_hash_table_lookup(stats, get_skew_dr());
-	double skew_dr = *value;
-	
-	value = (double *)g_hash_table_lookup(stats, get_kurtosis_cr());
-	double kurtosis_cr = *value;
-	
-	value = (double *)g_hash_table_lookup(stats, get_kurtosis_dr());
-	double kurtosis_dr = *value;	
+	double skew_cr = stats->coreDistanceValues.skewness;	
+	double skew_dr = stats->intraDistanceValues.skewness;
+	double kurtosis_cr = stats->coreDistanceValues.kurtosis;
+	double kurtosis_dr = stats->intraDistanceValues.kurtosis;	
 	
 	if((skew_dr > 0.0 ) && (kurtosis_dr > 0.0 )){
 		validity = 2;
@@ -1065,6 +1002,7 @@ int32_t hdbscan_analyse_stats(StringDoubleMap* stats){
 	} else{
 		validity += -1;
 	}
+	
 	return validity;
 }
 
@@ -1128,7 +1066,7 @@ void hdbscan_quicksort(IntArrayList *clusters, DoubleArrayList *sortData, size_t
 /**
  * Sorts the clusters using the distances in the distanceMap.
  */
-IntArrayList* hdbscan_sort_by_similarity(IntDoubleListMap* distanceMap, StringDoubleMap* stats, IntArrayList *clusters, int32_t distanceType){
+IntArrayList* hdbscan_sort_by_similarity(IntDoubleListMap* distanceMap, clustering_stats* stats, IntArrayList *clusters, int32_t distanceType){
 
 	DoubleArrayList *distances;
 	if(clusters == NULL){
@@ -1148,34 +1086,18 @@ IntArrayList* hdbscan_sort_by_similarity(IntDoubleListMap* distanceMap, StringDo
 
 		while (g_hash_table_iter_next (&iter, &key, &value)){
 			int32_t* k = (int32_t *)key;
-			DoubleArrayList *lst = (DoubleArrayList *)value;
-			int_array_list_append(clusters, *k);
-			double *ddata = (double *)lst->data;
-			
-			double similarity = 0;
-			if(distanceType == 0){
-				double rc = ddata[1]/ddata[0];
-				const char* maxCrStr = get_max_cr();
-				double *rcm = (double *)g_hash_table_lookup(stats, maxCrStr);
-				similarity = ((*rcm - rc) / (*rcm)) * 100;
-			} else if(distanceType == 1){
-				double rd = ddata[3]/ddata[2];
-				const char* maxDrStr = get_max_dr();
-				double *rdm = (double *)g_hash_table_lookup(res->stats, maxDrStr);
-				 similarity = ((*rdm - rd) / (*rdm)) * 100;
-			}
-			
-			double_array_list_append(distances, similarity);			
+			distance_values *dv = (distance_values *)value;
+			int_array_list_append(clusters, *k);			
+			double_array_list_append(distances, distanceType == CORE_DISTANCE_TYPE ? dv->cr_confidence : dv->dr_confidence);			
 		}
 	} else { /// else we just need to get the lengths from the hash table
 		int32_t *data = clusters->data;
 		
 #pragma omp parallel for
 		for(int32_t i = 0; i < clusters->size; i++){
-			int32_t key = data[i];
-			IntArrayList *lst = (IntArrayList *)g_hash_table_lookup(distanceMap, &key);
-			
-			double_array_list_append(distances, lst->size);
+			int32_t *key = data + i;
+			distance_values *dv = (distance_values *)g_hash_table_lookup(distanceMap, key);			
+			double_array_list_append(distances, distanceType == CORE_DISTANCE_TYPE ? dv->cr_confidence : dv->dr_confidence);
 		}
 	}
 	
@@ -1199,7 +1121,7 @@ IntArrayList* hdbscan_sort_by_length(IntIntListMap* clusterTable, IntArrayList *
 		lengths = double_array_list_init(clusters->size);
 	}
 	
-	int32_t empty = (clusters->size() == 0);
+	int32_t empty = (clusters->size == 0);
 	
 	if(empty){     /// If clusters had nothing in it, we will use the whole hash table 
 		GHashTableIter iter;
@@ -1210,19 +1132,18 @@ IntArrayList* hdbscan_sort_by_length(IntIntListMap* clusterTable, IntArrayList *
 		while (g_hash_table_iter_next (&iter, &key, &value)){
 			int32_t* k = (int32_t *)key;
 			IntArrayList *lst = (IntArrayList *)value;
-			double rd = lst->size;
-			
+						
 			int_array_list_append(clusters, *k);
-			double_array_list_append(lengths, lst->size);			
+			double_array_list_append(lengths, (double)lst->size);			
 		}
 	} else { /// else we just need to get the lengths from the hash table
 		int32_t *data = clusters->data;
 		
 #pragma omp parallel for
-		for(int32_t i = 0; i < clusters.size; i++){
+		for(int32_t i = 0; i < clusters->size; i++){
 			int32_t key = data[i];
 			IntArrayList *lst = (IntArrayList *)g_hash_table_lookup(clusterTable, &key);
-			double_array_list_append(lengths, lst->size);
+			double_array_list_append(lengths, (double)lst->size);
 		}
 	}
 	
@@ -1233,10 +1154,10 @@ IntArrayList* hdbscan_sort_by_length(IntIntListMap* clusterTable, IntArrayList *
 	return clusters;
 }
 
-void hdbscan_destroy_stats_map(StringDoubleMap* statsMap){
+/*void hdbscan_destroy_stats_map(clustering_stats* statsMap){
 	g_hash_table_destroy(statsMap);
 	statsMap = NULL;
-}
+}*/
 
 void hdbscan_destroy_cluster_table(IntIntListMap* table){
 	
@@ -1277,40 +1198,44 @@ void hdbscan_print_cluster_table(IntIntListMap* table){
 	}
 }
 
-void hdbscan_print_distance_map_table(IntDoubleListMap* distancesMap){
+void hdbscan_print_distance_map_table(IntDistancesMap* distancesMap){
 	GHashTableIter iter;
 	gpointer key;
 	gpointer value;
 	g_hash_table_iter_init (&iter, distancesMap);
 
 	printf("\n///////////////////////////////////////////////////////////////////////////////////////\n");
-	//printf("cluster -> min_cr, max_cr, min_dr, max_dr\n");
 	while (g_hash_table_iter_next (&iter, &key, &value)){
 		int32_t label = *((int32_t *)key);
-		printf("%d -> [", label);
-		DoubleArrayList* list = (DoubleArrayList*)value;
+		printf("%d -> {\n", label);
+		distance_values* dv = (distance_values *)value;
 		
-		for(int i = 0; i < list->size; i++){
-			double *dpointer = double_array_list_data(list, i);
-			printf("%f ", *dpointer);
-		}
-		
-		printf("]\n");
+		printf("min_cr : %f, max_cr : %f, cr_confidence : %f\n", dv->min_cr, dv->max_cr, dv->cr_confidence);
+		printf("min_dr : %f, max_dr : %f, dr_confidence : %f\n", dv->min_dr, dv->max_dr, dv->dr_confidence);
+				
+		printf("}\n\n");
 	}
 	printf("///////////////////////////////////////////////////////////////////////////////////////\n\n");
 }
 
-void hdbscan_print_stats_map(StringDoubleMap* table){
+void hdbscan_print_stats(clustering_stats* stats){
 	
-	GHashTableIter iter;
-	gpointer key;
-	gpointer value;
-	g_hash_table_iter_init (&iter, table);
-	printf("///////////////////////////////////////////////////////////////////////////////////////\n");
-	while (g_hash_table_iter_next (&iter, &key, &value)){
-		char* label = key;
-		double* v = (double*)value;
-		printf("%s : %f\n", label, *v);
-	}
+	printf("//////////////////////////////////////// Statistical Values ///////////////////////////////////////////////\n");
+	
+	printf("Cluster Count 					: %d\n", stats->count);	
+	printf("Core Distances - Max 			: %.5f\n", stats->coreDistanceValues.max);
+	printf("Core Distances - Mean 			: %.5f\n", stats->coreDistanceValues.mean);
+	printf("Core Distances - Skewness 		: %.5f\n", stats->coreDistanceValues.skewness);
+	printf("Core Distances - Kurtosis 		: %.5f\n", stats->coreDistanceValues.kurtosis);
+	printf("Core Distances - Variance 		: %.5f\n", stats->coreDistanceValues.variance);
+	printf("Core Distances - Standard Dev 	: %.5f\n\n", stats->coreDistanceValues.standardDev);
+	
+	printf("Intra Distances - Max 			: %.5f\n", stats->intraDistanceValues.max);
+	printf("Intra Distances - Mean 			: %.5f\n", stats->intraDistanceValues.mean);
+	printf("Intra Distances - Skewness 		: %.5f\n", stats->intraDistanceValues.skewness);
+	printf("Intra Distances - Kurtosis 		: %.5f\n", stats->intraDistanceValues.kurtosis);
+	printf("Intra Distances - Variance 		: %.5f\n", stats->intraDistanceValues.variance);
+	printf("Intra Distances - Standard Dev 	: %.5f\n", stats->intraDistanceValues.standardDev);
+	
 	printf("///////////////////////////////////////////////////////////////////////////////////////\n\n");
 }
