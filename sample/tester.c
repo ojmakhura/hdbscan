@@ -1,5 +1,11 @@
 /*
  * tester.c
+ * 
+ * A simple tester for the hdbscan library using C. This file shows how
+ * call the different methods. It shows how to run the initial clustering
+ * as well as how to recluster using the same data but different minPts.
+ * There is examples of how to create the clustering table as well as 
+ * statistical values and the cluster confidences and sorting the 
  *
  *  Created on: 17 Sep 2017
  *      Author: junior
@@ -48,8 +54,9 @@ int main(int argc, char** argv){
 			IntIntListMap* clusterTable = hdbscan_create_cluster_table(scan->clusterLabels, 0, scan->numPoints);
 			hdbscan_print_cluster_table(clusterTable);
 			
-			IntArrayList* sorted = hdbscan_sort_by_length(clusterTable, NULL);
-			printf("\n\nSorted = [");
+			IntArrayList* sorted  = int_array_list_init(g_hash_table_size(clusterTable));
+			sorted = hdbscan_sort_by_length(clusterTable, sorted);
+			printf("\n\nSorted by length = [");
 			
 			int32_t *data = (int32_t *)sorted->data;
 			for(size_t i = 0; i < sorted->size; i++){
@@ -60,7 +67,15 @@ int main(int argc, char** argv){
 			IntDistancesMap* dMap = hdbscan_get_min_max_distances(scan, clusterTable);
 			clustering_stats stats;
 			hdbscan_calculate_stats(dMap, &stats);
-			sorted = hdbscan_sort_by_similarity(dMap, NULL, CORE_DISTANCE_TYPE);
+			
+			sorted = hdbscan_sort_by_similarity(dMap, sorted, INTRA_DISTANCE_TYPE); // There is choice to use CORE_DISTANCE_TYPE
+			printf("Sorted by similarity = [");
+			
+			data = (int32_t *)sorted->data;
+			for(size_t i = 0; i < sorted->size; i++){
+				printf("%d ", data[i]);
+			}
+			printf("]\n\n");
 			
 			hdbscan_print_distance_map_table(dMap);
 			hdbscan_print_stats(&stats);								
@@ -71,8 +86,8 @@ int main(int argc, char** argv){
 				printf("%d ", scan->clusterLabels[i]);
 			}
 			printf("]\n\n");
+			int_array_list_delete(sorted);
 			hdbscan_destroy_distance_map_table(dMap);
-			//hdbscan_destroy_stats_map(stats);
 			hdbscan_destroy_cluster_table(clusterTable);
 		}
 		

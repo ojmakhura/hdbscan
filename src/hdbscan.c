@@ -922,6 +922,8 @@ void hdbscan_destroy_distance_map_table(IntDistancesMap* table){
 	table = NULL;	
 }
 void hdbscan_calculate_stats_helper(double* cr, double* dr, clustering_stats* stats){
+#pragma omp parallel
+{
 // Calculating core distance statistics	
 	stats->coreDistanceValues.mean = stats->coreDistanceValues.mean / stats->count;
 	stats->coreDistanceValues.standardDev = gsl_stats_sd(cr, 1, stats->count);
@@ -939,6 +941,7 @@ void hdbscan_calculate_stats_helper(double* cr, double* dr, clustering_stats* st
 	stats->intraDistanceValues.skewness = gsl_stats_skew(dr, 1, stats->count);
 	stats->intraDistanceValues.mean = gsl_stats_mean(dr, 1, stats->count);
 	stats->intraDistanceValues.max = gsl_stats_max(dr, 1, stats->count);
+}
 }
 
 void hdbscan_calculate_stats(IntDistancesMap* distanceMap, clustering_stats* stats){
@@ -1066,7 +1069,9 @@ void hdbscan_quicksort(IntArrayList *clusters, DoubleArrayList *sortData, int32_
 
 
 /**
- * Sorts the clusters using the distances in the distanceMap.
+ * Sorts the clusters using the distances in the distanceMap. This 
+ * function requires that the confidences be already calculates. This 
+ * can be achieved by calling the hdbscan_calculate_stats function
  */
 IntArrayList* hdbscan_sort_by_similarity(IntDistancesMap* distanceMap, IntArrayList *clusters, int32_t distanceType){
 
@@ -1102,6 +1107,8 @@ IntArrayList* hdbscan_sort_by_similarity(IntDistancesMap* distanceMap, IntArrayL
 		}
 	} else { /// else we just need to get the lengths from the hash table
 		int32_t *data = clusters->data;
+		distances->size = clusters->size;
+		double *ddata = distances->data;
 		
 #pragma omp parallel for
 		for(int32_t i = 0; i < clusters->size; i++){
@@ -1114,8 +1121,7 @@ IntArrayList* hdbscan_sort_by_similarity(IntDistancesMap* distanceMap, IntArrayL
 			} else{
 				conf = dv->dr_confidence;
 			}
-					
-			double_array_list_append(distances, conf);
+			ddata[i] = conf;
 		}
 	}
 	
@@ -1136,7 +1142,7 @@ IntArrayList* hdbscan_sort_by_length(IntIntListMap* clusterTable, IntArrayList *
 		clusters = int_array_list_init(g_hash_table_size(clusterTable));
 		lengths = double_array_list_init(g_hash_table_size(clusterTable));
 	} else{
-		lengths = double_array_list_init(clusters->size);
+		lengths = double_array_list_init(clusters->max_size);
 	}
 	
 	int32_t size = clusters->size;
@@ -1155,12 +1161,14 @@ IntArrayList* hdbscan_sort_by_length(IntIntListMap* clusterTable, IntArrayList *
 		}
 	} else { /// else we just need to get the lengths from the hash table
 		int32_t *data = clusters->data;
+		lengths->size = clusters->size;
+		double *ddata = lengths->data;
 		
 #pragma omp parallel for
 		for(int32_t i = 0; i < clusters->size; i++){
 			int32_t key = data[i];
 			IntArrayList *lst = (IntArrayList *)g_hash_table_lookup(clusterTable, &key);
-			double_array_list_append(lengths, (double)lst->size);
+			ddata[i] = (double)lst->size;
 		}
 	}
 	// sort
