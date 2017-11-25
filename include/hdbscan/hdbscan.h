@@ -300,7 +300,7 @@ IntDistancesMap* hdbscan_get_min_max_distances(hdbscan* sc, IntIntListMap* clust
 /**
  * Sorts the clusters using the distances in the distanceMap.
  */
-IntArrayList* hdbscan_sort_by_similarity(IntDoubleListMap* distanceMap, clustering_stats* stats, IntArrayList *clusters, int32_t distanceType);
+IntArrayList* hdbscan_sort_by_similarity(IntDistancesMap* distanceMap, IntArrayList *clusters, int32_t distanceType);
 
 /**
  * Sorts clusters according to how long the cluster is
@@ -310,7 +310,7 @@ IntArrayList* hdbscan_sort_by_length(IntIntListMap* clusterTable, IntArrayList *
 /**
  * Uses quick sort algorithm to sort clusters based on the data
  */ 
-void hdbscan_quicksort(IntArrayList *clusters, DoubleArrayList *sortData, size_t left, size_t right);
+void hdbscan_quicksort(IntArrayList *clusters, DoubleArrayList *sortData, int32_t left, int32_t right);
 
 /**
  * 

@@ -44,14 +44,23 @@ int main(int argc, char** argv){
 		if(err == HDBSCAN_ERROR){
 			printf("ERROR: Could not run hdbscan\n");
 		} else{
-			printf("SUCCESS: hdbscan clustring completed\n");
-			//printf("Number total number of clusters is %d\n\n", scan->clusters->len);
+			printf("SUCCESS: hdbscan clustering completed\n");
 			IntIntListMap* clusterTable = hdbscan_create_cluster_table(scan->clusterLabels, 0, scan->numPoints);
-			//hdbscan_print_cluster_table(clusterTable);
+			hdbscan_print_cluster_table(clusterTable);
+			
+			IntArrayList* sorted = hdbscan_sort_by_length(clusterTable, NULL);
+			printf("\n\nSorted = [");
+			
+			int32_t *data = (int32_t *)sorted->data;
+			for(size_t i = 0; i < sorted->size; i++){
+				printf("%d ", data[i]);
+			}
+			printf("]\n\n");
 				
 			IntDistancesMap* dMap = hdbscan_get_min_max_distances(scan, clusterTable);
 			clustering_stats stats;
 			hdbscan_calculate_stats(dMap, &stats);
+			sorted = hdbscan_sort_by_similarity(dMap, NULL, CORE_DISTANCE_TYPE);
 			
 			hdbscan_print_distance_map_table(dMap);
 			hdbscan_print_stats(&stats);								
