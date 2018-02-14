@@ -20,6 +20,7 @@ int main(int argc, char** argv){
 	clock_t begin, end;
 	int err;
 	double time_spent;
+	//int x = atoi(argv[1]);
 	hdbscan* scan = hdbscan_init(NULL, atoi(argv[1]), DATATYPE_DOUBLE);
 	bool rerun_ = false;
 	if(scan == NULL){
@@ -54,19 +55,26 @@ int main(int argc, char** argv){
 			IntIntListMap* clusterTable = hdbscan_create_cluster_table(scan->clusterLabels, 0, scan->numPoints);
 			hdbscan_print_cluster_table(clusterTable);
 			
-			IntArrayList* sorted  = int_array_list_init(g_hash_table_size(clusterTable));
-			sorted = hdbscan_sort_by_length(clusterTable, sorted);
-			printf("\n\nSorted by length = [");
-			
-			int32_t *data = (int32_t *)sorted->data;
-			for(size_t i = 0; i < sorted->size; i++){
-				printf("%d ", data[i]);
-			}
-			printf("]\n\n");
-				
 			IntDistancesMap* dMap = hdbscan_get_min_max_distances(scan, clusterTable);
 			clustering_stats stats;
 			hdbscan_calculate_stats(dMap, &stats);
+			
+			/*IntArrayList* sorted  = int_array_list_init(g_hash_table_size(clusterTable));
+			int_array_list_append(sorted, 7);
+			int_array_list_append(sorted, 28);
+			int_array_list_append(sorted, 29);
+			int_array_list_append(sorted, 25);
+			sorted = hdbscan_sort_by_length(clusterTable, sorted);
+			printf("\n\nSorted by length = [\n");
+			
+			int32_t *data = (int32_t *)sorted->data;
+			for(size_t i = 0; i < sorted->size; i++){
+				IntArrayList* l1 = (IntArrayList*)g_hash_table_lookup(clusterTable, data+i);	
+				printf("%d : %d\n", data[i], l1->size);
+			}
+			printf("]\n\n");
+			
+				
 			
 			sorted = hdbscan_sort_by_similarity(dMap, sorted, INTRA_DISTANCE_TYPE); // There is choice to use CORE_DISTANCE_TYPE
 			printf("Sorted by similarity = [");
@@ -76,6 +84,7 @@ int main(int argc, char** argv){
 				printf("%d ", data[i]);
 			}
 			printf("]\n\n");
+			*/ 
 			
 			hdbscan_print_distance_map_table(dMap);
 			hdbscan_print_stats(&stats);								
@@ -86,7 +95,7 @@ int main(int argc, char** argv){
 				printf("%d ", scan->clusterLabels[i]);
 			}
 			printf("]\n\n");
-			int_array_list_delete(sorted);
+			//int_array_list_delete(sorted);
 			hdbscan_destroy_distance_map_table(dMap);
 			hdbscan_destroy_cluster_table(clusterTable);
 		}

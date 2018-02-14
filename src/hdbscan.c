@@ -1106,9 +1106,9 @@ IntArrayList* hdbscan_sort_by_similarity(IntDistancesMap* distanceMap, IntArrayL
 			double_array_list_append(distances, conf);			
 		}
 	} else { /// else we just need to get the lengths from the hash table
-		int32_t *data = clusters->data;
+		int32_t *data = (int32_t *)clusters->data;
 		distances->size = clusters->size;
-		double *ddata = distances->data;
+		double *ddata = (double *)distances->data;
 		
 #pragma omp parallel for
 		for(int32_t i = 0; i < clusters->size; i++){
@@ -1160,10 +1160,9 @@ IntArrayList* hdbscan_sort_by_length(IntIntListMap* clusterTable, IntArrayList *
 			double_array_list_append(lengths, (double)lst->size);			
 		}
 	} else { /// else we just need to get the lengths from the hash table
-		int32_t *data = clusters->data;
+		int32_t *data = (int32_t *)clusters->data;
 		lengths->size = clusters->size;
-		double *ddata = lengths->data;
-		
+		double *ddata = (double *)lengths->data;
 #pragma omp parallel for
 		for(int32_t i = 0; i < clusters->size; i++){
 			int32_t key = data[i];
