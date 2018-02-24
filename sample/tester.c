@@ -59,11 +59,17 @@ int main(int argc, char** argv){
 			clustering_stats stats;
 			hdbscan_calculate_stats(dMap, &stats);
 			
-			/*IntArrayList* sorted  = int_array_list_init(g_hash_table_size(clusterTable));
-			int_array_list_append(sorted, 7);
-			int_array_list_append(sorted, 28);
-			int_array_list_append(sorted, 29);
-			int_array_list_append(sorted, 25);
+			IntArrayList* sorted  = int_array_list_init(g_hash_table_size(clusterTable));
+			GHashTableIter iter;
+			gpointer key;
+			gpointer value;
+			g_hash_table_iter_init (&iter, clusterTable);
+
+			while (g_hash_table_iter_next (&iter, &key, &value)){
+				int32_t* k = (int32_t *)key;	
+				int_array_list_append(sorted, *k);		
+			}
+			
 			sorted = hdbscan_sort_by_length(clusterTable, sorted);
 			printf("\n\nSorted by length = [\n");
 			
@@ -73,9 +79,7 @@ int main(int argc, char** argv){
 				printf("%d : %d\n", data[i], l1->size);
 			}
 			printf("]\n\n");
-			
-				
-			
+						
 			sorted = hdbscan_sort_by_similarity(dMap, sorted, INTRA_DISTANCE_TYPE); // There is choice to use CORE_DISTANCE_TYPE
 			printf("Sorted by similarity = [");
 			
@@ -84,7 +88,7 @@ int main(int argc, char** argv){
 				printf("%d ", data[i]);
 			}
 			printf("]\n\n");
-			*/ 
+			
 			
 			hdbscan_print_distance_map_table(dMap);
 			hdbscan_print_stats(&stats);								

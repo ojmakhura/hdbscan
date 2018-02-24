@@ -416,19 +416,7 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 					cluster* examinedCluster = (sc->clusters->pdata)[examinedClusterLabel];
 
 					cluster* newCluster = hdbscan_create_new_cluster(sc, constructingSubCluster, currentClusterLabels, examinedCluster, 0, currentEdgeWeight);
-					/*printf(
-							"\nhdbscan_create_new_cluster(points = %ld, parentCluster = %d, clusterLabel = %d, edgeWeight = %d)\n",
-							constructingSubCluster->count, numVertices,
-							examinedCluster != NULL ?
-									examinedCluster->label : 0, 0,
-							currentEdgeWeight);*/
-
-					/*printf("(sc->clusters->pdata)[examinedClusterLabel] = [%d -> %f, %f, %d, %d, %ld, %f]\n",
-							examinedCluster->label, examinedCluster->birthLevel,
-							examinedCluster->deathLevel, examinedCluster->hasChildren,
-							examinedCluster->numPoints, examinedCluster->offset,
-							examinedCluster->stability);*/
-
+					
 					for (int i = 0; i < constructingSubCluster->count; i++) {
 						int point;
 						gl_oset_value_at(constructingSubCluster, i, &point);
@@ -452,15 +440,11 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 			if (numChildClusters >= 2 && currentClusterLabels[dd] == examinedClusterLabel) {
 				while(unexploredFirstChildClusterPoints->count > 0){
 					int vertexToExplore;
-					//= *(int_array_set_data(unexploredFirstChildClusterPoints, unexploredFirstChildClusterPoints->count-1));
-					//int_array_set_remove_last(unexploredFirstChildClusterPoints);
 					gl_oset_remove_at(unexploredFirstChildClusterPoints, unexploredFirstChildClusterPoints->count-1, &vertexToExplore);
-
 					IntArrayList* v = (sc->mst->edges)[vertexToExplore];
 
 					for (int i = 0; i < v->size; i++) {
 						int neighbor = *(int_array_list_data(v, i));
-						//int p = int_array_set_insert(firstChildCluster, neighbor);
 						if (gl_oset_nx_add(firstChildCluster, neighbor)) {
 							gl_oset_nx_add(unexploredFirstChildClusterPoints, neighbor);
 						}
@@ -472,11 +456,6 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 
 				newClusters = g_list_append(newClusters, newCluster);
 				nextClusterLabel++;
-				/*printf("newCluster = [%d -> %f, %f, %d, %d, %ld, %f]\n",
-						newCluster->label, newCluster->birthLevel,
-						newCluster->deathLevel, newCluster->hasChildren,
-						newCluster->numPoints, newCluster->offset,
-						newCluster->stability);*/
 				g_ptr_array_add(sc->clusters, newCluster);
 			}
 			gl_oset_free(firstChildCluster);
@@ -505,7 +484,6 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 			gl_oset_nx_add(newClusterLabels, lineCount);
 			itr = g_list_next(itr);
 		}
-		//printf("hdbscan_compute_hierarchy_and_cluster_tree: 12\n");
 
 		if (newClusterLabels->count > 0){
 			//calculateNumConstraintsSatisfied(newClusterLabels, currentClusterLabels);
@@ -515,7 +493,6 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 			previousClusterLabels[i] = currentClusterLabels[i];
 		}
 
-		//printf("hdbscan_compute_hierarchy_and_cluster_tree: 13\n");
 		if (g_list_length(newClusters) == 0){
 			nextLevelSignificant = FALSE;
 		} else{
@@ -661,13 +638,12 @@ int hdbscan_construct_mst(hdbscan* sc){
 		//Attach the closest point found in this iteration to the tree:
 		attachedPoints[nearestMRDPoint] = TRUE;
 		int_array_list_set_value_at(otherVertexIndices, numAttachedPoints, numAttachedPoints);
-		currentPoint = nearestMRDPoint;
-		
+		currentPoint = nearestMRDPoint;		
 	}
 
 	//If necessary, attach self edges:
 	if (sc->selfEdges == TRUE) {
-//#pragma omp parallel for
+#pragma omp parallel for
 		for (uint i = size - 1; i < size * 2 - 1; i++) {
 			int vertex = i - (size - 1);
 			int_array_list_set_value_at(nearestMRDNeighbors, vertex, i);
