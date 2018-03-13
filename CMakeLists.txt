@@ -55,6 +55,12 @@ ENDIF()
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g3 -Wall -fmessage-length=0 -fPIC -O3")
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Wall -fmessage-length=0 -fPIC -O3")
 
+# ... for the config.h
+configure_file(config.h.in "${PROJECT_BINARY_DIR}/config.h" @ONLY)# set up include-directories
+
+include_directories(
+  "${PROJECT_BINARY_DIR}")  # to find config.h
+
 add_subdirectory(modules)
 add_subdirectory(src)
 add_subdirectory(sample)
@@ -69,8 +75,6 @@ export(PACKAGE hdbscan)
 # Create the HdbscanConfig.cmake and HdbscanConfigVersion files
 file(RELATIVE_PATH REL_INCLUDE_DIR "${INSTALL_CMAKE_DIR}" "${INSTALL_INCLUDE_DIR}")
 
-# ... for the config.h
-configure_file(config.h.in "${GNULIB_INCLUDE_DIR}/gnulib/config.h" @ONLY)
 
 # ... for the build tree
 set(CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}")
@@ -96,6 +100,6 @@ install(FILES
 install (DIRECTORY ${HDBSCAN_INCLUDE_DIR}/hdbscan DESTINATION ${INSTALL_INCLUDE_DIR})
 install (DIRECTORY ${GNULIB_INCLUDE_DIR}/gnulib DESTINATION ${INSTALL_INCLUDE_DIR})
 install (DIRECTORY ${LISTLIB_INCLUDE_DIR}/listlib DESTINATION ${INSTALL_INCLUDE_DIR})
-INSTALL(FILES ${GNULIB_INCLUDE_DIR}/gnulib/config.h DESTINATION include)
+INSTALL(FILES ${PROJECT_BINARY_DIR}/config.h DESTINATION ${INSTALL_INCLUDE_DIR})
 
 install(EXPORT HdbscanTargets DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)
