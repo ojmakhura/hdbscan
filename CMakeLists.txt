@@ -70,7 +70,7 @@ export(PACKAGE hdbscan)
 file(RELATIVE_PATH REL_INCLUDE_DIR "${INSTALL_CMAKE_DIR}" "${INSTALL_INCLUDE_DIR}")
 
 # ... for the config.h
-configure_file(config.h.in "${HDBSCAN_INCLUDE_DIR}/hdbscan/config.h" @ONLY)
+configure_file(config.h.in "${GNULIB_INCLUDE_DIR}/gnulib/config.h" @ONLY)
 
 # ... for the build tree
 set(CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}")
@@ -84,7 +84,7 @@ configure_file(HdbscanConfig.cmake.in "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECT
 configure_file(HdbscanConfigVersion.cmake.in "${PROJECT_BINARY_DIR}/HdbscanConfigVersion.cmake" @ONLY)
 
 set_target_properties(hdbscan PROPERTIES
-  PUBLIC_HEADER "include/hdbscan/*.h;${HDBSCAN_INCLUDE_DIR}/hdbscan/config.h")
+  PUBLIC_HEADER "include/hdbscan/*.h")
  
 # Install the HdbscanConfig.cmake and HdbscanConfigVersion.cmake
 install(FILES
@@ -96,6 +96,6 @@ install(FILES
 install (DIRECTORY ${HDBSCAN_INCLUDE_DIR}/hdbscan DESTINATION ${INSTALL_INCLUDE_DIR})
 install (DIRECTORY ${GNULIB_INCLUDE_DIR}/gnulib DESTINATION ${INSTALL_INCLUDE_DIR})
 install (DIRECTORY ${LISTLIB_INCLUDE_DIR}/listlib DESTINATION ${INSTALL_INCLUDE_DIR})
-INSTALL(FILES ${HDBSCAN_INCLUDE_DIR}/hdbscan/config.h DESTINATION include)
+INSTALL(FILES ${GNULIB_INCLUDE_DIR}/gnulib/config.h DESTINATION include)
 
 install(EXPORT HdbscanTargets DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)
