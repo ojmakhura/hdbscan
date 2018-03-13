@@ -1,10 +1,10 @@
 project(hdbscan_samples)
 
 add_executable(hdbscan_csample tester.c)
-target_link_libraries(hdbscan_csample hdbscan)
+target_link_libraries(hdbscan_csample hdbscan listlib gnulib)
 
 add_executable(hdbscan_cppsample tester.cpp)
-target_link_libraries(hdbscan_cppsample hdbscan)
+target_link_libraries(hdbscan_cppsample hdbscan listlib gnulib)
 
 include_directories(${HDBSCAN_INCLUDE_DIR} ${GLIB2_INCLUDE_DIRS} ${LISTLIB_INCLUDE_DIR} ${GNULIB_INCLUDE_DIR})
 
