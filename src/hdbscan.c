@@ -958,7 +958,7 @@ void hdbscan_calculate_stats(IntDistancesMap* distanceMap, clustering_stats* sta
 }
 
 int32_t hdbscan_analyse_stats(clustering_stats* stats){
-	int32_t validity = -1;
+	int32_t validity = 0;
 	
 	double skew_cr = stats->coreDistanceValues.skewness;	
 	double skew_dr = stats->intraDistanceValues.skewness;
@@ -966,13 +966,13 @@ int32_t hdbscan_analyse_stats(clustering_stats* stats){
 	double kurtosis_dr = stats->intraDistanceValues.kurtosis;	
 	
 	if((skew_dr > 0.0 ) && (kurtosis_dr > 0.0 )){
-		validity = 2;
+		validity += 2;
 	} else if(skew_dr < 0.0 && kurtosis_dr > 0.0){
-		validity = 1;
+		validity += 1;
 	} else if(skew_dr > 0.0 && kurtosis_dr < 0.0){
-		validity = 0;
+		validity += 0;
 	} else{
-		validity = -1;
+		validity += -1;
 	}
 
 	if((skew_cr > 0.0 ) && (kurtosis_cr > 0.0 )){
