@@ -933,8 +933,28 @@ void hdbscan_calculate_stats(IntDistancesMap* distanceMap, clustering_stats* sta
 	int c = 0;	
 	while (g_hash_table_iter_next (&iter, &key, &value)){
 		distance_values* dl = (distance_values*)value;
-		cr[c] = dl->max_cr/dl->min_cr;
-		dr[c] = dl->max_dr/dl->min_dr;
+		
+		if(dl->max_cr == dl->min_cr){
+			cr[c] = 1.0;
+		} else{
+			if(dl->max_cr > 0 && dl->min_cr == 0){
+				cr[c] = DBL_MAX;
+			} else {
+				cr[c] = dl->max_cr/dl->min_cr;
+			}
+		}
+		
+		
+		if(dl->max_dr == dl->min_dr){
+			dr[c] = 1.0;
+		} else{
+			
+			if(dl->max_cr > 0 && dl->min_cr == 0){
+				dr[c] = DBL_MAX;
+			} else {
+				dr[c] = dl->max_dr/dl->min_dr;
+			}			
+		}	
 			
 		c++;
 	}
