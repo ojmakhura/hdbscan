@@ -1,0 +1,7 @@
+from distutils.core import setup
+
+setup(name='PyHdbscan',
+      version='${PACKAGE_VERSION}',
+      package_dir={ '': '${CMAKE_CURRENT_SOURCE_DIR}' },
+      packages=['PyHdbscan']
+      ext_modules=[Extension("PyHdbscan", ["${CMAKE_CURRENT_SOURCE_DIR}/src/PyHdbscan.c"])])

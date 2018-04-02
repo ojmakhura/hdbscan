@@ -14,6 +14,8 @@ set(INSTALL_INCLUDE_DIR include CACHE PATH "Installation directory for header fi
 set(MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/modules)
 set(LISTLIB_DIR ${MODULE_PATH}/listlib)
 set(GNULIB_DIR ${MODULE_PATH}/gnulib)
+set(HDBSCAN_JAVA_DIR ${MODULE_PATH}/java)
+set(HDBSCAN_PYTHON_DIR ${MODULE_PATH}/python)
 
 set(HDBSCAN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(GNULIB_INCLUDE_DIR ${GNULIB_DIR}/include)
@@ -63,6 +65,7 @@ include_directories(
 
 add_subdirectory(modules)
 add_subdirectory(src)
+add_subdirectory(${HDBSCAN_JAVA_DIR})
 add_subdirectory(sample)
 
 # Add all targets to the build-tree export set
