@@ -1,7 +1,29 @@
-from distutils.core import setup
+from distutils.core import setup, Extension
+extensions = {
+    "PyHdbscan":["${CMAKE_CURRENT_SOURCE_DIR}/src/PyHdbscan.c"]
+    }
+
+_modules = [Extension(	key, 
+						sources=sources,
+						include_dirs = ['${HDBSCAN_INCLUDE_DIR}', 
+										'/usr/include/glib-2.0', 
+										'/usr/lib64/glib-2.0/include', 
+										'${LISTLIB_INCLUDE_DIR}', 
+										'${GNULIB_INCLUDE_DIR}'],
+						
+						libraries = [	'${HDBSCAN_LIBRARY}',
+										'${GNULIB_LIBRARY}',
+										'${LISTLIB_LIBRARY}'
+									],
+						
+						library_dirs = ['${HDBSCAN_LIB_DIR}',
+										'${GNULIB_LIB_DIR}',
+										'${LISTLIB_LIB_DIR}'
+										]) 
+			for key,sources in extensions.items()]
 
 setup(name='PyHdbscan',
       version='${PACKAGE_VERSION}',
       package_dir={ '': '${CMAKE_CURRENT_SOURCE_DIR}' },
-      packages=['PyHdbscan']
-      ext_modules=[Extension("PyHdbscan", ["${CMAKE_CURRENT_SOURCE_DIR}/src/PyHdbscan.c"])])
+      packages=[''],
+      ext_modules=_modules)

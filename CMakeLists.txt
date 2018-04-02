@@ -21,6 +21,12 @@ set(HDBSCAN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(GNULIB_INCLUDE_DIR ${GNULIB_DIR}/include)
 set(LISTLIB_INCLUDE_DIR ${LISTLIB_DIR}/include)
 
+set(GNULIB_LIBRARY gnulib)
+set(LISTLIB_LIBRARY listlib)
+set(HDBSCAN_LIBRARY hdbscan)
+set(HDBSCAN_LIB_DIR ${PROJECT_BINARY_DIR}/src)
+set(GNULIB_LIB_DIR ${PROJECT_BINARY_DIR}/modules/gnulib/src)
+set(LISTLIB_LIB_DIR ${PROJECT_BINARY_DIR}/modules/listlib/src)
 
 if(WIN32 AND NOT CYGWIN)
   set(DEF_INSTALL_CMAKE_DIR CMake)
@@ -65,7 +71,6 @@ include_directories(
 
 add_subdirectory(modules)
 add_subdirectory(src)
-add_subdirectory(${HDBSCAN_JAVA_DIR})
 add_subdirectory(sample)
 
 # Add all targets to the build-tree export set

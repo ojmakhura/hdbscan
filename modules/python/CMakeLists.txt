@@ -1,4 +1,4 @@
-find_program(PYTHON "python")
+find_program(PYTHON "python3")
 
 if (PYTHON)
     set(SETUP_PY_IN "${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in")
