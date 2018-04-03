@@ -118,13 +118,12 @@ int main(int argc, char** argv){
 				printf("%d ", scan->clusterLabels[i]);
 			}
 			printf("]\n\n");
-			//int_array_list_delete(sorted);
+			
 			hdbscan_destroy_distance_map_table(dMap);
 			hdbscan_destroy_cluster_table(clusterTable);
 		}
 		
 		printf("***********************************************************************************\n\n");
-		break;
 	}
 	
 	hdbscan_destroy(scan);

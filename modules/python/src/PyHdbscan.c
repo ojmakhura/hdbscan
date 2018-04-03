@@ -118,7 +118,6 @@ void get_labels(PyHdbscan *self, int32_t *labels){
 static PyObject *PyHdbscan_run(PyHdbscan *self, PyObject *args){
 	/// TODO: check for errors
 	PyObject *dataset;
-    //static char *kwlist[] = {"dataset", NULL};
 	double *dset = NULL;
     if (! PyArg_ParseTuple(args, "O", &dataset)){
         return NULL;
@@ -216,15 +215,7 @@ static PyTypeObject PyHdbscanType = {
    0,                         /* tp_alloc */
    PyHdbscan_new,             /* tp_new */
 };
-/*
-static PyModuleDef PyHdbscanNodule = {	
-    PyModuleDef_HEAD_INIT,
-    "PyHdbscan",
-    "HDBSCAn clustering algorithm",
-    -1,
-    NULL, NULL, NULL, NULL, NULL
-};
-*/
+
 MOD_INIT(PyHdbscan)
 {
     PyObject *m;
@@ -244,20 +235,3 @@ MOD_INIT(PyHdbscan)
     return MOD_SUCCESS_VAL(m);
 
 }
-/*
-PyMODINIT_FUNC
-PyInit_PyHdbscan(void)
-{
-    PyObject* m;
-
-    if (PyType_Ready(&PyHdbscanType) < 0)
-        return NULL;
-
-    m = PyModule_Create(&PyHdbscanmodule);
-    if (m == NULL)
-        return NULL;
-
-    Py_INCREF(&PyHdbscanType);
-    PyModule_AddObject(m, "PyHdbscan", (PyObject *)&PyHdbscanType);
-    return m;
-}*/
