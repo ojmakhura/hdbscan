@@ -28,6 +28,22 @@
 #include <Python.h>
 #include "structmember.h"
 
+#if PY_MAJOR_VERSION >= 3
+  #define MOD_ERROR_VAL NULL
+  #define MOD_SUCCESS_VAL(val) val
+  #define MOD_INIT(name) PyMODINIT_FUNC PyInit_##name(void)
+  #define MOD_DEF(ob, name, doc, methods) \
+          static struct PyModuleDef PyHdbscanNodule = { \
+            PyModuleDef_HEAD_INIT, name, doc, -1, methods, }; \
+          ob = PyModule_Create(&PyHdbscanNodule);
+#else
+  #define MOD_ERROR_VAL
+  #define MOD_SUCCESS_VAL(val)
+  #define MOD_INIT(name) void init##name(void)
+  #define MOD_DEF(ob, name, doc, methods) \
+          ob = Py_InitModule3(name, methods, doc);
+#endif
+
 hdbscan* scan = NULL;
 
 typedef struct {
@@ -200,16 +216,35 @@ static PyTypeObject PyHdbscanType = {
    0,                         /* tp_alloc */
    PyHdbscan_new,             /* tp_new */
 };
-
-static PyModuleDef PyHdbscanmodule = {	
+/*
+static PyModuleDef PyHdbscanNodule = {	
     PyModuleDef_HEAD_INIT,
     "PyHdbscan",
     "HDBSCAn clustering algorithm",
     -1,
     NULL, NULL, NULL, NULL, NULL
 };
+*/
+MOD_INIT(PyHdbscan)
+{
+    PyObject *m;
 
+    MOD_DEF(m, "PyHdbscan", "HDBSCAN clustering algorithm",
+            NULL)
 
+    if (m == NULL)
+        return MOD_ERROR_VAL;
+
+    if (PyType_Ready(&PyHdbscanType) < 0)
+        return MOD_ERROR_VAL;
+
+    Py_INCREF(&PyHdbscanType);
+    PyModule_AddObject(m, "PyHdbscan", (PyObject *)&PyHdbscanType);
+
+    return MOD_SUCCESS_VAL(m);
+
+}
+/*
 PyMODINIT_FUNC
 PyInit_PyHdbscan(void)
 {
@@ -225,4 +260,4 @@ PyInit_PyHdbscan(void)
     Py_INCREF(&PyHdbscanType);
     PyModule_AddObject(m, "PyHdbscan", (PyObject *)&PyHdbscanType);
     return m;
-}
+}*/
