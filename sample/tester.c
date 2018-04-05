@@ -34,11 +34,31 @@
 #include "hdbscan/hdbscan.h"
 #include "dataset.h"
 #include <time.h>
+#include <stdio.h> 
+
+void getDset(char* filename, double* dset, int *rs, int *cs){
+	FILE *fp = fopen(filename,"r");
+	char buff[2048];
+	while(fgets(tmp, 1024, fp)!=0) {
+		
+		
+		(*rs)++;
+	} 
+}
 
 int main(int argc, char** argv){
 	clock_t begin, end;
-	int err;
+	int err, rs = 0, cs = 0;
 	double time_spent;
+	printf("argc = %d\n", argc);
+	double* dset;
+	if(argc == 3){
+		getDset(argv[2], double* dset)
+	} else {
+		dset = dataset;
+		rs = rows;
+		cs = cols;
+	}
 	//int x = atoi(argv[1]);
 	hdbscan* scan = hdbscan_init(NULL, atoi(argv[1]), DATATYPE_DOUBLE);
 	bool rerun_ = false;
@@ -49,10 +69,10 @@ int main(int argc, char** argv){
 	printf("SUCCESS: hdbscan fully initialised\n");
 	
 	// This lil loop demonstrates how to use the rerun function
-	for(int i = 0; i < 10; i++){
+	for(int i = 0; i < 8; i++){
 		if(!rerun_){
 			begin = clock();
-			err = hdbscan_run(scan, dataset, rows, cols, TRUE);
+			err = hdbscan_run(scan, dset, rows, cols, TRUE);
 			end = clock();
 			time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 			printf("hdbscan run Process took %f\n", time_spent);
@@ -110,9 +130,9 @@ int main(int argc, char** argv){
 			
 			
 			hdbscan_print_distance_map_table(dMap);
-			hdbscan_print_stats(&stats);								
+			hdbscan_print_stats(&stats);				
 			printf("Clustering validity : %d\n", hdbscan_analyse_stats(&stats));
-				
+			
 			printf("\n\nCluster labels = [");
 			for(uint i = 0; i < scan->numPoints; i++){
 				printf("%d ", scan->clusterLabels[i]);

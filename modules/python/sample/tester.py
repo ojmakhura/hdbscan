@@ -22,7 +22,17 @@ def printLabels(labels):
 	for l in labels:
 		print(str(l) + " ", end="");
 	print("]\n");
-
+	
+def getClusterMap(labels):
+	dmap = {}
+	for i in range(len(labels)):
+		key = labels[i]
+		if key in dmap:
+			dmap[key].append(i)
+		else:
+			dmap[key] = [i]
+	return dmap
+	
 def main(fname):
 	print("Opening file : ", fname)	
 	dataset = readFile(fname)
@@ -33,12 +43,22 @@ def main(fname):
 	scan.run(dataset)
 	printLabels(scan.labels)
 	print(set(scan.labels))
+	dmap = getClusterMap(scan.labels)
+	
+	for key in dmap:
+		print(key, ":", dmap[key])
+	
 	print("\n***********************************************************************************\n");
-	for i in range(4, 13):
+	for i in range(4, 11):
 		print("\nRe-Clustering for dataset with minPts =", i)
 		scan.rerun(i)
 		printLabels(scan.labels)
 		print(set(scan.labels))
+		dmap = getClusterMap(scan.labels) 
+		
+		for key in dmap:
+			print(key, ":", dmap[key])
+		#print(getClusterMap(scan.labels))
 		print("\n***********************************************************************************\n");
 
 if __name__ == "__main__":
