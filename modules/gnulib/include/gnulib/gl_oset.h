@@ -21,6 +21,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include "config.h"
 
 #ifndef _GL_INLINE_HEADER_BEGIN
 #error "Please include config.h first."
