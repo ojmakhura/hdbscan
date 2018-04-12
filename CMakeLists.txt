@@ -1,14 +1,28 @@
 cmake_minimum_required (VERSION 2.8)
 
 project(hdbscan)
-
+set(PROJECT_DESCRIPTION "Implementation of HDBSCAN algorithm in C, C++, Java and python(2, 3)")
 # The version number.
 set (HDBSCAN_MAJOR_VERSION 3)
-set (HDBSCAN_MINOR_VERSION 0)
+set (HDBSCAN_MINOR_VERSION 1)
 set (HDBSCAN_PATCH_VERSION 0)
-set (HDBSCAN_VERSION ${HDBSCAN_VERSION_MAJOR}.${HDBSCAN_VERSION_MINOR}.${HDBSCAN_PATCH_VERSION})
+set (HDBSCAN_VERSION ${HDBSCAN_MAJOR_VERSION}.${HDBSCAN_MINOR_VERSION}.${HDBSCAN_PATCH_VERSION})
 
-set(INSTALL_LIB_DIR lib CACHE PATH "Installation directory for libraries")
+if("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")
+	
+	set(LIBDIR "lib64")
+else()
+	set(LIBDIR "lib")
+endif()
+
+if(WIN32 AND NOT CYGWIN)
+  set(DEF_INSTALL_CMAKE_DIR CMake)
+else()
+  set(DEF_INSTALL_CMAKE_DIR ${INSTALL_LIB_DIR}/CMake/hdbscan)
+endif()
+
+set(INSTALL_LIB_DIR "${LIBDIR}" CACHE PATH "Installation directory for libraries")
+set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH "Installation directory for CMake files")
 set(INSTALL_BIN_DIR bin CACHE PATH "Installation directory for executables")
 set(INSTALL_INCLUDE_DIR include CACHE PATH "Installation directory for header files")
 set(MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/modules)
@@ -28,12 +42,7 @@ set(HDBSCAN_LIB_DIR ${PROJECT_BINARY_DIR}/src)
 set(GNULIB_LIB_DIR ${PROJECT_BINARY_DIR}/modules/gnulib/src)
 set(LISTLIB_LIB_DIR ${PROJECT_BINARY_DIR}/modules/listlib/src)
 
-if(WIN32 AND NOT CYGWIN)
-  set(DEF_INSTALL_CMAKE_DIR CMake)
-else()
-  set(DEF_INSTALL_CMAKE_DIR lib/CMake/hdbscan)
-endif()
-set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH "Installation directory for CMake files")
+set(PRIVATE_LIBS "-l${HDBSCAN_LIBRARY} -l${LISTLIB_LIBRARY} -l${GNULIB_LIBRARY}")
 
 # Make relative paths absolute (needed later on)
 foreach(p LIB BIN INCLUDE CMAKE)
@@ -63,11 +72,11 @@ ENDIF()
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g3 -Wall -fmessage-length=0 -fPIC -O3")
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Wall -fmessage-length=0 -fPIC -O3")
 
-# ... for the config.h
+# ... config files
 configure_file(config.h.in "${PROJECT_BINARY_DIR}/config.h" @ONLY)# set up include-directories
+configure_file(hdbscan.pc.in "${PROJECT_BINARY_DIR}/hdbscan.pc" @ONLY)# set up include-directories
 
-include_directories(
-  "${PROJECT_BINARY_DIR}")  # to find config.h
+include_directories("${PROJECT_BINARY_DIR}")  # to find config.h
 
 add_subdirectory(modules)
 add_subdirectory(src)
@@ -83,7 +92,6 @@ export(PACKAGE hdbscan)
 # Create the HdbscanConfig.cmake and HdbscanConfigVersion files
 file(RELATIVE_PATH REL_INCLUDE_DIR "${INSTALL_CMAKE_DIR}" "${INSTALL_INCLUDE_DIR}")
 
-
 # ... for the build tree
 set(CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}")
 configure_file(HdbscanConfig.cmake.in "${PROJECT_BINARY_DIR}/HdbscanConfig.cmake" @ONLY)
@@ -97,7 +105,7 @@ configure_file(HdbscanConfigVersion.cmake.in "${PROJECT_BINARY_DIR}/HdbscanConfi
 
 set_target_properties(hdbscan PROPERTIES
   PUBLIC_HEADER "include/hdbscan/*.h")
- 
+
 # Install the HdbscanConfig.cmake and HdbscanConfigVersion.cmake
 install(FILES
   "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/HdbscanConfig.cmake"
@@ -109,5 +117,6 @@ install (DIRECTORY ${HDBSCAN_INCLUDE_DIR}/hdbscan DESTINATION ${INSTALL_INCLUDE_
 install (DIRECTORY ${GNULIB_INCLUDE_DIR}/gnulib DESTINATION ${INSTALL_INCLUDE_DIR})
 install (DIRECTORY ${LISTLIB_INCLUDE_DIR}/listlib DESTINATION ${INSTALL_INCLUDE_DIR})
 INSTALL(FILES ${PROJECT_BINARY_DIR}/config.h DESTINATION ${INSTALL_INCLUDE_DIR})
+INSTALL(FILES ${PROJECT_BINARY_DIR}/hdbscan.pc DESTINATION ${INSTALL_LIB_DIR}/pkgconfig)
 
 install(EXPORT HdbscanTargets DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)

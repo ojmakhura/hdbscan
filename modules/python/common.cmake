@@ -12,5 +12,5 @@ if (PYTHON)
 
     add_custom_target(${TARGET_NAME} ALL DEPENDS ${OUTPUT})
 
-    install(CODE "execute_process(COMMAND ${PYTHON} ${SETUP_PY} install)")
+    install(CODE "execute_process(COMMAND ${PYTHON} ${SETUP_PY} install --prefix=${CMAKE_INSTALL_PREFIX})")
 endif()

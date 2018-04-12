@@ -12,3 +12,8 @@ install(TARGETS hdbscan_csample
   # IMPORTANT: Add the bar executable to the "export-set"
   EXPORT HdbscanTargets
   RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin)
+
+install(TARGETS hdbscan_cppsample
+  # IMPORTANT: Add the bar executable to the "export-set"
+  EXPORT HdbscanTargets
+  RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin)

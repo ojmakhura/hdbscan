@@ -1,11 +1,11 @@
 project (listlib)
 
 file(GLOB_RECURSE LISTLIB_SRC_FILES ${LISTLIB_SRC_DIR}/*.c)
-add_library(${LISTLIB_LIBRARY} ${LISTLIB_SRC_FILES})
+add_library(${LISTLIB_LIBRARY} SHARED ${LISTLIB_SRC_FILES})
 include_directories(${GLIB2_INCLUDE_DIRS})
 
-#install(TARGETS ${LISTLIB_LIBRARY}
-  # IMPORTANT: Add the hdbscan library to the "export-set"
- # EXPORT HdbscanTargets
- # RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
- # LIBRARY DESTINATION "${INSTALL_LIB_DIR}" COMPONENT shlib)
+install(TARGETS ${LISTLIB_LIBRARY}
+  # IMPORTANT: Add the listlib library to the "export-set"
+  EXPORT HdbscanTargets
+  RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
+  LIBRARY DESTINATION "${INSTALL_LIB_DIR}" COMPONENT shlib)
