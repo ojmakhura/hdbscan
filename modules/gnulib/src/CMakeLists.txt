@@ -5,7 +5,6 @@ add_library(${GNULIB_LIBRARY} SHARED ${GNULIB_SRC_FILES})
 include_directories(${GNULIB_INCLUDE_DIR} ${PROJECT_BINARY_DIR})
 
 install(TARGETS ${GNULIB_LIBRARY}
-  # IMPORTANT: Add the hdbscan library to the "export-set"
   EXPORT HdbscanTargets
   RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
   LIBRARY DESTINATION "${INSTALL_LIB_DIR}" COMPONENT shlib)
