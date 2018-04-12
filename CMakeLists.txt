@@ -27,6 +27,8 @@ set(INSTALL_LIB_DIR "${LIBDIR}" CACHE PATH "Installation directory for libraries
 set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH "Installation directory for CMake files")
 set(INSTALL_BIN_DIR bin CACHE PATH "Installation directory for executables")
 set(INSTALL_INCLUDE_DIR include CACHE PATH "Installation directory for header files")
+set(INSTALL_SHARE_DIR share/hdbscan CACHE PATH "Installation directory for extension files")
+
 set(MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/modules)
 set(LISTLIB_DIR ${MODULE_PATH}/listlib)
 set(GNULIB_DIR ${MODULE_PATH}/gnulib)
@@ -43,6 +45,7 @@ set(HDBSCAN_LIBRARY hdbscan)
 set(HDBSCAN_LIB_DIR ${PROJECT_BINARY_DIR}/src)
 set(GNULIB_LIB_DIR ${PROJECT_BINARY_DIR}/modules/gnulib/src)
 set(LISTLIB_LIB_DIR ${PROJECT_BINARY_DIR}/modules/listlib/src)
+set(JAVA_LIB_DIR ${PROJECT_BINARY_DIR}/modules/java)
 
 set(PRIVATE_LIBS "-l${HDBSCAN_LIBRARY} -l${LISTLIB_LIBRARY} -l${GNULIB_LIBRARY}")
 
@@ -53,7 +56,7 @@ else()
 endif()
 
 # Make relative paths absolute (needed later on)
-foreach(p LIB BIN INCLUDE CMAKE)
+foreach(p LIB BIN INCLUDE CMAKE SHARE)
   set(var INSTALL_${p}_DIR)
   if(NOT IS_ABSOLUTE "${${var}}")
     set(${var} "${CMAKE_INSTALL_PREFIX}/${${var}}")
@@ -126,7 +129,7 @@ install(FILES
 INSTALL (DIRECTORY ${HDBSCAN_INCLUDE_DIR}/hdbscan DESTINATION ${INSTALL_INCLUDE_DIR})
 INSTALL (DIRECTORY ${GNULIB_INCLUDE_DIR}/gnulib DESTINATION ${INSTALL_INCLUDE_DIR})
 INSTALL (DIRECTORY ${LISTLIB_INCLUDE_DIR}/listlib DESTINATION ${INSTALL_INCLUDE_DIR})
-#INSTALL (FILES ${PROJECT_BINARY_DIR}/config.h DESTINATION ${INSTALL_INCLUDE_DIR})
+#INSTALL (FILES ${PROJECT_BINARY_DIR}/config.h DESTINATION ${INSTALL_LIB_DIR}/share/hdbscan/java)
 INSTALL (FILES ${PROJECT_BINARY_DIR}/hdbscan.pc DESTINATION ${INSTALL_LIB_DIR}/pkgconfig)
 
 INSTALL (EXPORT HdbscanTargets DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)

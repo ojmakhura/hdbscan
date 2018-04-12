@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.6)
-project (hdbscan_jni)
+project (hdbscan_java)
 
 find_package(JNI REQUIRED)
 find_package(Java REQUIRED)
@@ -11,15 +11,16 @@ set(CMAKE_JNI_TARGET TRUE)
 #	CLASSES hdbscan.Hdbscan
 #)
 set(JAVA_SOURCE_FILES src/hdbscan/Hdbscan.java)
-add_jar(hdbscan_java ${JAVA_SOURCE_FILES})
-#get_target_property(_jarFile hdbscan_java JAR_FILE)
-#get_target_property(_classDir hdbscan_java CLASSDIR)
+set(LIB_VERSION ${HDBSCAN_MAJOR_VERSION}${HDBSCAN_MINOR_VERSION}${HDBSCAN_PATCH_VERSION})
+add_jar(hdbscan-${LIB_VERSION} ${JAVA_SOURCE_FILES})
 
 set(HDBSCAN_JNI_SRC src/Hdbscan.cpp )
 
-add_library(hdbscan_jni SHARED ${HDBSCAN_JNI_SRC} )
-target_link_libraries(hdbscan_jni LINK_PUBLIC hdbscan gnulib listlib)
+add_library(${PROJECT_NAME}-${LIB_VERSION} SHARED ${HDBSCAN_JNI_SRC} )
+target_link_libraries(${PROJECT_NAME}-${LIB_VERSION} LINK_PUBLIC hdbscan gnulib listlib)
 include_directories(${HDBSCAN_INCLUDE_DIR} ${GLIB2_INCLUDE_DIRS} ${LISTLIB_INCLUDE_DIR} ${GNULIB_INCLUDE_DIR} ${JNI_INCLUDE_DIRS})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Wall -fmessage-length=0 -fPIC -O3 -std=c++11 -lc -shared")
-SET_TARGET_PROPERTIES(hdbscan_jni PROPERTIES LINKER_LANGUAGE CXX)
+SET_TARGET_PROPERTIES(${PROJECT_NAME}-${LIB_VERSION} PROPERTIES LINKER_LANGUAGE CXX)
 
+INSTALL (FILES ${JAVA_LIB_DIR}/hdbscan-${LIB_VERSION}.jar DESTINATION ${INSTALL_SHARE_DIR}/java)
+INSTALL (FILES ${JAVA_LIB_DIR}/lib${PROJECT_NAME}-${LIB_VERSION}.so DESTINATION ${INSTALL_SHARE_DIR}/java)
