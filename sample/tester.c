@@ -33,17 +33,40 @@
 //#include "config.h"
 #include "hdbscan/hdbscan.h"
 #include "dataset.h"
+#include "listlib/intlist.h"
 #include <time.h>
 #include <stdio.h> 
+#include <string.h>
+#include <ctype.h>
 
-void getDset(char* filename, double* dset, int *rs, int *cs){
+double* getDset(char* filename, int *rs, int *cs){
+	
+	DoubleArrayList* list = (DoubleArrayList *)double_array_list_init_size(10);
+	
 	FILE *fp = fopen(filename,"r");
 	char buff[2048];
-	while(fgets(tmp, 1024, fp)!=0) {
-		
+	char* delim = " ,\n\t\r\v";
+	while(fgets(buff, 2048, fp) != 0) {
+		char *toks = strtok (buff, delim);
+		while(toks != NULL && !(strlen(toks) == 1 && isspace(toks[0]))){
+			
+			if(strlen(toks) > 0){
+				double_array_list_append(list, atof(toks));
+			}
+			toks = strtok (NULL, delim);
+		}
 		
 		(*rs)++;
-	} 
+	}
+	*cs = list->size/(*rs);
+	double* dset = (double *) malloc(list->size * sizeof(double));
+	double *ddata = (double *)list->data;
+	for(int32_t i = 0; i < list->size; i++){
+		dset[i] = ddata[i];
+	}
+	double_array_list_delete(list);
+	fclose(fp);
+	return dset;
 }
 
 int main(int argc, char** argv){
@@ -51,15 +74,26 @@ int main(int argc, char** argv){
 	int err, rs = 0, cs = 0;
 	double time_spent;
 	printf("argc = %d\n", argc);
-	double* dset;
-	if(argc == 3){
-		getDset(argv[2], double* dset)
-	} else {
+	double* dset = NULL;
+	
+	if(argc == 3){ // will read the dataset from the provided csv file
+		dset = getDset(argv[2], &rs, &cs);
+		/*for(int i = 0; i < rs; i++){
+			printf("rows = %d : [", i);
+			for(int j = 0; j < cs; j++){
+				int idx = i * cs + j;
+				printf("%f, ", dset[idx]);
+			}
+			printf("]\n");
+		}
+		*/
+		
+	} else { // will use the default dataset in dataset.h
 		dset = dataset;
 		rs = rows;
 		cs = cols;
 	}
-	//int x = atoi(argv[1]);
+	printf("(rows, cols) = (%d, %d)\n", rs, cs);
 	hdbscan* scan = hdbscan_init(NULL, atoi(argv[1]), DATATYPE_DOUBLE);
 	bool rerun_ = false;
 	if(scan == NULL){
