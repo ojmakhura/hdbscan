@@ -24,7 +24,6 @@
  * SOFTWARE.
  */
  
-//#include "config.h"
 #include "hdbscan/hdbscan.h"
 #include <Python.h>
 #include "structmember.h"

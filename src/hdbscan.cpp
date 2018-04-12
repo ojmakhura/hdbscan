@@ -27,7 +27,6 @@
 
 #ifdef __cplusplus
 #include <limits>
-//#include "config.h"
 #include "hdbscan/hdbscan.hpp"
 namespace clustering {
 
