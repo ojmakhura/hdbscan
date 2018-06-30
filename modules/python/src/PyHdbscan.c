@@ -23,10 +23,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
+ 
 #include "hdbscan/hdbscan.h"
 #include <Python.h>
 #include "structmember.h"
+#include <omp.h>
 
 #if PY_MAJOR_VERSION >= 3
   #define MOD_ERROR_VAL NULL

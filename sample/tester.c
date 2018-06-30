@@ -33,13 +33,67 @@
 //#include "config.h"
 #include "hdbscan/hdbscan.h"
 #include "dataset.h"
+#include "listlib/intlist.h"
 #include <time.h>
+#include <stdio.h> 
+#include <string.h>
+#include <ctype.h>
+
+double* getDset(char* filename, int *rs, int *cs){
+	
+	DoubleArrayList* list = (DoubleArrayList *)double_array_list_init_size(10);
+	
+	FILE *fp = fopen(filename,"r");
+	char buff[2048];
+	char* delim = " ,\n\t\r\v";
+	while(fgets(buff, 2048, fp) != 0) {
+		char *toks = strtok (buff, delim);
+		while(toks != NULL && !(strlen(toks) == 1 && isspace(toks[0]))){
+			
+			if(strlen(toks) > 0){
+				double_array_list_append(list, atof(toks));
+			}
+			toks = strtok (NULL, delim);
+		}
+		
+		(*rs)++;
+	}
+	*cs = list->size/(*rs);
+	double* dset = (double *) malloc(list->size * sizeof(double));
+	double *ddata = (double *)list->data;
+	for(int32_t i = 0; i < list->size; i++){
+		dset[i] = ddata[i];
+	}
+	double_array_list_delete(list);
+	fclose(fp);
+	return dset;
+}
 
 int main(int argc, char** argv){
 	clock_t begin, end;
-	int err;
+	int err, rs = 0, cs = 0;
 	double time_spent;
-	//int x = atoi(argv[1]);
+	printf("argc = %d\n", argc);
+	double* dset = NULL;
+	
+	if(argc == 3){ // will read the dataset from the provided csv file
+		dset = getDset(argv[2], &rs, &cs);
+		/*for(int i = 0; i < rs; i++){
+			printf("rows = %d : [", i);
+			for(int j = 0; j < cs; j++){
+				int idx = i * cs + j;
+				printf("%f, ", dset[idx]);
+			}
+			printf("]\n");
+		}
+		*/
+		
+	} else { // will use the default dataset in dataset.h
+		dset = dataset;
+		rs = rows;
+		cs = cols;
+	}
+	printf("(rows, cols) = (%d, %d)\n", rs, cs);
 	hdbscan* scan = hdbscan_init(NULL, atoi(argv[1]), DATATYPE_DOUBLE);
 	bool rerun_ = false;
 	if(scan == NULL){
@@ -49,10 +103,10 @@ int main(int argc, char** argv){
 	printf("SUCCESS: hdbscan fully initialised\n");
 	
 	// This lil loop demonstrates how to use the rerun function
-	for(int i = 0; i < 10; i++){
+	for(int i = 0; i < 8; i++){
 		if(!rerun_){
 			begin = clock();
-			err = hdbscan_run(scan, dataset, rows, cols, TRUE);
+			err = hdbscan_run(scan, dset, rows, cols, TRUE);
 			end = clock();
 			time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 			printf("hdbscan run Process took %f\n", time_spent);
@@ -110,9 +164,9 @@ int main(int argc, char** argv){
 			
 			
 			hdbscan_print_distance_map_table(dMap);
-			hdbscan_print_stats(&stats);								
+			hdbscan_print_stats(&stats);				
 			printf("Clustering validity : %d\n", hdbscan_analyse_stats(&stats));
-				
+			
 			printf("\n\nCluster labels = [");
 			for(uint i = 0; i < scan->numPoints; i++){
 				printf("%d ", scan->clusterLabels[i]);
