@@ -258,6 +258,15 @@ void printClusterTable(map_t& table){
 	}
 }
 
+void printClusterSizes(map_t& table){
+	for(map_t::iterator it = table.begin(); it != table.end(); it++){
+	
+		int32_t label = it->first;
+		vector<int>& clusterList = it->second;
+		printf("%d : %ld\n", label, clusterList.size());					
+	}
+}
+
 void printDistanceMapTable(map<int32_t, distance_values>& distancesMap){
 
 	printf("\n//////////////////////////////////////// Distances ///////////////////////////////////////////////\n");

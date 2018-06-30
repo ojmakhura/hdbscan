@@ -1236,6 +1236,21 @@ void hdbscan_print_cluster_table(IntIntListMap* table){
 	}
 }
 
+
+void hdbscan_print_cluster_sizes(IntIntListMap* table){
+	
+	GHashTableIter iter;
+	gpointer key;
+	gpointer value;
+	g_hash_table_iter_init (&iter, table);
+
+	while (g_hash_table_iter_next (&iter, &key, &value)){
+		int32_t label = *((int32_t *)key);
+		IntArrayList* clusterList = (IntArrayList*)value;
+		printf("%d : %d\n", label, clusterList->size);
+	}
+}
+
 void hdbscan_print_distance_map_table(IntDistancesMap* distancesMap){
 	GHashTableIter iter;
 	gpointer key;

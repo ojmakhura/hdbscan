@@ -59,6 +59,8 @@ namespace clustering {
 	int32_t analyseStats(clustering_stats& stats); 
 	
 	void printClusterTable(map_t& table);
+	
+	void printClusterSizes(map_t& table);
 
 	void printDistanceMapTable(map<int32_t, distance_values>& distancesMap);
 

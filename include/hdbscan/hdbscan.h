@@ -343,6 +343,7 @@ void hdbscan_destroy_distance_map_table(IntDistancesMap* table);
  * 
  */ 
 void hdbscan_print_cluster_table(IntIntListMap* table);
+void hdbscan_print_cluster_sizes(IntIntListMap* table);
 void hdbscan_print_distance_map_table(IntDistancesMap* table);
 void hdbscan_print_stats(clustering_stats* stats);
 #ifdef __cplusplus
