@@ -92,6 +92,13 @@ typedef struct _clustering_stats{
 	struct stats_values intraDistanceValues;
 } clustering_stats;
 
+typedef struct _hierarchy_entry{
+	double edgeWeight;
+	int32_t* labels;
+} hierarchy_entry;
+
+typedef GHashTable LongHierarchyEntryMap;
+
 struct hdbscan {
 	distance distanceFunction;
 	double* dataSet;
@@ -101,7 +108,7 @@ struct hdbscan {
 	ClusterPtrList* clusters;
 	outlier_score* outlierScores;
 	int32_t* clusterLabels;
-	LongIntPointerMap* hierarchy;
+	LongHierarchyEntryMap* hierarchy;
 	IntDoubleMap* clusterStabilities;
 	boolean selfEdges;
 	uint minPoints, minClusterSize, numPoints;	
@@ -338,6 +345,11 @@ void hdbscan_destroy_cluster_table(IntIntListMap* table);
 void hdbscan_destroy_distance_map_table(IntDistancesMap* table);
 
 /**
+ * 
+ */
+hierarchy_entry* hdbscan_create_hierarchy_entry(); 
+
+/**
  * Printing the hash tables
  * 
  */ 
@@ -345,7 +357,7 @@ void hdbscan_print_cluster_table(IntIntListMap* table);
 void hdbscan_print_cluster_sizes(IntIntListMap* table);
 void hdbscan_print_distance_map_table(IntDistancesMap* table);
 void hdbscan_print_stats(clustering_stats* stats);
-void hdbscan_print_hierarchies(LongIntPointerMap* hierarchy, uint numPoints);
+void hdbscan_print_hierarchies(LongHierarchyEntryMap* hierarchy, uint numPoints, char *filename);
 #ifdef __cplusplus
 };
 }

@@ -151,9 +151,11 @@ void hdbscan_minimal_clean(hdbscan* sc){
 		g_hash_table_iter_init (&iter, sc->hierarchy);
 
 		while (g_hash_table_iter_next (&iter, &key, &value)){
-			int* label = (int*)value;
-			if(label != NULL)
-				free(label);
+			hierarchy_entry* entry = (hierarchy_entry*)value;
+			if(entry != NULL){
+				free(entry->labels);
+				free(entry);
+			}
 			if(key != NULL)
 				free(key);
 		}
@@ -272,11 +274,11 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 	int nextClusterLabel = 2;
 	boolean nextLevelSignificant = TRUE;
 	//The previous and current cluster numbers of each point in the data set:
-	int numVertices = sc->mst->numVertices;
-	int previousClusterLabels[numVertices];
-	int currentClusterLabels[numVertices];
+	int32_t numVertices = sc->mst->numVertices;
+	int32_t previousClusterLabels[numVertices];
+	int32_t currentClusterLabels[numVertices];
 #pragma omp parallel for
-	for(int i = 0; i < numVertices; i++){
+	for(int32_t i = 0; i < numVertices; i++){
 		previousClusterLabels[i] = 1;
 		currentClusterLabels[i] = 1;
 	}
@@ -488,12 +490,14 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 
 		if (compactHierarchy == FALSE || nextLevelSignificant == TRUE || g_list_length(newClusters) > 0) {
 			lineCount++;
-			int* newpl = (int*)malloc(numVertices * sizeof(int));
-			memcpy(newpl, previousClusterLabels, numVertices * sizeof(int));
+			hierarchy_entry* entry = hdbscan_create_hierarchy_entry();
+			entry->edgeWeight = currentEdgeWeight;
+			entry->labels = (int32_t*)malloc(numVertices * sizeof(int32_t));
+			memcpy(entry->labels, previousClusterLabels, numVertices * sizeof(int32_t));
 
 			int64_t *l = (int64_t *) malloc(sizeof(int64_t));
 			*l = lineCount;
-			g_hash_table_insert(sc->hierarchy, l, newpl);
+			g_hash_table_insert(sc->hierarchy, l, entry);
 		}
 
 		// Assign file offsets and calculate the number of constraints
@@ -526,19 +530,28 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 		gl_oset_free(newClusterLabels);
 	}
 
-	int* labels = (int*) malloc(numVertices * sizeof(int));
-	memset(labels, 0, numVertices * sizeof(int));
+	hierarchy_entry* entry = hdbscan_create_hierarchy_entry();
+	entry->edgeWeight = 0.0;
+	entry->labels = (int32_t*) malloc(numVertices * sizeof(int32_t));
+	memset(entry->labels, 0, numVertices * sizeof(int32_t));
 	// Write out the final level of the hierarchy (all points noise):
 
 	int64_t *l = (int64_t *) malloc(sizeof(int64_t));
 	*l = 0;
-	g_hash_table_insert(sc->hierarchy, l, labels);
+	g_hash_table_insert(sc->hierarchy, l, entry);
 	lineCount++;
 
 	gl_oset_free(affectedClusterLabels);
 	gl_oset_free(affectedVertices);
 
 	return HDBSCAN_SUCCESS;
+}
+
+hierarchy_entry* hdbscan_create_hierarchy_entry(){
+	hierarchy_entry* entry = (hierarchy_entry *) malloc(sizeof(hierarchy_entry));
+	entry->labels = NULL;
+	entry->edgeWeight = 0.0;
+	return entry;
 }
 
 void print_distances(hdbscan* sc){
@@ -773,10 +786,10 @@ void hdbscan_find_prominent_clusters(hdbscan* sc, int infiniteStability){
 		int64_t offset = *((int64_t *)key);
 		int64_t l = offset + 1;
 		IntArrayList* clusterList = (IntArrayList*)value;
-		int* hpSecond = (int *)g_hash_table_lookup(sc->hierarchy, &l);
+		hierarchy_entry* hpSecond = (hierarchy_entry *)g_hash_table_lookup(sc->hierarchy, &l);
 
 		for(int i = 0; i < sc->numPoints; i++){
-			int label = hpSecond[i];
+			int label = (hpSecond->labels)[i];
 			int it = int_array_list_search(clusterList, label);
 			if(it != -1){
 				sc->clusterLabels[i] = label;
@@ -1255,8 +1268,27 @@ void hdbscan_print_cluster_sizes(IntIntListMap* table){
 	}
 }
 
-
-void hdbscan_print_hierarchies(LongIntPointerMap* hierarchy, uint numPoints){
+void hdbscan_print_hierarchies(LongHierarchyEntryMap* hierarchy, uint numPoints, char *filename){
+	
+	
+	FILE *visFile = NULL;
+	FILE *hierarchyFile = NULL;
+	
+	if(filename != NULL){
+		
+		char visFilename[100];
+		strcat(visFilename, filename);
+		strcat(visFilename, "_visualization.vis");
+		visFile = fopen(visFilename, "w");
+		fprintf(visFile, "1\n");
+		fprintf(visFile, "%d\n", g_hash_table_size(hierarchy));
+		fclose(visFile);
+		
+		char hierarchyFilename[100];
+		strcat(hierarchyFilename, filename);
+		strcat(hierarchyFilename, "_hierarchy.csv");
+		hierarchyFile = fopen(hierarchyFilename, "w");
+	}
 	
 	printf("\n/////////////////////////////////Printing Hierarchies//////////////////////////////////////////////////////\n");
 	printf("hierarchy size = %d\n", g_hash_table_size(hierarchy));
@@ -1266,16 +1298,31 @@ void hdbscan_print_hierarchies(LongIntPointerMap* hierarchy, uint numPoints){
 	g_hash_table_iter_init (&iter, hierarchy);
 
 	while (g_hash_table_iter_next (&iter, &key, &value)){
-		int64_t label = *((int64_t *)key);
-		int* data = (int*)value;
-		//printf("%ld : %d\n", label, clusterList->size);
-		printf("%ld -> [", label);
+		int64_t level = *((int64_t *)key);
+		hierarchy_entry* data = (hierarchy_entry*)value;
+		if(hierarchyFile){
+			fprintf(hierarchyFile, "%.15f,", data->edgeWeight);
+		} else {
+			printf("%ld : %.15f -> [", level, data->edgeWeight);
+		}
 		
 		for(int j = 0; j < numPoints; j++){
-			printf("%d ", data[j]);
+			if(hierarchyFile){
+				fprintf(hierarchyFile, "%d,", data->labels[j]);
+			} else {
+				printf("%d ", data->labels[j]);
+			}
 		}
-		printf("]\n");
+		
+		if(hierarchyFile){
+			fprintf(hierarchyFile, "\n");
+		} else {
+			printf("]\n");
+		}
 	}
+	if(hierarchyFile){
+		fclose(hierarchyFile);
+	} 
 	printf("///////////////////////////////////////////////////////////////////////////////////////\n\n");
 }
 
