@@ -314,6 +314,10 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 
 			currentEdgeIndex--;
 		}
+		
+		if(affectedClusterLabels->count < 1){
+			continue;
+		}
 
 		//Check each cluster affected for a possible split:
 		while(affectedClusterLabels->count > 0){
@@ -787,6 +791,7 @@ void hdbscan_find_prominent_clusters(hdbscan* sc, int infiniteStability){
 		int_array_list_delete(clusterList);
 	}
 
+	printf("Significant has size %d\n", g_hash_table_size(significant));
 	g_hash_table_destroy(significant);
 }
 
@@ -1236,7 +1241,6 @@ void hdbscan_print_cluster_table(IntIntListMap* table){
 	}
 }
 
-
 void hdbscan_print_cluster_sizes(IntIntListMap* table){
 	
 	GHashTableIter iter;
@@ -1249,6 +1253,30 @@ void hdbscan_print_cluster_sizes(IntIntListMap* table){
 		IntArrayList* clusterList = (IntArrayList*)value;
 		printf("%d : %d\n", label, clusterList->size);
 	}
+}
+
+
+void hdbscan_print_hierarchies(LongIntPointerMap* hierarchy, uint numPoints){
+	
+	printf("\n/////////////////////////////////Printing Hierarchies//////////////////////////////////////////////////////\n");
+	printf("hierarchy size = %d\n", g_hash_table_size(hierarchy));
+	GHashTableIter iter;
+	gpointer key;
+	gpointer value;
+	g_hash_table_iter_init (&iter, hierarchy);
+
+	while (g_hash_table_iter_next (&iter, &key, &value)){
+		int64_t label = *((int64_t *)key);
+		int* data = (int*)value;
+		//printf("%ld : %d\n", label, clusterList->size);
+		printf("%ld -> [", label);
+		
+		for(int j = 0; j < numPoints; j++){
+			printf("%d ", data[j]);
+		}
+		printf("]\n");
+	}
+	printf("///////////////////////////////////////////////////////////////////////////////////////\n\n");
 }
 
 void hdbscan_print_distance_map_table(IntDistancesMap* distancesMap){

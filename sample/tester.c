@@ -44,6 +44,9 @@ double* getDset(char* filename, int *rs, int *cs){
 	DoubleArrayList* list = (DoubleArrayList *)double_array_list_init_size(10);
 	
 	FILE *fp = fopen(filename,"r");
+	if(!fp){
+		printf("Could not open file%s\n", filename);
+	}
 	char buff[2048];
 	char* delim = " ,\n\t\r\v";
 	while(fgets(buff, 2048, fp) != 0) {
@@ -85,8 +88,8 @@ int main(int argc, char** argv){
 				printf("%f, ", dset[idx]);
 			}
 			printf("]\n");
-		}
-		*/
+		}*/
+		
 		
 	} else { // will use the default dataset in dataset.h
 		dset = dataset;
@@ -106,7 +109,7 @@ int main(int argc, char** argv){
 	for(int i = 0; i < 8; i++){
 		if(!rerun_){
 			begin = clock();
-			err = hdbscan_run(scan, dset, rows, cols, TRUE);
+			err = hdbscan_run(scan, dset, rs, cs, TRUE);
 			end = clock();
 			time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 			printf("hdbscan run Process took %f\n", time_spent);
@@ -127,6 +130,7 @@ int main(int argc, char** argv){
 			printf("SUCCESS: hdbscan clustering completed\n");
 			IntIntListMap* clusterTable = hdbscan_create_cluster_table(scan->clusterLabels, 0, scan->numPoints);
 			hdbscan_print_cluster_table(clusterTable);
+			hdbscan_print_hierarchies(scan->hierarchy, scan->numPoints);
 			
 			IntDistancesMap* dMap = hdbscan_get_min_max_distances(scan, clusterTable);
 			clustering_stats stats;
@@ -178,6 +182,7 @@ int main(int argc, char** argv){
 		}
 		
 		printf("***********************************************************************************\n\n");
+		break;
 	}
 	
 	hdbscan_destroy(scan);

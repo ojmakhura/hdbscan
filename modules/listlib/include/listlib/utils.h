@@ -48,6 +48,7 @@ typedef GPtrArray ConstraintPtrList;
 
 typedef GHashTable IntIntListMap;			// Hash table with keys as int and values as a list of integers
 typedef GHashTable LongIntListMap;
+typedef GHashTable LongIntPointerMap;
 typedef GHashTable IntDoubleMap;
 typedef GHashTable IntDoubleListMap;
 typedef GHashTable IntClusterListMap;

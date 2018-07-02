@@ -35,6 +35,7 @@ extern "C" {
 #include <string.h>
 #include <glib.h>
 #include <float.h>
+#include <stdio.h>
 #include <gsl/gsl_statistics.h>
 #include "cluster.h"
 #include "constraint.h"
@@ -100,11 +101,10 @@ struct hdbscan {
 	ClusterPtrList* clusters;
 	outlier_score* outlierScores;
 	int32_t* clusterLabels;
-	LongIntListMap* hierarchy;
+	LongIntPointerMap* hierarchy;
 	IntDoubleMap* clusterStabilities;
 	boolean selfEdges;
-	uint minPoints, minClusterSize, numPoints;
-	
+	uint minPoints, minClusterSize, numPoints;	
 	
 #ifdef __cplusplus
 
@@ -345,6 +345,7 @@ void hdbscan_print_cluster_table(IntIntListMap* table);
 void hdbscan_print_cluster_sizes(IntIntListMap* table);
 void hdbscan_print_distance_map_table(IntDistancesMap* table);
 void hdbscan_print_stats(clustering_stats* stats);
+void hdbscan_print_hierarchies(LongIntPointerMap* hierarchy, uint numPoints);
 #ifdef __cplusplus
 };
 }
