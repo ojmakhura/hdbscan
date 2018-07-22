@@ -68,20 +68,20 @@ namespace clustering {
 #endif
 
 typedef struct distance_values{
-	double min_cr;
-	double max_cr;
-	double cr_confidence;
+	double min_cr;				/// Minimum core distance in the cluster
+	double max_cr;				/// Maximum core distance in the cluster
+	double cr_confidence;		/// Cluster confidence based on core distances
 	
-	double max_dr;
-	double min_dr;
-	double dr_confidence;
+	double max_dr;				/// Minimum actual distance in the cluster
+	double min_dr;				/// Maximum actua distance in the cluster
+	double dr_confidence;		/// Cluster confidence based on actual distances
 } distance_values;
 
 struct stats_values{
 	double mean;
 	double standardDev;
 	double variance;
-	double max;
+	double max;					/// 
 	double kurtosis;
 	double skewness;
 };
@@ -238,6 +238,12 @@ int hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean rowwis
  * 
  */ 
 int hdbscan_rerun(hdbscan* sc, int32_t minPts);
+
+/**
+ * Given min and max values of minPts, select the best minPts from min
+ * to max inclusive.
+ */
+int32_t hdbscan_select_min_pts(int32_t min, int32_t max, void* dataset, int32_t datatype, IntIntListMap* selection, int32_t *val, int32_t *numClusters); 
 
 /**
  * Create the minimum spanning tree

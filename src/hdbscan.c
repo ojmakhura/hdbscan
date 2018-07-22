@@ -804,7 +804,7 @@ void hdbscan_find_prominent_clusters(hdbscan* sc, int infiniteStability){
 		int_array_list_delete(clusterList);
 	}
 
-	printf("Significant has size %d\n", g_hash_table_size(significant));
+	//printf("Significant has size %d\n", g_hash_table_size(significant));
 	g_hash_table_destroy(significant);
 }
 
@@ -1233,7 +1233,76 @@ void hdbscan_destroy_cluster_table(IntIntListMap* table){
 	g_hash_table_destroy(table);
 	table = NULL;
 }
-
+/*
+int32_t hdbscan_select_min_pts(void* dataset, uint rows, uint cols, int32_t min, int32_t max, int32_t datatype, IntIntListMap* selection, int32_t *val, int32_t *numClusters){
+	
+	//map<uint, set<int>> numClusterMap;
+	GHashTable* numClusterMap;
+	
+	//vector<int> validities;
+	int32_t* validities;
+	//vector<int32_t*> labelsList;
+	GHashTable* clusterMaps;
+	
+	int32_t minPts = -3;
+	hdbscan* scan = hdbscan_init(NULL, min, datatype);
+	hdbscan_run(scan, dataset, rows, cols, TRUE);	
+	
+	for(int i = 3; i <= 30; i++){
+		if(i > 3){
+			hdbscan_rerun(scan, i);
+		}
+		printf("\n\n >>>>>>>>>>>> Clustering for minPts = %d\n", i);			
+		IntIntListMap* clusterMap = hdbscan_create_cluster_table(scan->clusterLabels, 0, scan->numPoints);
+		clusterMaps[i] = clusterMap;
+		
+		hdbscan_print_cluster_sizes(clusterMap);		
+		IntDoubleListMap* distancesMap = hdbscan_get_min_max_distances(scan, clusterMap);
+		
+		clustering_stats stats;
+		hdbscan_calculate_stats(distancesMap, &stats);
+		int val = hdbscan_analyse_stats(&stats);
+		printf("cluster map has size = %d and validity = %d\n", g_hash_table_size(clusterMap), val);
+		trainingOut << i << "," << g_hash_table_size(clusterMap) << "," << val << "\n";
+		
+		uint idx = g_hash_table_size(clusterMap);
+		numClusterMap[idx].insert(i);				
+		validities.push_back(val);
+		
+		int32_t *labelsCopy = (int32_t *) malloc(sizeof(int32_t) * scan->numPoints);
+		memcpy(labelsCopy, scan->clusterLabels, scan->numPoints);
+		
+		//for(uint j = 0; j < scan.numPoints; j++){
+			//labelsCopy[j] = scan.clusterLabels[j];
+		//}
+		
+		//labelsList.push_back(labelsCopy);
+		hdbscan_destroy_distance_map_table(distancesMap);		
+	}
+		
+	minPts = hdbscan_choose_min_pts(numClusterMap, validities);
+	
+	GHashTableIter iter;
+	gpointer key;
+	gpointer value;
+	g_hash_table_iter_init (&iter, table);
+	
+	//for(map<int, IntDoubleListMap* >::iterator it = clusterMaps.begin(); it != clusterMaps.end(); ++it){
+	while (g_hash_table_iter_next (&iter, &key, &value)){
+		int32_t k = *((int32_t *)key);
+		IntDoubleListMap* cmap = (IntDoubleListMap*) value;
+		if(k == minPts){
+			selection = value;
+			(*val) = validities[k - 3];
+			(*numClusters) = g_hash_table_size(selection);
+			
+		} else{
+			hdbscan_destroy_distance_map_table(value);			
+		}
+		//delete[] labelsList[it->first - 3];
+	}
+}
+*/
 
 void hdbscan_print_cluster_table(IntIntListMap* table){
 	GHashTableIter iter;
