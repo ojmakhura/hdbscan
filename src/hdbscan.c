@@ -774,7 +774,7 @@ void hdbscan_find_prominent_clusters(hdbscan* sc, int infiniteStability){
 	
 	sc->clusterLabels = (int *)malloc(sc->numPoints * sizeof(int));
 	for (int i = 0; i < sc->numPoints; i++) {
-		(sc->clusterLabels)[i] = 0;
+		(sc->clusterLabels)[i] = -1;
 	}
 
 	GHashTableIter iter;
