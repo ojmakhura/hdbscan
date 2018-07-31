@@ -58,7 +58,7 @@ def main(fname):
 		
 		for key in dmap:
 			print(key, ":", dmap[key])
-		#print(getClusterMap(scan.labels))
+		print(getClusterMap(scan.labels))
 		print("\n***********************************************************************************\n");
 
 if __name__ == "__main__":
