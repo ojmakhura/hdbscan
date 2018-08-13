@@ -12,15 +12,23 @@ _modules = [Extension(	key,
 										'${GNULIB_INCLUDE_DIR}',
 										'${CMAKE_BINARY_DIR}'],
 						
-						libraries = [	'${HDBSCAN_LIBRARY}',
-										'${GNULIB_LIBRARY}',
-										'${LISTLIB_LIBRARY}'
+						libraries = [	'${HDBSCAN_LIBRARY}_static',
+										'${GNULIB_LIBRARY}_static',
+										'${LISTLIB_LIBRARY}_static',
+										'${GLIB2_LIBRARIES}',
+										'gsl',
+										'gslcblas',
+										'm'
 									],
 						
 						library_dirs = ['${HDBSCAN_LIB_DIR}',
 										'${GNULIB_LIB_DIR}',
 										'${LISTLIB_LIB_DIR}'
-										]) 
+										],
+						
+						extra_compile_args=['-fopenmp'],
+						extra_link_args=['-lgomp']
+					) 
 			for key,sources in extensions.items()]
 
 setup(name='PyHdbscan',

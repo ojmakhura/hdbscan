@@ -2,6 +2,7 @@ project (gnulib)
 
 file(GLOB_RECURSE GNULIB_SRC_FILES ${GNULIB_SRC_DIR}/*.c)
 add_library(${GNULIB_LIBRARY} SHARED ${GNULIB_SRC_FILES})
+add_library(${GNULIB_LIBRARY}_static STATIC ${GNULIB_SRC_FILES})
 include_directories(${GNULIB_INCLUDE_DIR} ${PROJECT_BINARY_DIR})
 
 install(TARGETS ${GNULIB_LIBRARY}
