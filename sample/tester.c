@@ -130,7 +130,7 @@ int main(int argc, char** argv){
 			printf("SUCCESS: hdbscan clustering completed\n");
 			IntIntListMap* clusterTable = hdbscan_create_cluster_table(scan->clusterLabels, 0, scan->numPoints);
 			hdbscan_print_cluster_table(clusterTable);
-			hdbscan_print_hierarchies(scan->hierarchy, scan->numPoints, NULL);
+			//hdbscan_print_hierarchies(scan->hierarchy, scan->numPoints, NULL);
 			
 			IntDistancesMap* dMap = hdbscan_get_min_max_distances(scan, clusterTable);
 			clustering_stats stats;
