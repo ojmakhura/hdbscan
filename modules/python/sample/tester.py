@@ -38,20 +38,16 @@ def main(fname):
 	dataset = readFile(fname)
 	
 	scan = PyHdbscan.PyHdbscan(3)
-	print("***********************************************************************************\n\n");
-	print("Clustering for dataset with minPts =", 3)
-	scan.run(dataset)
-	printLabels(scan.labels)
-	print(set(scan.labels))
-	dmap = getClusterMap(scan.labels)
-	
-	for key in dmap:
-		print(key, ":", dmap[key])
-	
+		
 	print("\n***********************************************************************************\n");
-	for i in range(4, 11):
-		print("\nRe-Clustering for dataset with minPts =", i)
-		scan.rerun(i)
+	for i in range(3, 11):
+		if i == 3:
+			print("Clustering for dataset with minPts =", 3)
+			scan.run(dataset)
+		else:
+			print("\nRe-Clustering for dataset with minPts =", i)
+			scan.rerun(i)
+			
 		printLabels(scan.labels)
 		print(set(scan.labels))
 		dmap = getClusterMap(scan.labels) 
