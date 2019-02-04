@@ -18,8 +18,10 @@ OPTION (USE_OpenMP "Use OpenMP" ON)
 
 #detect architecture
 if("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")	
+	message("Detected 64 bit architecture.")
 	set(LIBDIR "lib64")
 else()
+	message("Detected 32 bit architecture.")
 	set(LIBDIR "lib")
 endif()
 
@@ -110,7 +112,10 @@ set(CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}")
 configure_file(HdbscanConfig.cmake.in "${PROJECT_BINARY_DIR}/HdbscanConfig.cmake" @ONLY)
 
 # ... for the install tree
-set(CONF_INCLUDE_DIRS "\${HDBSCAN_CMAKE_DIR}/${REL_INCLUDE_DIR}")
+set(CONF_INCLUDE_DIRS "${INSTALL_INCLUDE_DIR}")
+set(CONF_LIB_DIRS "${INSTALL_LIB_DIR}")
+set(CONF_HDBSCAB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}")
+message("HDBSCAN to be installed in ${CMAKE_INSTALL_PREFIX}")
 configure_file(HdbscanConfig.cmake.in "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/HdbscanConfig.cmake" @ONLY)
 
 # ... for both
@@ -123,7 +128,7 @@ set_target_properties(hdbscan PROPERTIES
 install(FILES
   "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/HdbscanConfig.cmake"
   "${PROJECT_BINARY_DIR}/HdbscanConfigVersion.cmake"
-  DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)
+  DESTINATION "${INSTALL_LIB_DIR}/cmake" COMPONENT dev)
  
 # Install the export set for use with the install-tree
 INSTALL (DIRECTORY ${HDBSCAN_INCLUDE_DIR}/hdbscan DESTINATION ${INSTALL_INCLUDE_DIR})
@@ -132,4 +137,4 @@ INSTALL (DIRECTORY ${LISTLIB_INCLUDE_DIR}/listlib DESTINATION ${INSTALL_INCLUDE_
 INSTALL (FILES ${PROJECT_BINARY_DIR}/config.h DESTINATION ${INSTALL_INCLUDE_DIR}/gnulib)
 INSTALL (FILES ${PROJECT_BINARY_DIR}/hdbscan.pc DESTINATION ${INSTALL_LIB_DIR}/pkgconfig)
 
-INSTALL (EXPORT HdbscanTargets DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)
+INSTALL (EXPORT HdbscanTargets DESTINATION "${INSTALL_LIB_DIR}/cmake" COMPONENT dev)

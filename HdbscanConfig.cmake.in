@@ -1,11 +1,15 @@
 # - Config file for the hdbscan package
 # It defines the following variables
 #  HDBSCAN_INCLUDE_DIRS - include directories for hdbscan
+#  HDBSCAN_LIB_DIRS - library directories for hdbscan
+#  HDBSCAN_INSTALL_DIR - installation directories for hdbscan
 #  HDBSCAN_LIBRARIES    - libraries to link against
  
 # Compute paths
 get_filename_component(HDBSCAN_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 set(HDBSCAN_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
+set(HDBSCAN_LIB_DIRS "@CONF_LIB_DIRS@")
+set(HDBSCAN_INSTALL_DIR "@CONF_HDBSCAN_INSTALL_DIR@")
  
 # Our library dependencies (contains definitions for IMPORTED targets)
 if(NOT TARGET hdbscan AND NOT hdbscan_BINARY_DIR)
