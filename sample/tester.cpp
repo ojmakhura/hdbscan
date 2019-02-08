@@ -36,28 +36,49 @@ void dummy_tester(int minPts){
 	bool rerun = false;
 	for(int i = 0; i < 10; i++){
 		printf("%d ------- ***********************************************************************************\n", scan.minPoints);
-		
+
 		if(rerun){
 			scan.reRun(minPts + i);
 		}
-		
-		map_t clusterTable = createClusterTable(scan.clusterLabels, 0, scan.numPoints);		
-		printClusterTable(clusterTable);
-		
+
+		map_t clusterTable = createClusterMap(scan.clusterLabels, 0, scan.numPoints);
+		printClusterMap(clusterTable);
+
 		map<int32_t, distance_values> dMap = getMinMaxDistances(scan, clusterTable);
 		clustering_stats stats;
 		calculateStats(dMap, stats);
-		printDistanceMapTable(dMap);
+		printDistanceMap(dMap);
 		printStats(stats);
-		
+
 		printf("Clustering validity : %d\n", analyseStats(stats));
-				
+
+		vector<int32_t> sorted;
+		sortByLength(clusterTable, sorted);
+
+		printf("\n\nSorted by length = [\n");
+
+		for(size_t i = 0; i < sorted.size(); i++){
+			map_t::iterator it = clusterTable.find(sorted[i]);
+			printf("%d : %d\n", sorted[i], it->second.size());
+		}
+		printf("]\n\n");
+
+		sortBySimilarity(dMap, sorted, INTRA_DISTANCE_TYPE);
+		printf("Sorted by similarity = [");
+		for(size_t i = 0; i < sorted.size(); i++){
+			map<int32_t, distance_values>::iterator it = dMap.find(sorted[i]);
+			printf("%d : (%f, %f)\n", sorted[i], it->second.dr_confidence, it->second.cr_confidence);
+		}
+		printf("]\n\n");
+
+		printDistanceMap(dMap);
+
 		printf("\n\nCluster labels = [");
 		for(uint i = 0; i < scan.numPoints; i++){
 			printf("%d ", scan.clusterLabels[i]);
 		}
 		printf("]\n\n");
-		
+
 		printf("***********************************************************************************\n");
 		if(!rerun){
 			rerun = true;

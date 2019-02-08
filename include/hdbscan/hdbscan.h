@@ -1,6 +1,6 @@
 /*
  * hdbscan.h
- * 
+ *
  * Copyright 2018 Onalenna Junior Makhura
  *
  * Permission is hereby granted, free of charge, to any person
@@ -71,7 +71,7 @@ typedef struct distance_values{
 	double min_cr;				/// Minimum core distance in the cluster
 	double max_cr;				/// Maximum core distance in the cluster
 	double cr_confidence;		/// Cluster confidence based on core distances
-	
+
 	double max_dr;				/// Minimum actual distance in the cluster
 	double min_dr;				/// Maximum actua distance in the cluster
 	double dr_confidence;		/// Cluster confidence based on actual distances
@@ -81,7 +81,7 @@ struct stats_values{
 	double mean;
 	double standardDev;
 	double variance;
-	double max;					/// 
+	double max;					///
 	double kurtosis;
 	double skewness;
 };
@@ -111,8 +111,8 @@ struct hdbscan {
 	LongHierarchyEntryMap* hierarchy;
 	IntDoubleMap* clusterStabilities;
 	boolean selfEdges;
-	uint minPoints, minClusterSize, numPoints;	
-	
+	uint minPoints, minClusterSize, numPoints;
+
 #ifdef __cplusplus
 
 public:
@@ -196,7 +196,7 @@ public:
 	 * @param infiniteStability true if there are any clusters with infinite stability, false otherwise
 	 */
 	void calculateOutlierScores(double* pointNoiseLevels, int* pointLastClusters, boolean infiniteStability);
-	
+
 	void clean();
 #endif
 
@@ -207,8 +207,8 @@ typedef struct hdbscan hdbscan;
 
 /**
  * Initialise hdbcsan parameters
- * 
- */ 
+ *
+ */
 hdbscan* hdbscan_init(hdbscan* sc, uint minPoints, uint datatype);
 
 /**
@@ -223,7 +223,7 @@ void hdbscan_destroy(hdbscan* sc);
 void hdbscan_clean(hdbscan* sc);
 
 /**
- * Cluster the dataset 
+ * Cluster the dataset
  */
 int hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean rowwise);
 
@@ -231,19 +231,19 @@ int hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean rowwis
  * hdbscan_rerun
  * @param sc
  * @param minPts
- * 
+ *
  * In case you need to re-cluster with a differnt minPts without changing the dataset.
  * This function will do that by just recalculating the core distances from the existing
  * distances.
- * 
- */ 
+ *
+ */
 int hdbscan_rerun(hdbscan* sc, int32_t minPts);
 
 /**
  * Given min and max values of minPts, select the best minPts from min
  * to max inclusive.
  */
-int32_t hdbscan_select_min_pts(int32_t min, int32_t max, void* dataset, int32_t datatype, IntIntListMap* selection, int32_t *val, int32_t *numClusters); 
+int32_t hdbscan_select_min_pts(int32_t min, int32_t max, void* dataset, int32_t datatype, IntIntListMap* selection, int32_t *val, int32_t *numClusters);
 
 /**
  * Create the minimum spanning tree
@@ -305,15 +305,15 @@ int hdbscsan_calculate_outlier_scores(hdbscan* sc, double* pointNoiseLevels, int
 /**
  * Given an array of labels, create a hash table where the keys are the labels and the values are the indices.
  **/
-IntIntListMap* hdbscan_create_cluster_table(int32_t* labels, int32_t begin, int32_t end);
+IntIntListMap* hdbscan_create_cluster_map(int32_t* labels, int32_t begin, int32_t end);
 
 /**
  * Create a hash table that maps the different statistical values to their values.
  * The statistical value names are declared in the hdbscan.h header file. They are in the form
  * of NAME_{CR, DR}, where name is the name of the value and CR is for the value calculated using
- * the core distance values and DR is for 
- * 
- */ 
+ * the core distance values and DR is for
+ *
+ */
 void hdbscan_calculate_stats(IntDistancesMap* distanceMap, clustering_stats* stats);
 
 void hdbscan_calculate_stats_helper(double* cr, double* dr, clustering_stats* stats);
@@ -321,7 +321,7 @@ void hdbscan_calculate_stats_helper(double* cr, double* dr, clustering_stats* st
 /**
  * Create a hash table for statistical values describing the clustering results
  */
-int32_t hdbscan_analyse_stats(clustering_stats* stats); 
+int32_t hdbscan_analyse_stats(clustering_stats* stats);
 
 /**
  * Get the minimum and maximum core and intra-cluster distances
@@ -336,32 +336,32 @@ IntArrayList* hdbscan_sort_by_similarity(IntDistancesMap* distanceMap, IntArrayL
 /**
  * Sorts clusters according to how long the cluster is
  */
-IntArrayList* hdbscan_sort_by_length(IntIntListMap* clusterTable, IntArrayList *clusters); 
+IntArrayList* hdbscan_sort_by_length(IntIntListMap* clusterTable, IntArrayList *clusters);
 
 /**
  * Uses quick sort algorithm to sort clusters based on the data
- */ 
+ */
 void hdbscan_quicksort(IntArrayList *clusters, DoubleArrayList *sortData, int32_t left, int32_t right);
 
 /**
- * 
+ *
  * Destroy the hash tables
  */
-void hdbscan_destroy_cluster_table(IntIntListMap* table);
-void hdbscan_destroy_distance_map_table(IntDistancesMap* table);
+void hdbscan_destroy_cluster_map(IntIntListMap* table);
+void hdbscan_destroy_distance_map(IntDistancesMap* table);
 
 /**
- * 
+ *
  */
-hierarchy_entry* hdbscan_create_hierarchy_entry(); 
+hierarchy_entry* hdbscan_create_hierarchy_entry();
 
 /**
  * Printing the hash tables
- * 
- */ 
-void hdbscan_print_cluster_table(IntIntListMap* table);
+ *
+ */
+void hdbscan_print_cluster_map(IntIntListMap* table);
 void hdbscan_print_cluster_sizes(IntIntListMap* table);
-void hdbscan_print_distance_map_table(IntDistancesMap* table);
+void hdbscan_print_distance_map(IntDistancesMap* table);
 void hdbscan_print_stats(clustering_stats* stats);
 void hdbscan_print_hierarchies(LongHierarchyEntryMap* hierarchy, uint numPoints, char *filename);
 #ifdef __cplusplus

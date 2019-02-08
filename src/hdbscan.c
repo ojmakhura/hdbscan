@@ -23,7 +23,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
- 
+
 #include "hdbscan/hdbscan.h"
 #include <time.h>
 
@@ -95,13 +95,13 @@ void hdbscan_minimal_clean(hdbscan* sc){
 		free(sc->clusterLabels);
 		sc->clusterLabels = NULL;
 	}
-	
-	
+
+
 	if(sc->outlierScores != NULL){
 		free(sc->outlierScores);
 		sc->outlierScores = NULL;
 	}
-	
+
 	if(sc->mst != NULL){
 		graph_destroy(sc->mst);
 		sc->mst = NULL;
@@ -119,7 +119,7 @@ void hdbscan_minimal_clean(hdbscan* sc){
 		sc->constraints = NULL;
 	}
 
-	if(sc->clusterStabilities != NULL){		
+	if(sc->clusterStabilities != NULL){
 
 		GHashTableIter iter;
 		gpointer key;
@@ -131,14 +131,14 @@ void hdbscan_minimal_clean(hdbscan* sc){
 			if(label != NULL){
 				free(label);
 			}
-			
+
 			double* stability = (double*)key;
-			if(stability != NULL){				
+			if(stability != NULL){
 				free(stability);
 			}
 		}
 		g_hash_table_destroy(sc->clusterStabilities);
-		
+
 		sc->clusterStabilities = NULL;
 	}
 
@@ -162,7 +162,7 @@ void hdbscan_minimal_clean(hdbscan* sc){
 		g_hash_table_destroy(sc->hierarchy);
 		sc->hierarchy = NULL;
 	}
-	
+
 	if(sc->clusters != NULL){
 
 		for(guint i = 0; i < sc->clusters->len; i++){
@@ -189,8 +189,8 @@ void hdbscan_destroy(hdbscan* sc){
 }
 
 /**
- * 
- */ 
+ *
+ */
 int hdbscan_do_run(hdbscan* sc){
 
 	guint csize = sc->numPoints/2;
@@ -200,7 +200,7 @@ int hdbscan_do_run(hdbscan* sc){
 		printf("Error: Could not construct the minimum spanning tree.\n");
 		return HDBSCAN_ERROR;
 	}
-	
+
 	graph_quicksort_by_edge_weight(sc->mst);
 
 	double pointNoiseLevels[sc->numPoints];
@@ -216,7 +216,7 @@ int hdbscan_do_run(hdbscan* sc){
 int hdbscan_rerun(hdbscan* sc, int32_t minPts){
 	// clean the hdbscan
 	hdbscan_minimal_clean(sc);
-	
+
 	sc->selfEdges = TRUE;
 	sc->hierarchy = g_hash_table_new(g_int64_hash, g_int64_equal);
 	sc->clusterStabilities = g_hash_table_new(g_int_hash, g_int_equal);
@@ -239,7 +239,7 @@ int hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean rowwis
 		return HDBSCAN_ERROR;
 	}
 
-	sc->numPoints = hdbscan_get_dataset_size(rows, cols, rowwise);	
+	sc->numPoints = hdbscan_get_dataset_size(rows, cols, rowwise);
 	distance_compute(&(sc->distanceFunction), dataset, rows, cols, sc->minPoints-1);
 
 	return hdbscan_do_run(sc);
@@ -288,7 +288,7 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 
 	cluster* c = cluster_init(NULL, 1, NULL, NAN, numVertices);
 	g_ptr_array_add(sc->clusters, c);
-	
+
 	//Sets for the clusters and vertices that are affected by the edge(s) being removed:
 	gl_oset_t affectedClusterLabels = gl_oset_nx_create_empty (GL_ARRAY_OSET, (gl_setelement_compar_fn) int_compare, NULL);
 	gl_oset_t affectedVertices = gl_oset_nx_create_empty (GL_ARRAY_OSET, (gl_setelement_compar_fn) int_compare, NULL);
@@ -316,7 +316,7 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 
 			currentEdgeIndex--;
 		}
-		
+
 		if(affectedClusterLabels->count < 1){
 			continue;
 		}
@@ -437,11 +437,11 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 
 				//If this child cluster is not valid cluster, assign it to noise:
 				else if(constructingSubCluster->count < sc->minPoints || anyEdges == FALSE){
-					
+
 					cluster* examinedCluster = (sc->clusters->pdata)[examinedClusterLabel];
 
 					cluster* newCluster = hdbscan_create_new_cluster(sc, constructingSubCluster, currentClusterLabels, examinedCluster, 0, currentEdgeWeight);
-					
+
 					for (int i = 0; i < constructingSubCluster->count; i++) {
 						int point;
 						gl_oset_value_at(constructingSubCluster, i, &point);
@@ -638,7 +638,7 @@ int hdbscan_construct_mst(hdbscan* sc){
 		//Iterate through all unattached points, updating distances using the current point:
 #pragma omp parallel for
 		for (unsigned int neighbor = 0; neighbor < size; neighbor++) {
-			
+
 			if (currentPoint == neighbor) {
 				continue;
 			}
@@ -648,7 +648,7 @@ int hdbscan_construct_mst(hdbscan* sc){
 			}
 
 			double mutualReachabiltiyDistance = distance_get(&sc->distanceFunction, neighbor, currentPoint);
-			
+
 			if (coreDistances[currentPoint] > mutualReachabiltiyDistance) {
 				mutualReachabiltiyDistance = coreDistances[currentPoint];
 			}
@@ -674,7 +674,7 @@ int hdbscan_construct_mst(hdbscan* sc){
 		//Attach the closest point found in this iteration to the tree:
 		attachedPoints[nearestMRDPoint] = TRUE;
 		int_array_list_set_value_at(otherVertexIndices, numAttachedPoints, numAttachedPoints);
-		currentPoint = nearestMRDPoint;		
+		currentPoint = nearestMRDPoint;
 	}
 
 	//If necessary, attach self edges:
@@ -712,7 +712,7 @@ boolean hdbscan_propagate_tree(hdbscan* sc){
 
 		cluster* cl = (sc->clusters->pdata)[i];
 		if(cl != NULL && cl->hasChildren == FALSE){
-			
+
 			gl_oset_nx_add(clustersToExamine, cl->label);
 			addedToExaminationList[cl->label] = TRUE;
 		}
@@ -771,7 +771,7 @@ void hdbscan_find_prominent_clusters(hdbscan* sc, int infiniteStability){
 		}
 		node = g_list_next(node);
 	}
-	
+
 	sc->clusterLabels = (int *)malloc(sc->numPoints * sizeof(int));
 	for (int i = 0; i < sc->numPoints; i++) {
 		(sc->clusterLabels)[i] = 0;
@@ -829,13 +829,13 @@ int hdbscsan_calculate_outlier_scores(hdbscan* sc, double* pointNoiseLevels, int
 		cluster* c = (cluster*)(sc->clusters->pdata)[tmp];
 		double epsilon_max = c->propagatedLowestChildDeathLevel;
 		double epsilon = pointNoiseLevels[i];
-		
+
 		double score = 0;
 		if(epsilon != 0){
 			score = 1 - (epsilon_max / epsilon);
 		}
-		
-		sc->outlierScores[i].id = i;		
+
+		sc->outlierScores[i].id = i;
 		sc->outlierScores[i].score = score;
 		sc->outlierScores[i].coreDistance = coreDistances[i];
 	}
@@ -846,13 +846,13 @@ int hdbscsan_calculate_outlier_scores(hdbscan* sc, double* pointNoiseLevels, int
 	return 1;
 }
 
-IntIntListMap* hdbscan_create_cluster_table(int* labels, int32_t begin, int32_t end){
-	IntIntListMap* clusterTable = g_hash_table_new(g_int_hash, g_int_equal); 
+IntIntListMap* hdbscan_create_cluster_map(int* labels, int32_t begin, int32_t end){
+	IntIntListMap* clusterTable = g_hash_table_new(g_int_hash, g_int_equal);
 	int32_t size = end - begin;
 	for(int i = begin; i < end; i++){
 		int *lb = labels + i;
 		IntArrayList* clusterList = (IntArrayList *)g_hash_table_lookup(clusterTable, lb);
-		
+
 		if(clusterList == NULL){
 			lb = (int *)malloc(sizeof(int));
 			*lb = labels[i];
@@ -861,15 +861,15 @@ IntIntListMap* hdbscan_create_cluster_table(int* labels, int32_t begin, int32_t 
 		}
 		int_array_list_append(clusterList, i);
 	}
-	
+
 	return clusterTable;
 }
 
 IntDistancesMap* hdbscan_get_min_max_distances(hdbscan* sc, IntIntListMap* clusterTable){
 	IntDistancesMap* distanceMap = g_hash_table_new_full(g_int_hash, g_int_equal, free, free);
-	double* core = sc->distanceFunction.coreDistances;	
+	double* core = sc->distanceFunction.coreDistances;
 	double zero = 0.00000000000;
-	
+
 	GHashTableIter iter;
 	gpointer key;
 	gpointer value;
@@ -878,41 +878,41 @@ IntDistancesMap* hdbscan_get_min_max_distances(hdbscan* sc, IntIntListMap* clust
 	while (g_hash_table_iter_next (&iter, &key, &value)){
 		IntArrayList* clusterLabels = (IntArrayList*)value;
 		int32_t* idxList = (int32_t* )clusterLabels->data;
-		
+
 		for(int i = 0; i < clusterLabels->size; i++){
 			distance_values* dl = g_hash_table_lookup(distanceMap, (int32_t *)key);
 			int32_t index = idxList[i];
 			int32_t *k = NULL;
-			
+
 			if(dl == NULL){
 				dl = (distance_values *)malloc(sizeof(distance_values));
-				
+
 				k = (int32_t *)malloc(sizeof(int32_t));
 				*k = *((int32_t *)key);
 				dl->min_cr = core[index];
 				dl->max_cr = core[index];
 				dl->cr_confidence = 0.0;
-				
+
 				dl->min_dr = DBL_MAX;
 				dl->max_dr = DBL_MIN;
 				dl->dr_confidence = 0.0;
-				
+
 				g_hash_table_insert(distanceMap, k, dl);
 			} else{
 				if(dl->min_cr > core[index] && (core[index] < zero || core[index] > zero)){
 					dl->min_cr = core[index];
 				}
-								
+
 				//max core distance
 				if(dl->max_cr < core[index]){
 					dl->max_cr = core[index];
 				}
 			}
-			
+
 			// Calculating min and max distances
 			for(size_t j = i+1; j < clusterLabels->size; j++){
 				double d = distance_get(&(sc->distanceFunction), index, idxList[j]);
-				
+
 				if(dl->min_dr > d && (d < zero || d > zero)){
 					dl->min_dr = d;
 				}
@@ -921,23 +921,24 @@ IntDistancesMap* hdbscan_get_min_max_distances(hdbscan* sc, IntIntListMap* clust
 				if(dl->max_dr < d){
 					dl->max_dr = d;
 				}
-				
-			}			
+
+			}
 		}
 	}
-	
+
 	return distanceMap;
 }
 
-void hdbscan_destroy_distance_map_table(IntDistancesMap* table){
-	
+void hdbscan_destroy_distance_map(IntDistancesMap* table){
+
 	g_hash_table_destroy(table);
-	table = NULL;	
+	table = NULL;
 }
+
 void hdbscan_calculate_stats_helper(double* cr, double* dr, clustering_stats* stats){
 #pragma omp parallel
 {
-// Calculating core distance statistics	
+// Calculating core distance statistics
 	stats->coreDistanceValues.mean = stats->coreDistanceValues.mean / stats->count;
 	stats->coreDistanceValues.standardDev = gsl_stats_sd(cr, 1, stats->count);
 	stats->coreDistanceValues.variance = gsl_stats_variance(cr, 1, stats->count);
@@ -945,7 +946,7 @@ void hdbscan_calculate_stats_helper(double* cr, double* dr, clustering_stats* st
 	stats->coreDistanceValues.skewness = gsl_stats_skew(cr, 1, stats->count);
 	stats->coreDistanceValues.mean = gsl_stats_mean(cr, 1, stats->count);
 	stats->coreDistanceValues.max = gsl_stats_max(cr, 1, stats->count);
-	
+
 	// calculating intra distance statistics
 	stats->intraDistanceValues.mean = stats->intraDistanceValues.mean / stats->count;
 	stats->intraDistanceValues.standardDev = gsl_stats_sd(dr, 1, stats->count);
@@ -958,27 +959,27 @@ void hdbscan_calculate_stats_helper(double* cr, double* dr, clustering_stats* st
 }
 
 void hdbscan_calculate_stats(IntDistancesMap* distanceMap, clustering_stats* stats){
-	
+
 	GHashTableIter iter;
 	gpointer key;
 	gpointer value;
 	g_hash_table_iter_init (&iter, distanceMap);
-	
+
 	double cr[g_hash_table_size(distanceMap)];
 	double dr[g_hash_table_size(distanceMap)];
-	
-	int c = 0;	
+
+	int c = 0;
 	while (g_hash_table_iter_next (&iter, &key, &value)){
 		distance_values* dl = (distance_values*)value;
 		cr[c] = dl->max_cr/dl->min_cr;
 		dr[c] = dl->max_dr/dl->min_dr;
-					
+
 		c++;
 	}
-	
-	stats->count = c;	
+
+	stats->count = c;
 	hdbscan_calculate_stats_helper(cr, dr, stats);
-		
+
 	/// update the distanceMap confidences
 	c = 0;
 	g_hash_table_iter_init (&iter, distanceMap);
@@ -986,22 +987,22 @@ void hdbscan_calculate_stats(IntDistancesMap* distanceMap, clustering_stats* sta
 		distance_values* dl = (distance_values*)value;
 		double rc = cr[c];
 		double rd = dr[c];
-		
+
 		dl->cr_confidence = ((stats->coreDistanceValues.max - rc) / stats->coreDistanceValues.max) * 100;
 		dl->dr_confidence = ((stats->intraDistanceValues.max - rd) / stats->intraDistanceValues.max) * 100;
 		c++;
 	}
-	
+
 }
 
 int32_t hdbscan_analyse_stats(clustering_stats* stats){
 	int32_t validity = 0;
-	
-	double skew_cr = stats->coreDistanceValues.skewness;	
+
+	double skew_cr = stats->coreDistanceValues.skewness;
 	double skew_dr = stats->intraDistanceValues.skewness;
 	double kurtosis_cr = stats->coreDistanceValues.kurtosis;
-	double kurtosis_dr = stats->intraDistanceValues.kurtosis;	
-	
+	double kurtosis_dr = stats->intraDistanceValues.kurtosis;
+
 	if((skew_dr > 0.0 ) && (kurtosis_dr > 0.0 )){
 		validity += 2;
 	} else if(skew_dr < 0.0 && kurtosis_dr > 0.0){
@@ -1021,69 +1022,69 @@ int32_t hdbscan_analyse_stats(clustering_stats* stats){
 	} else{
 		validity += -1;
 	}
-	
+
 	return validity;
 }
 
 void partition(int32_t *c_data, double *d_data, int lower, int upper, int* pivot){
 	double x = d_data[lower];
 	int32_t x2 = c_data[lower];
-	
+
 	int up = lower+1; /* index will go up */
 	int down = upper; /* index will go down */
-	
+
 	while(up < down){
 		while((up < down) && (d_data[up] <= x)) {
 			up++;
 		}
-		
+
 		while((up < down) && (d_data[down] > x)){
 			down--;
 		}
-		
+
 		if(up == down){
 			break;
 		}
-		
+
 		double tmp = d_data[up];
-		d_data[up] = d_data[down]; 
+		d_data[up] = d_data[down];
 		d_data[down] = tmp;
-		
+
 		int32_t tmp2 = c_data[up];
-		c_data[up] = c_data[down]; 
+		c_data[up] = c_data[down];
 		c_data[down] = tmp2;
-		
+
 	}
 	if(d_data[up] > x){
 		up--;
 	}
-	
-	d_data[lower] = d_data[up]; 
+
+	d_data[lower] = d_data[up];
 	d_data[up] = x;
-	
-	c_data[lower] = c_data[up]; 
+
+	c_data[lower] = c_data[up];
 	c_data[up] = x2;
-	
+
 	*pivot = up;
 }
 
 void hdbscan_quicksort(IntArrayList *clusters, DoubleArrayList *sortData, int32_t left, int32_t right){
-	
+
 	double *d_data = (double *)sortData->data;
-	int32_t *c_data = (int32_t *)clusters->data; 
+	int32_t *c_data = (int32_t *)clusters->data;
 	if(left < right){
-		int pivot;
+		int32_t pivot;
 		partition(c_data, d_data, left, right, &pivot);
 		hdbscan_quicksort(clusters, sortData, left, pivot - 1);
 		hdbscan_quicksort(clusters, sortData, pivot + 1, right);
-	} 
+	}
 }
 
 
 
 /**
- * Sorts the clusters using the distances in the distanceMap. This 
- * function requires that the confidences be already calculates. This 
+ * Sorts the clusters using the distances in the distanceMap. This
+ * function requires that the confidences be already calculates. This
  * can be achieved by calling the hdbscan_calculate_stats function
  */
 IntArrayList* hdbscan_sort_by_similarity(IntDistancesMap* distanceMap, IntArrayList *clusters, int32_t distanceType){
@@ -1095,10 +1096,10 @@ IntArrayList* hdbscan_sort_by_similarity(IntDistancesMap* distanceMap, IntArrayL
 	} else{
 		distances = double_array_list_init(clusters->size);
 	}
-	
+
 	int32_t size = clusters->size;
-	
-	if(size == 0){     /// If clusters had nothing in it, we will use the whole hash table 
+
+	if(size == 0){     /// If clusters had nothing in it, we will use the whole hash table
 		GHashTableIter iter;
 		gpointer key;
 		gpointer value;
@@ -1109,26 +1110,26 @@ IntArrayList* hdbscan_sort_by_similarity(IntDistancesMap* distanceMap, IntArrayL
 			distance_values *dv = (distance_values *)value;
 			int_array_list_append(clusters, *k);
 			double conf;
-			
+
 			if(distanceType == CORE_DISTANCE_TYPE){
 				conf = dv->cr_confidence;
 			} else{
 				conf = dv->dr_confidence;
 			}
-			
-			double_array_list_append(distances, conf);			
+
+			double_array_list_append(distances, conf);
 		}
 	} else { /// else we just need to get the lengths from the hash table
 		int32_t *data = (int32_t *)clusters->data;
 		distances->size = clusters->size;
 		double *ddata = (double *)distances->data;
-		
+
 #pragma omp parallel for
 		for(int32_t i = 0; i < clusters->size; i++){
 			int32_t *key = data + i;
-			distance_values *dv = (distance_values *)g_hash_table_lookup(distanceMap, key);	
+			distance_values *dv = (distance_values *)g_hash_table_lookup(distanceMap, key);
 			double conf;
-			
+
 			if(distanceType == CORE_DISTANCE_TYPE){
 				conf = dv->cr_confidence;
 			} else{
@@ -1137,11 +1138,11 @@ IntArrayList* hdbscan_sort_by_similarity(IntDistancesMap* distanceMap, IntArrayL
 			ddata[i] = conf;
 		}
 	}
-	
+
 	// sort
 	hdbscan_quicksort(clusters, distances, 0, clusters->size-1);
 	double_array_list_delete(distances);
-	
+
 	return clusters;
 }
 
@@ -1149,7 +1150,7 @@ IntArrayList* hdbscan_sort_by_similarity(IntDistancesMap* distanceMap, IntArrayL
  * Sorts clusters according to how long the cluster is
  */
 IntArrayList* hdbscan_sort_by_length(IntIntListMap* clusterTable, IntArrayList *clusters){
-	
+
 	DoubleArrayList *lengths;
 	if(clusters == NULL){
 		clusters = int_array_list_init(g_hash_table_size(clusterTable));
@@ -1157,10 +1158,10 @@ IntArrayList* hdbscan_sort_by_length(IntIntListMap* clusterTable, IntArrayList *
 	} else{
 		lengths = double_array_list_init(clusters->max_size);
 	}
-	
+
 	int32_t size = clusters->size;
-	
-	if(size == 0){     /// If clusters had nothing in it, we will use the whole hash table 
+
+	if(size == 0){     /// If clusters had nothing in it, we will use the whole hash table
 		GHashTableIter iter;
 		gpointer key;
 		gpointer value;
@@ -1170,7 +1171,7 @@ IntArrayList* hdbscan_sort_by_length(IntIntListMap* clusterTable, IntArrayList *
 			int32_t* k = (int32_t *)key;
 			IntArrayList *lst = (IntArrayList *)value;
 			int_array_list_append(clusters, *k);
-			double_array_list_append(lengths, (double)lst->size);			
+			double_array_list_append(lengths, (double)lst->size);
 		}
 	} else { /// else we just need to get the lengths from the hash table
 		int32_t *data = (int32_t *)clusters->data;
@@ -1186,15 +1187,15 @@ IntArrayList* hdbscan_sort_by_length(IntIntListMap* clusterTable, IntArrayList *
 	// sort
 	hdbscan_quicksort(clusters, lengths, 0, clusters->size-1);
 	double_array_list_delete(lengths);
-	
+
 	return clusters;
 }
 
 /**
  * Destroys the cluster table
- */ 
-void hdbscan_destroy_cluster_table(IntIntListMap* table){
-	
+ */
+void hdbscan_destroy_cluster_map(IntIntListMap* table){
+
 	GHashTableIter iter;
 	gpointer key;
 	gpointer value;
@@ -1203,7 +1204,7 @@ void hdbscan_destroy_cluster_table(IntIntListMap* table){
 	while (g_hash_table_iter_next (&iter, &key, &value)){
 		IntArrayList* clusterList = (IntArrayList*)value;
 		int_array_list_delete(clusterList);
-			
+
 		if(key != NULL){
 			free(key);
 		}
@@ -1211,78 +1212,8 @@ void hdbscan_destroy_cluster_table(IntIntListMap* table){
 	g_hash_table_destroy(table);
 	table = NULL;
 }
-/*
-int32_t hdbscan_select_min_pts(void* dataset, uint rows, uint cols, int32_t min, int32_t max, int32_t datatype, IntIntListMap* selection, int32_t *val, int32_t *numClusters){
-	
-	//map<uint, set<int>> numClusterMap;
-	GHashTable* numClusterMap;
-	
-	//vector<int> validities;
-	int32_t* validities;
-	//vector<int32_t*> labelsList;
-	GHashTable* clusterMaps;
-	
-	int32_t minPts = -3;
-	hdbscan* scan = hdbscan_init(NULL, min, datatype);
-	hdbscan_run(scan, dataset, rows, cols, TRUE);	
-	
-	for(int i = 3; i <= 30; i++){
-		if(i > 3){
-			hdbscan_rerun(scan, i);
-		}
-		printf("\n\n >>>>>>>>>>>> Clustering for minPts = %d\n", i);			
-		IntIntListMap* clusterMap = hdbscan_create_cluster_table(scan->clusterLabels, 0, scan->numPoints);
-		clusterMaps[i] = clusterMap;
-		
-		hdbscan_print_cluster_sizes(clusterMap);		
-		IntDoubleListMap* distancesMap = hdbscan_get_min_max_distances(scan, clusterMap);
-		
-		clustering_stats stats;
-		hdbscan_calculate_stats(distancesMap, &stats);
-		int val = hdbscan_analyse_stats(&stats);
-		printf("cluster map has size = %d and validity = %d\n", g_hash_table_size(clusterMap), val);
-		trainingOut << i << "," << g_hash_table_size(clusterMap) << "," << val << "\n";
-		
-		uint idx = g_hash_table_size(clusterMap);
-		numClusterMap[idx].insert(i);				
-		validities.push_back(val);
-		
-		int32_t *labelsCopy = (int32_t *) malloc(sizeof(int32_t) * scan->numPoints);
-		memcpy(labelsCopy, scan->clusterLabels, scan->numPoints);
-		
-		//for(uint j = 0; j < scan.numPoints; j++){
-			//labelsCopy[j] = scan.clusterLabels[j];
-		//}
-		
-		//labelsList.push_back(labelsCopy);
-		hdbscan_destroy_distance_map_table(distancesMap);		
-	}
-		
-	minPts = hdbscan_choose_min_pts(numClusterMap, validities);
-	
-	GHashTableIter iter;
-	gpointer key;
-	gpointer value;
-	g_hash_table_iter_init (&iter, table);
-	
-	//for(map<int, IntDoubleListMap* >::iterator it = clusterMaps.begin(); it != clusterMaps.end(); ++it){
-	while (g_hash_table_iter_next (&iter, &key, &value)){
-		int32_t k = *((int32_t *)key);
-		IntDoubleListMap* cmap = (IntDoubleListMap*) value;
-		if(k == minPts){
-			selection = value;
-			(*val) = validities[k - 3];
-			(*numClusters) = g_hash_table_size(selection);
-			
-		} else{
-			hdbscan_destroy_distance_map_table(value);			
-		}
-		//delete[] labelsList[it->first - 3];
-	}
-}
-*/
 
-void hdbscan_print_cluster_table(IntIntListMap* table){
+void hdbscan_print_cluster_map(IntIntListMap* table){
 	GHashTableIter iter;
 	gpointer key;
 	gpointer value;
@@ -1292,7 +1223,7 @@ void hdbscan_print_cluster_table(IntIntListMap* table){
 		int32_t label = *((int32_t *)key);
 		IntArrayList* clusterList = (IntArrayList*)value;
 		printf("%d -> [", label);
-					
+
 		for(int j = 0; j < clusterList->size; j++){
 			int32_t *dpointer = int_array_list_data(clusterList, j);
 			printf("%d ", *dpointer);
@@ -1302,7 +1233,7 @@ void hdbscan_print_cluster_table(IntIntListMap* table){
 }
 
 void hdbscan_print_cluster_sizes(IntIntListMap* table){
-	
+
 	GHashTableIter iter;
 	gpointer key;
 	gpointer value;
@@ -1316,13 +1247,13 @@ void hdbscan_print_cluster_sizes(IntIntListMap* table){
 }
 
 void hdbscan_print_hierarchies(LongHierarchyEntryMap* hierarchy, uint numPoints, char *filename){
-	
-	
+
+
 	FILE *visFile = NULL;
 	FILE *hierarchyFile = NULL;
-	
+
 	if(filename != NULL){
-		
+
 		char visFilename[100];
 		strcat(visFilename, filename);
 		strcat(visFilename, "_visualization.vis");
@@ -1330,13 +1261,13 @@ void hdbscan_print_hierarchies(LongHierarchyEntryMap* hierarchy, uint numPoints,
 		fprintf(visFile, "1\n");
 		fprintf(visFile, "%d\n", g_hash_table_size(hierarchy));
 		fclose(visFile);
-		
+
 		char hierarchyFilename[100];
 		strcat(hierarchyFilename, filename);
 		strcat(hierarchyFilename, "_hierarchy.csv");
 		hierarchyFile = fopen(hierarchyFilename, "w");
 	}
-	
+
 	printf("\n/////////////////////////////////Printing Hierarchies//////////////////////////////////////////////////////\n");
 	printf("hierarchy size = %d\n", g_hash_table_size(hierarchy));
 	GHashTableIter iter;
@@ -1352,7 +1283,7 @@ void hdbscan_print_hierarchies(LongHierarchyEntryMap* hierarchy, uint numPoints,
 		} else {
 			printf("%ld : %.15f -> [", level, data->edgeWeight);
 		}
-		
+
 		for(int j = 0; j < numPoints; j++){
 			if(hierarchyFile){
 				fprintf(hierarchyFile, "%d,", data->labels[j]);
@@ -1360,7 +1291,7 @@ void hdbscan_print_hierarchies(LongHierarchyEntryMap* hierarchy, uint numPoints,
 				printf("%d ", data->labels[j]);
 			}
 		}
-		
+
 		if(hierarchyFile){
 			fprintf(hierarchyFile, "\n");
 		} else {
@@ -1369,11 +1300,11 @@ void hdbscan_print_hierarchies(LongHierarchyEntryMap* hierarchy, uint numPoints,
 	}
 	if(hierarchyFile){
 		fclose(hierarchyFile);
-	} 
+	}
 	printf("///////////////////////////////////////////////////////////////////////////////////////\n\n");
 }
 
-void hdbscan_print_distance_map_table(IntDistancesMap* distancesMap){
+void hdbscan_print_distance_map(IntDistancesMap* distancesMap){
 	GHashTableIter iter;
 	gpointer key;
 	gpointer value;
@@ -1384,33 +1315,33 @@ void hdbscan_print_distance_map_table(IntDistancesMap* distancesMap){
 		int32_t label = *((int32_t *)key);
 		printf("%d -> {\n", label);
 		distance_values* dv = (distance_values *)value;
-		
+
 		printf("min_cr : %f, max_cr : %f, cr_confidence : %f\n", dv->min_cr, dv->max_cr, dv->cr_confidence);
 		printf("min_dr : %f, max_dr : %f, dr_confidence : %f\n", dv->min_dr, dv->max_dr, dv->dr_confidence);
-				
+
 		printf("}\n\n");
 	}
 	printf("///////////////////////////////////////////////////////////////////////////////////////\n\n");
 }
 
 void hdbscan_print_stats(clustering_stats* stats){
-	
+
 	printf("//////////////////////////////////////// Statistical Values ///////////////////////////////////////////////\n");
-	
-	printf("Cluster Count 					: %d\n", stats->count);	
+
+	printf("Cluster Count 					: %d\n", stats->count);
 	printf("Core Distances - Max 			: %.5f\n", stats->coreDistanceValues.max);
 	printf("Core Distances - Mean 			: %.5f\n", stats->coreDistanceValues.mean);
 	printf("Core Distances - Skewness 		: %.5f\n", stats->coreDistanceValues.skewness);
 	printf("Core Distances - Kurtosis 		: %.5f\n", stats->coreDistanceValues.kurtosis);
 	printf("Core Distances - Variance 		: %.5f\n", stats->coreDistanceValues.variance);
 	printf("Core Distances - Standard Dev 	: %.5f\n\n", stats->coreDistanceValues.standardDev);
-	
+
 	printf("Intra Distances - Max 			: %.5f\n", stats->intraDistanceValues.max);
 	printf("Intra Distances - Mean 			: %.5f\n", stats->intraDistanceValues.mean);
 	printf("Intra Distances - Skewness 		: %.5f\n", stats->intraDistanceValues.skewness);
 	printf("Intra Distances - Kurtosis 		: %.5f\n", stats->intraDistanceValues.kurtosis);
 	printf("Intra Distances - Variance 		: %.5f\n", stats->intraDistanceValues.variance);
 	printf("Intra Distances - Standard Dev 	: %.5f\n", stats->intraDistanceValues.standardDev);
-	
+
 	printf("///////////////////////////////////////////////////////////////////////////////////////\n\n");
 }
