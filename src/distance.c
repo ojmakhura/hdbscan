@@ -50,7 +50,7 @@ double get_float_diff(distance* dis, void* dataset, uint i, uint j, uint k){
 	float* dt = (float*)dataset;
     float num1 = dt[i * dis->cols + k];
     float num2 = dt[j * dis->cols + k];
-    
+
 	return (double)(num1 - num2);
 }
 
@@ -100,9 +100,9 @@ int cmpdouble(const void * ptr_a, const void * ptr_b) {
 }
 
 /**
- *
+ * Endcode and decode the input index
  */
-uint triangular(uint n) {
+uint encoder(uint n) {
 	return (n * n + n) / 2;
 }
 
@@ -118,24 +118,24 @@ distance* distance_init(distance* dis, calculator cal, uint datatype) {
 		dis->coreDistances = NULL;
 		dis->distances = NULL;
 		dis->datatype = datatype;
-		
+
 		if(dis->datatype == DATATYPE_FLOAT){
 			get_diff = get_float_diff;
-			
+
 		} else if(dis->datatype == DATATYPE_DOUBLE){
 			get_diff = get_double_diff;
-			
+
 		}else if(dis->datatype == DATATYPE_INT){
-			
+
 			get_diff = get_int_diff;
 
 		}	else if(dis->datatype == DATATYPE_LONG){
-			
+
 			get_diff = get_long_diff;
 
 		}else if(dis->datatype == DATATYPE_SHORT){
-			
-			get_diff = get_short_diff;			
+
+			get_diff = get_short_diff;
 		}
 	}
 	return dis;
@@ -202,14 +202,14 @@ void do_euclidean(distance* dis, void* dataset) {
 			if (j > i) {
 				// Calculate the linearised upper triangular matrix offset
 				offset1 = i * dis->rows + j;
-				c = offset1 - triangular(i + 1);
+				c = offset1 - encoder(i + 1);
 
 				dis->distances[c] = sum;
 			} else if (i == j) {
 				c = -1;
 			} else {
 				offset1 = j * dis->rows + i;
-				c = offset1 - triangular(j + 1);
+				c = offset1 - encoder(j + 1);
 			}
 
 			sortedDistance[j] = sum;
@@ -224,15 +224,16 @@ void do_euclidean(distance* dis, void* dataset) {
 double distance_get(distance* dis, uint row, uint col) {
 	uint idx;
 	if (row < col) {
-		idx = (dis->rows * row + col) - triangular(row + 1);
+		idx = (dis->rows * row + col) - encoder(row + 1);
 
 	} else if (row == col) {
 		return 0;
 	} else {
-		idx = (dis->rows * col + row) - triangular(col + 1);
+		idx = (dis->rows * col + row) - encoder(col + 1);
 	}
 	return dis->distances[idx];
 }
+
 void setDimenstions(distance* dis, int rows, int cols){
 
     dis->rows = rows;
@@ -245,8 +246,8 @@ void setDimenstions(distance* dis, int rows, int cols){
 void distance_compute(distance* dis, void* dataset, int rows, int cols, int numNeighbors){
 	dis->numNeighbors = numNeighbors;
 	setDimenstions(dis, rows, cols);
-	
-#pragma omp parallel for 
+
+#pragma omp parallel for
 	for (uint i = 0; i < dis->rows; i++) {
 		for (uint j = i; j < dis->rows; j++) {
 			double sum, diff = 0.0;
@@ -279,14 +280,14 @@ void distance_compute(distance* dis, void* dataset, int rows, int cols, int numN
 }
 
 void distance_get_core_distances(distance *dis){
-	
+
 	double sortedDistance[dis->rows];
 #pragma omp parallel for private(sortedDistance)
 	for (uint i = 0; i < dis->rows; i++) {
 		for (uint j = 0; j < dis->rows; j++) {
 			sortedDistance[j] = distance_get(dis, i, j);
-		}	
+		}
 		qsort(sortedDistance, dis->rows, sizeof(double), cmpdouble);
-		dis->coreDistances[i] = sortedDistance[dis->numNeighbors];	
+		dis->coreDistances[i] = sortedDistance[dis->numNeighbors];
 	}
 }
