@@ -3,6 +3,7 @@ build
 
 # The generated config.h
 modules/gnulib/include/config.h
+.vscode
 
 # Compiled Object files
 *.slo
