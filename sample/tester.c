@@ -133,9 +133,9 @@ int main(int argc, char** argv){
 			//hdbscan_print_hierarchies(scan->hierarchy, scan->numPoints, NULL);
 
 			IntDistancesMap* dMap = hdbscan_get_min_max_distances(scan, clusterTable);
-			hdbscan_print_distance_map(dMap);
 			clustering_stats stats;
 			hdbscan_calculate_stats(dMap, &stats);
+			hdbscan_print_distance_map(dMap);
 
 			IntArrayList* sorted  = int_array_list_init(g_hash_table_size(clusterTable));
 			GHashTableIter iter;
