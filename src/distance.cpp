@@ -34,6 +34,14 @@ Distance::Distance(){
 	distance_init(this, _EUCLIDEAN, DATATYPE_DOUBLE);
 }
 
+Distance::Distance(calculator cal){
+	distance_init(this, cal, DATATYPE_DOUBLE);
+}
+
+Distance::Distance(calculator cal, int32_t type){
+	distance_init(this, cal, type);
+}
+
 Distance::~Distance(){
 	distance_clean(this);
 }
@@ -41,6 +49,16 @@ Distance::~Distance(){
 void Distance::getCoreDistances(int32_t numNeighbors){
 	this->numNeighbors = numNeighbors;
 	distance_get_core_distances(this);
+}
+
+double Distance::getDistance(uint row, uint col)
+{
+	return distance_get(this, row, col);
+}
+
+void Distance::computeDistance(distance* dis, void* dataset, int rows, int cols, int numNeighbors)
+{
+	distance_compute(this, dataset, rows, cols, numNeighbors);
 }
 };
 #endif

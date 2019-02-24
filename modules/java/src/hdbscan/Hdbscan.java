@@ -5,7 +5,7 @@ import java.util.ArrayList;
 
 public class Hdbscan{
 	static {
-		System.loadLibrary("hdbscan_jni");
+		System.loadLibrary("hdbscan_java");
 	};
 
 	private int[] labels;

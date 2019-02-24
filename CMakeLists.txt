@@ -5,7 +5,7 @@ set(HDBSCAN_DESCRIPTION "Implementation of HDBSCAN algorithm in C, C++, Java and
 # The version number.
 set (HDBSCAN_MAJOR_VERSION 3)
 set (HDBSCAN_MINOR_VERSION 1)
-set (HDBSCAN_PATCH_VERSION 0)
+set (HDBSCAN_PATCH_VERSION 6)
 set (HDBSCAN_VERSION ${HDBSCAN_MAJOR_VERSION}.${HDBSCAN_MINOR_VERSION}.${HDBSCAN_PATCH_VERSION})
 
 # Set modules to build
@@ -98,7 +98,7 @@ IF(BUILD_SAMPLES)
 	add_subdirectory(sample)
 ENDIF()
 # Add all targets to the build-tree export set
-export(TARGETS hdbscan gnulib listlib FILE "${PROJECT_BINARY_DIR}/HdbscanTargets.cmake")
+export(TARGETS ${HDBSCAN_LIBRARY}-${HDBSCAN_VERSION} gnulib listlib FILE "${PROJECT_BINARY_DIR}/HdbscanTargets.cmake")
  
 # Export the package for use from the build-tree
 # (this registers the build-tree with a global CMake-registry)
@@ -121,7 +121,7 @@ configure_file(HdbscanConfig.cmake.in "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECT
 # ... for both
 configure_file(HdbscanConfigVersion.cmake.in "${PROJECT_BINARY_DIR}/HdbscanConfigVersion.cmake" @ONLY)
 
-set_target_properties(hdbscan PROPERTIES
+set_target_properties(${HDBSCAN_LIBRARY}-${HDBSCAN_VERSION} PROPERTIES
   PUBLIC_HEADER "include/hdbscan/*.h")
 
 # Install the HdbscanConfig.cmake and HdbscanConfigVersion.cmake

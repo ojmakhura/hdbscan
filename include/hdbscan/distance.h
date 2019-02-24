@@ -57,6 +57,17 @@ namespace clustering {
 #define DATATYPE_LONG			3
 #define DATATYPE_SHORT			4
 
+/**
+ * Calculate the triangular number of n
+ * 
+ * @param n
+ */ 
+inline uint TRIANGULAR(uint n) {
+	return (n * n + n) / 2;
+}
+
+//#define TRIANGULAR(n)((((n) * (n)) + (n)) / 2)
+
 /*
 #ifndef MANHATTAN
 #define MANHATTAN		2
@@ -88,6 +99,7 @@ struct Distance{
 public:
 	Distance(calculator cal);
 	Distance();
+	Distance(calculator cal, int32_t type);
 	~Distance();
 
 	/**
@@ -99,46 +111,51 @@ public:
     void getCoreDistances(int32_t numNeighbors);
 
 private:
-
-	/**
-	 * Calculates the n_th triangular number
-	 *
-	 * @param n
-	 *
-	 */
-
-	uint encode(uint n);
     void setDimenstions(uint rows, uint cols);
 	/**
 	 * Computes the euclidean distance between two points, d = sqrt((x1-y1)^2 + (x2-y2)^2 + ... + (xn-yn)^2).
 	 */
 	void doEuclidean(void* dataset, int32_t numNeighbors);
 
-
+	void computeDistance(Distance* dis, void* dataset, int rows, int cols, int numNeighbors);
 #endif
 };
 
-/*
-#ifdef __cplusplus
-template <class T>
-class Distance Distance;
-#endif
-*/
 
-//typedef struct Distance Distance;
 typedef struct Distance distance;
 
+/**
+ * 
+ * 
+ */ 
 distance* distance_init(distance* dis, calculator cal, uint datatype);
+
+/**
+ * 
+ */ 
 void distance_destroy(distance* d);
+
+/**
+ * 
+ * 
+ */ 
 void distance_clean(distance* d);
 
 /**
  * Computes the euclidean distance between two points, d = sqrt((x1-y1)^2 + (x2-y2)^2 + ... + (xn-yn)^2).
  */
 void distance_euclidean(void* dataset, distance* dis, uint rows, uint cols);
-//double (*get_diff)(distance* dis, void* dataset, uint i, uint j, uint k);
 
+/**
+ * 
+ * 
+ */ 
 double distance_get(distance* dis, uint row, uint col);
+
+/**
+ * 
+ * 
+ */ 
 void distance_compute(distance* dis, void* dataset, int rows, int cols, int numNeighbors);
 
 /**

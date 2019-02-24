@@ -99,13 +99,6 @@ int cmpdouble(const void * ptr_a, const void * ptr_b) {
 	return (-1);
 }
 
-/**
- * Endcode and decode the input index
- */
-uint encode(uint n) {
-	return (n * n + n) / 2;
-}
-
 distance* distance_init(distance* dis, calculator cal, uint datatype) {
 	if(dis == NULL)
 		dis = (distance*)malloc(sizeof(distance));
@@ -202,14 +195,14 @@ void do_euclidean(distance* dis, void* dataset) {
 			if (j > i) {
 				// Calculate the linearised upper triangular matrix offset
 				offset1 = i * dis->rows + j;
-				c = offset1 - encode(i + 1);
+				c = offset1 - TRIANGULAR(i + 1);
 
 				dis->distances[c] = sum;
 			} else if (i == j) {
 				c = -1;
 			} else {
 				offset1 = j * dis->rows + i;
-				c = offset1 - encode(j + 1);
+				c = offset1 - TRIANGULAR(j + 1);
 			}
 
 			sortedDistance[j] = sum;
@@ -224,12 +217,12 @@ void do_euclidean(distance* dis, void* dataset) {
 double distance_get(distance* dis, uint row, uint col) {
 	uint idx;
 	if (row < col) {
-		idx = (dis->rows * row + col) - encode(row + 1);
+		idx = (dis->rows * row + col) - TRIANGULAR(row + 1);
 
 	} else if (row == col) {
 		return 0;
 	} else {
-		idx = (dis->rows * col + row) - encode(col + 1);
+		idx = (dis->rows * col + row) - TRIANGULAR(col + 1);
 	}
 	return dis->distances[idx];
 }
@@ -265,14 +258,14 @@ void distance_compute(distance* dis, void* dataset, int rows, int cols, int numN
 			if (j > i) {
 				// Calculate the linearised upper triangular matrix offset
 				offset1 = i * dis->rows + j;
-				c = offset1 - encode(i + 1);
-
+				c = offset1 - TRIANGULAR(i + 1);
+				
 				dis->distances[c] = sum;
 			} else if (i == j) {
 				c = -1;
 			} else {
 				offset1 = j * dis->rows + i;
-				c = offset1 - encode(j + 1);
+				c = offset1 - TRIANGULAR(j + 1);
 			}
 		}
 	}
