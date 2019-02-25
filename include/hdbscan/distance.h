@@ -112,11 +112,7 @@ public:
 
 private:
     void setDimenstions(uint rows, uint cols);
-	/**
-	 * Computes the euclidean distance between two points, d = sqrt((x1-y1)^2 + (x2-y2)^2 + ... + (xn-yn)^2).
-	 */
-	void doEuclidean(void* dataset, int32_t numNeighbors);
-
+	
 	void computeDistance(Distance* dis, void* dataset, int rows, int cols, int numNeighbors);
 #endif
 };
@@ -142,19 +138,19 @@ void distance_destroy(distance* d);
 void distance_clean(distance* d);
 
 /**
- * Computes the euclidean distance between two points, d = sqrt((x1-y1)^2 + (x2-y2)^2 + ... + (xn-yn)^2).
- */
-void distance_euclidean(void* dataset, distance* dis, uint rows, uint cols);
-
-/**
  * 
  * 
  */ 
 double distance_get(distance* dis, uint row, uint col);
 
 /**
+ * Computes the euclidean distance between two points, d = sqrt((x1-y1)^2 + (x2-y2)^2 + ... + (xn-yn)^2).
  * 
- * 
+ * @param dis 			-> distance pointer
+ * @param dataset 		-> the dataset
+ * @param rows			-> The number of data points in the dataset
+ * @param cols			-> The size of each data point
+ * @param numNeighbours	-> The number of points for the core distance
  */ 
 void distance_compute(distance* dis, void* dataset, int rows, int cols, int numNeighbors);
 

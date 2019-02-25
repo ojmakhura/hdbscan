@@ -171,49 +171,6 @@ double l2_norm(double const* u, uint n) {
 	return sqrt(accum);
 }
 
-/**
- *
- */
-void do_euclidean(distance* dis, void* dataset) {
-
-	double sortedDistance[dis->rows];
-#pragma omp parallel for private(sortedDistance)
-	for (uint i = 0; i < dis->rows; i++) {
-		for (uint j = 0; j < dis->rows; j++) {
-			double sum, diff = 0.0;
-			uint offset1;
-			sum = 0;
-
-            for (uint k = 0; ((k < dis->cols) && (i != j)); k++) {
-    			diff = get_diff(dis, dataset, i, j, k);
-    			sum += (diff * diff);
-            }
-
-			sum = sqrt(sum);
-
-			int c;
-			if (j > i) {
-				// Calculate the linearised upper triangular matrix offset
-				offset1 = i * dis->rows + j;
-				c = offset1 - TRIANGULAR(i + 1);
-
-				dis->distances[c] = sum;
-			} else if (i == j) {
-				c = -1;
-			} else {
-				offset1 = j * dis->rows + i;
-				c = offset1 - TRIANGULAR(j + 1);
-			}
-
-			sortedDistance[j] = sum;
-
-		}
-		qsort(sortedDistance, dis->rows, sizeof(double), cmpdouble);
-		dis->coreDistances[i] = sortedDistance[dis->numNeighbors];
-	}
-
-}
-
 double distance_get(distance* dis, uint row, uint col) {
 	uint idx;
 	if (row < col) {
@@ -242,9 +199,8 @@ void distance_compute(distance* dis, void* dataset, int rows, int cols, int numN
 
 #pragma omp parallel for
 	for (uint i = 0; i < dis->rows; i++) {
-		for (uint j = i; j < dis->rows; j++) {
+		for (uint j = i + 1; j < dis->rows; j++) {
 			double sum, diff = 0.0;
-			uint offset1;
 			sum = 0;
 
             for (uint k = 0; ((k < dis->cols) && (i != j)); k++) {
@@ -254,19 +210,11 @@ void distance_compute(distance* dis, void* dataset, int rows, int cols, int numN
 
 			sum = sqrt(sum);
 
-			int c;
-			if (j > i) {
-				// Calculate the linearised upper triangular matrix offset
-				offset1 = i * dis->rows + j;
-				c = offset1 - TRIANGULAR(i + 1);
-				
-				dis->distances[c] = sum;
-			} else if (i == j) {
-				c = -1;
-			} else {
-				offset1 = j * dis->rows + i;
-				c = offset1 - TRIANGULAR(j + 1);
-			}
+			// Calculate the linearised upper triangular matrix offset
+			uint offset = i * dis->rows + j;
+			int c = offset - TRIANGULAR(i + 1);				
+			dis->distances[c] = sum;
+			
 		}
 	}
 	distance_get_core_distances(dis);

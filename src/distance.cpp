@@ -51,11 +51,6 @@ void Distance::getCoreDistances(int32_t numNeighbors){
 	distance_get_core_distances(this);
 }
 
-double Distance::getDistance(uint row, uint col)
-{
-	return distance_get(this, row, col);
-}
-
 void Distance::computeDistance(distance* dis, void* dataset, int rows, int cols, int numNeighbors)
 {
 	distance_compute(this, dataset, rows, cols, numNeighbors);
