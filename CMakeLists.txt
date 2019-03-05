@@ -73,6 +73,12 @@ find_package(PkgConfig)
 # lookup gli-2.0 in pkg-config
 pkg_check_modules(GLIB2 REQUIRED glib-2.0>=2.36.0)
 
+# A little hack for the python bindings
+list(GET GLIB2_INCLUDE_DIRS 0 GLIB2_FIRST_INDCLUDE_DIR)
+list(GET GLIB2_INCLUDE_DIRS 1 GLIB2_SECOND_INDCLUDE_DIR)
+message("GLIB2_FIRST_INDCLUDE_DIR is ${GLIB2_FIRST_INDCLUDE_DIR}")
+message("GLIB2_SECOND_INDCLUDE_DIR is ${GLIB2_SECOND_INDCLUDE_DIR}")
+
 OPTION (USE_OpenMP "Use OpenMP" ON)
 IF(USE_OpenMP)
   FIND_PACKAGE(OpenMP)
