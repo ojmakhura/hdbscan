@@ -118,27 +118,22 @@ static PyObject *PyHdbscan_run(PyHdbscan *self, PyObject *args){
     if(typenum == NPY_DOUBLE)
     {
         datatype = DATATYPE_DOUBLE;
-        printf("This is a double\n");
     } 
     else if(typenum == NPY_FLOAT32)
     {
         datatype = DATATYPE_FLOAT;
-        printf("This is a float\n");
     }
     else if(typenum == NPY_INT32)
     {
         datatype = DATATYPE_INT;
-        printf("This is an int\n");
     }
     else if(typenum == NPY_LONG)
     {
         datatype = DATATYPE_LONG;
-        printf("This is a long\n");
     }
     else if(typenum == NPY_SHORT)
     {
         datatype = DATATYPE_SHORT;
-        printf("This is a short\n");
     }
     else{
         printf("Unsupported datatype.\n");
