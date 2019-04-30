@@ -31,7 +31,7 @@
 extern "C" {
 
 #endif
-
+//#define __STDC_WANT_LIB_EXT1__ 1
 #include <string.h>
 #include <glib.h>
 #include <float.h>
@@ -118,13 +118,13 @@ struct hdbscan {
 public:
 
 	hdbscan();
-	hdbscan(uint minPts, uint datatype);
+	hdbscan(uint minPts);
 	~hdbscan();
 
 	/**
 	 *
 	 */
-	void run(void* dataset, uint rows, uint cols, boolean rowwise);
+	void run(void* dataset, uint rows, uint cols, boolean rowwise, uint datatype);
 	void reRun(int32_t minPts);
 
 	/**
@@ -209,7 +209,7 @@ typedef struct hdbscan hdbscan;
  * Initialise hdbcsan parameters
  *
  */
-hdbscan* hdbscan_init(hdbscan* sc, uint minPoints, uint datatype);
+hdbscan* hdbscan_init(hdbscan* sc, uint minPoints);
 
 /**
  * Deallocate all memory including for the sc itself
@@ -225,7 +225,7 @@ void hdbscan_clean(hdbscan* sc);
 /**
  * Cluster the dataset
  */
-int hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean rowwise);
+int hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean rowwise, uint datatype);
 
 /**
  * hdbscan_rerun

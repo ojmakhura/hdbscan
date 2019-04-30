@@ -24,7 +24,12 @@
  * SOFTWARE.
  */
  
+#if PY_MAJOR_VERSION >= 3
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#endif
+
 #include "hdbscan/hdbscan.h"
+#include <numpy/arrayobject.h>
 #include <Python.h>
 #include "structmember.h"
 #include <omp.h>
@@ -50,31 +55,13 @@ hdbscan* scan = NULL;
 typedef struct {
 	PyObject_HEAD
 	PyObject *labels;
-	uint minPoints, cols, rows;
+	uint minPoints, cols, rows;     /// TODO: change rows and cols to use long or ulong
 } PyHdbscan;
 
 static void PyHdbscan_dealloc(PyHdbscan* self){
 	hdbscan_clean(scan);
     Py_XDECREF(self->labels);
     Py_TYPE(self)->tp_free((PyObject*)self);
-}
-
-static double* PyList_toArray(PyObject* dataset, double* dset_p, uint rows, uint cols){
-	if(!dset_p){
-		dset_p = (double *)malloc(rows * cols * sizeof(double));
-	}
-#pragma omp parallel for
-	for(long i = 0; i < rows; i++){
-		PyObject* row = PyList_GetItem(dataset, i);
-		
-		for(long j = 0; j < cols; j++){
-			PyObject* temp = PyList_GetItem(row, j);
-			long idx = i * cols + j;			
-			dset_p[idx] = PyFloat_AsDouble(temp);
-		}
-	}
-	
-	return dset_p;
 }
 
 static PyObject *
@@ -101,11 +88,11 @@ PyHdbscan_init(PyHdbscan *self, PyObject *args, PyObject *kwds)
     if (! PyArg_ParseTupleAndKeywords(args, kwds, "i", kwlist, &self->minPoints))
         return -1;
     
-    if(self->minPoints < 3){
+    if(self->minPoints < 2){
 		return -1;
 	} 
 	
-    scan = hdbscan_init(NULL, self->minPoints, DATATYPE_DOUBLE);
+    scan = hdbscan_init(NULL, self->minPoints);
 	
     return 0;
 }
@@ -119,45 +106,90 @@ void get_labels(PyHdbscan *self, int32_t *labels){
 static PyObject *PyHdbscan_run(PyHdbscan *self, PyObject *args){
 	/// TODO: check for errors
 	PyObject *dataset;
-	double *dset = NULL;
+	    
     if (! PyArg_ParseTuple(args, "O", &dataset)){
         return NULL;
 	}
     
-    if (dataset) {		
-        Py_INCREF(dataset);    
-		self->rows = PyList_Size(dataset);
-		PyObject* row = PyList_GetItem(dataset, 0);
-		self->cols = PyList_Size(row);
-		dset = PyList_toArray(dataset, NULL, self->rows, self->cols);
-		self->labels = PyList_New(0);
-		Py_INCREF(self->labels);
-		Py_XDECREF(dataset); 
-		if(!scan){
-			return NULL;
-		}
-	} else {
-		return NULL;
-	}
+    int typenum = PyArray_TYPE(dataset);
+    uint datatype;
+
+    /// Determine the datatype from the array
+    if(typenum == NPY_DOUBLE)
+    {
+        datatype = DATATYPE_DOUBLE;
+        printf("This is a double\n");
+    } 
+    else if(typenum == NPY_FLOAT32)
+    {
+        datatype = DATATYPE_FLOAT;
+        printf("This is a float\n");
+    }
+    else if(typenum == NPY_INT32)
+    {
+        datatype = DATATYPE_INT;
+        printf("This is an int\n");
+    }
+    else if(typenum == NPY_LONG)
+    {
+        datatype = DATATYPE_LONG;
+        printf("This is a long\n");
+    }
+    else if(typenum == NPY_SHORT)
+    {
+        datatype = DATATYPE_SHORT;
+        printf("This is a short\n");
+    }
+    else{
+        printf("Unsupported datatype.\n");
+        return NULL;
+    }
+
+    Py_INCREF(dataset);    
+    
+    // Create a contigous array from dataset
+    PyArrayObject* d_arr = (PyArrayObject*)PyArray_ContiguousFromAny(dataset, typenum, 0, 0);
 	
-	int err = hdbscan_run(scan, dset, self->rows, self->cols, TRUE);	
-	get_labels(self, scan->clusterLabels);
-	free(dset);
+    int nd = nd = PyArray_NDIM(d_arr);
+	npy_intp *dimensions = PyArray_DIMS(d_arr);
+
+    // Get numpy array dimensions
+    if(nd == 1)
+    {
+        self->cols = 1;
+        self->rows = (uint)*dimensions;
+    } else {
+        self->rows = (uint)dimensions[0];
+        self->cols = (uint)dimensions[1];
+    }
+	
+    void *dset = PyArray_DATA(d_arr); /// The contigous array
+	int err = hdbscan_run(scan, dset, self->rows, self->cols, TRUE, datatype);
+
+    npy_intp dims[] = {self->rows, 1}; // Dimensions for the labels numpy array
+    self->labels = PyArray_SimpleNewFromData(1, dims, NPY_INT, scan->clusterLabels);
+
+    Py_INCREF(self->labels);
+    Py_XDECREF(dataset); // Release the dataset memory
+
 	return Py_BuildValue("i", err);
 }
+
 static PyObject *PyHdbscan_rerun(PyHdbscan *self, PyObject *args){
 	Py_XDECREF(self->labels); 
     if (!PyArg_ParseTuple(args, "i", &self->minPoints))
         return NULL;
     
-    if(self->minPoints < 3){
+    if(self->minPoints < 2){
+        printf("minPts must be greater than 2.\n");
 		return NULL;
 	} 
 	
 	int err = hdbscan_rerun(scan, self->minPoints);
-	self->labels = PyList_New(0);
-	Py_INCREF(self->labels);
-	get_labels(self, scan->clusterLabels);
+
+    npy_intp dims[] = {self->rows, 1};
+    self->labels = PyArray_SimpleNewFromData(1, dims, NPY_INT, scan->clusterLabels);
+    Py_INCREF(self->labels);
 	
 	return Py_BuildValue("i", err);
 }
@@ -232,7 +264,7 @@ MOD_INIT(PyHdbscan)
 
     Py_INCREF(&PyHdbscanType);
     PyModule_AddObject(m, "PyHdbscan", (PyObject *)&PyHdbscanType);
-
+    import_array();
     return MOD_SUCCESS_VAL(m);
 
 }

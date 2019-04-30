@@ -31,8 +31,8 @@ using namespace std;
 using namespace clustering;
 
 void dummy_tester(int minPts){
-	hdbscan scan(minPts, DATATYPE_DOUBLE);
-	scan.run(dataset, rows, cols, TRUE);
+	hdbscan scan(minPts);
+	scan.run(dataset, rows, cols, TRUE, DATATYPE_DOUBLE);
 	bool rerun = false;
 	for(int i = 0; i < 10; i++){
 		printf("%d ------- ***********************************************************************************\n", scan.minPoints);

@@ -25,6 +25,7 @@
  */
 
 #include "hdbscan/hdbscan.h"
+#include <assert.h>
 #include <time.h>
 
 uint hdbscan_get_dataset_size(uint rows, uint cols, boolean rowwise){
@@ -63,7 +64,7 @@ cluster* hdbscan_create_new_cluster(hdbscan* sc, gl_oset_t points, int* clusterL
 }
 
 
-hdbscan* hdbscan_init(hdbscan* sc, uint minPoints, uint datatype){
+hdbscan* hdbscan_init(hdbscan* sc, uint minPoints){
 	if(sc == NULL)
 		sc = (hdbscan*) malloc(sizeof(hdbscan));
 
@@ -71,7 +72,7 @@ hdbscan* hdbscan_init(hdbscan* sc, uint minPoints, uint datatype){
 		printf("Error: Could not allocate memory for HDBSCAN.\n");
 	} else{
 		sc->minPoints = minPoints;
-		distance_init(&sc->distanceFunction, _EUCLIDEAN, datatype);
+		//distance_init(&sc->distanceFunction, _EUCLIDEAN, datatype);
 
 		sc->selfEdges = TRUE;
 
@@ -232,12 +233,14 @@ int hdbscan_rerun(hdbscan* sc, int32_t minPts){
 	return hdbscan_do_run(sc);
 }
 
-int hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean rowwise){
+int hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean rowwise, uint datatype){
 
 	if(sc == NULL){
 		printf("hdbscan_run: sc has not been initialised.\n");
 		return HDBSCAN_ERROR;
 	}
+
+	distance_init(&sc->distanceFunction, _EUCLIDEAN, datatype);
 
 	sc->numPoints = hdbscan_get_dataset_size(rows, cols, rowwise);
 	distance_compute(&(sc->distanceFunction), dataset, rows, cols, sc->minPoints-1);
@@ -735,7 +738,7 @@ boolean hdbscan_propagate_tree(hdbscan* sc){
 		}
 	};
 	if(infiniteStability){
-		char *message =
+		const char *message =
 					"----------------------------------------------- WARNING -----------------------------------------------\n"
 					"(infinite) for some data objects, either due to replicates in the data (not a set) or due to numerical\n"
 					"roundings. This does not affect the construction of the density-based clustering hierarchy, but\n"
@@ -1080,15 +1083,14 @@ void hdbscan_quicksort(IntArrayList *clusters, DoubleArrayList *sortData, int32_
 	}
 }
 
-
-
 /**
  * Sorts the clusters using the distances in the distanceMap. This
  * function requires that the confidences be already calculates. This
  * can be achieved by calling the hdbscan_calculate_stats function
  */
 IntArrayList* hdbscan_sort_by_similarity(IntDistancesMap* distanceMap, IntArrayList *clusters, int32_t distanceType){
-
+	
+	assert(distanceMap != NULL); 
 	DoubleArrayList *distances;
 	if(clusters == NULL){
 		clusters = int_array_list_init(g_hash_table_size(distanceMap));
@@ -1151,6 +1153,7 @@ IntArrayList* hdbscan_sort_by_similarity(IntDistancesMap* distanceMap, IntArrayL
  */
 IntArrayList* hdbscan_sort_by_length(IntIntListMap* clusterTable, IntArrayList *clusters){
 
+	assert(clusterTable != NULL && clusters != NULL);
 	DoubleArrayList *lengths;
 	if(clusters == NULL){
 		clusters = int_array_list_init(g_hash_table_size(clusterTable));
@@ -1196,6 +1199,7 @@ IntArrayList* hdbscan_sort_by_length(IntIntListMap* clusterTable, IntArrayList *
  */
 void hdbscan_destroy_cluster_map(IntIntListMap* table){
 
+	assert(table != NULL);
 	GHashTableIter iter;
 	gpointer key;
 	gpointer value;
@@ -1214,6 +1218,8 @@ void hdbscan_destroy_cluster_map(IntIntListMap* table){
 }
 
 void hdbscan_print_cluster_map(IntIntListMap* table){
+
+	assert(table != NULL);
 	GHashTableIter iter;
 	gpointer key;
 	gpointer value;
@@ -1234,6 +1240,7 @@ void hdbscan_print_cluster_map(IntIntListMap* table){
 
 void hdbscan_print_cluster_sizes(IntIntListMap* table){
 
+	assert(table != NULL);
 	GHashTableIter iter;
 	gpointer key;
 	gpointer value;
@@ -1248,10 +1255,11 @@ void hdbscan_print_cluster_sizes(IntIntListMap* table){
 
 void hdbscan_print_hierarchies(LongHierarchyEntryMap* hierarchy, uint numPoints, char *filename){
 
-
+	assert(hierarchy != NULL && filename != NULL);
 	FILE *visFile = NULL;
 	FILE *hierarchyFile = NULL;
 
+	/// TODO: Use strcat_s
 	if(filename != NULL){
 
 		char visFilename[100];

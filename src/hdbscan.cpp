@@ -32,12 +32,12 @@ namespace clustering {
 
 
 hdbscan::hdbscan(){
-	hdbscan_init(this, 3, DATATYPE_DOUBLE);
+	hdbscan_init(this, 3);
 }
 
 
-hdbscan::hdbscan(uint minPts, uint datatype){
-	hdbscan_init(this, minPts, datatype);
+hdbscan::hdbscan(uint minPts){
+	hdbscan_init(this, minPts);
 }
 
 hdbscan::~hdbscan(){
@@ -47,8 +47,8 @@ hdbscan::~hdbscan(){
 /**
  *
  */
-void hdbscan::run(void* dataset, uint rows, uint cols, boolean rowwise){
-	hdbscan_run(this, dataset, rows, cols, rowwise);
+void hdbscan::run(void* dataset, uint rows, uint cols, boolean rowwise, uint datatype){
+	hdbscan_run(this, dataset, rows, cols, rowwise, datatype);
 }
 
 /**

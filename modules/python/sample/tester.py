@@ -1,27 +1,22 @@
 import PyHdbscan
+import numpy as np
+import math
 import sys
 
 def readFile(filename):
-	f = open(filename)
-	dataset = []
-	for line in f:
-		lineset = line.strip().split(",")
-		
-		row = []
-		for l in line.strip().split(","):
-			if len(l) > 0:
-				row.append(float(l.strip()))
-		
-		if len(row) > 0:
-			dataset.append(row)
+	dataset = np.genfromtxt(filename, delimiter=',')
+	r,c = dataset.shape
 	
+	if math.isnan(dataset[0][c-1]):
+		dataset = np.delete(dataset, -1, axis=1)
+	print("rows = ", r, " coloumns = ", c)
 	return dataset
 
 def printLabels(labels):
-	print("\nCluster labels = [");
+	print("\nCluster labels = [")
 	for l in labels:
-		print(str(l) + " ", end="");
-	print("]\n");
+		print(str(l) + " ", end="")
+	print("]\n")
 	
 def getClusterMap(labels):
 	dmap = {}
@@ -39,7 +34,7 @@ def main(fname):
 	
 	scan = PyHdbscan.PyHdbscan(3)
 		
-	print("\n***********************************************************************************\n");
+	print("\n***********************************************************************************\n")
 	for i in range(3, 11):
 		if i == 3:
 			print("Clustering for dataset with minPts =", 3)
@@ -55,7 +50,7 @@ def main(fname):
 		for key in dmap:
 			print(key, ":", dmap[key])
 		print(getClusterMap(scan.labels))
-		print("\n***********************************************************************************\n");
+		print("\n***********************************************************************************\n")
 
 if __name__ == "__main__":
     main(sys.argv[1])

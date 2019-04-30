@@ -97,7 +97,7 @@ int main(int argc, char** argv){
 		cs = cols;
 	}
 	printf("(rows, cols) = (%d, %d)\n", rs, cs);
-	hdbscan* scan = hdbscan_init(NULL, atoi(argv[1]), DATATYPE_DOUBLE);
+	hdbscan* scan = hdbscan_init(NULL, atoi(argv[1]));
 	bool rerun_ = false;
 	if(scan == NULL){
 		printf("ERROR: Could not initialise hdbscan\n");
@@ -109,7 +109,7 @@ int main(int argc, char** argv){
 	for(int i = 0; i < 8; i++){
 		if(!rerun_){
 			begin = clock();
-			err = hdbscan_run(scan, dset, rs, cs, TRUE);
+			err = hdbscan_run(scan, dset, rs, cs, TRUE, DATATYPE_DOUBLE);
 			end = clock();
 			time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 			printf("hdbscan run Process took %f\n", time_spent);

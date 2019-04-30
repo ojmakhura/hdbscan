@@ -31,7 +31,7 @@ using namespace clustering;
 hdbscan scan;
 
 JNIEXPORT void JNICALL Java_hdbscan_Hdbscan_initHdbscan(JNIEnv *env, jobject obj, jint minPoints){
-	hdbscan_init(&scan, minPoints, DATATYPE_DOUBLE);
+	hdbscan_init(&scan, minPoints);
 }
 
 jintArray getLabelsArray(JNIEnv *env, int32_t *lbs, int rows){
@@ -57,7 +57,7 @@ JNIEXPORT jintArray JNICALL Java_hdbscan_Hdbscan_runImpl(JNIEnv *env, jobject ob
 			dIdx++;
 		}
 	}
-	scan.run(dset, rows, cols, TRUE);
+	scan.run(dset, rows, cols, TRUE, DATATYPE_DOUBLE);
 	
 	delete dset;
 	
