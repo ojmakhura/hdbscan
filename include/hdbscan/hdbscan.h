@@ -36,7 +36,7 @@ extern "C" {
 #include <glib.h>
 #include <float.h>
 #include <stdio.h>
-#include <gsl/gsl_statistics.h>
+//#include <gsl/gsl_statistics.h>
 #include "cluster.h"
 #include "constraint.h"
 #include "distance.h"

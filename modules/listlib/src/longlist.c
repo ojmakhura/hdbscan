@@ -42,7 +42,7 @@
 
 LongArrayList* long_array_list_init(){
 
-	return long_array_list_init_size(256);
+	return long_array_list_init_size(128);
 }
 
 LongArrayList* long_array_list_init_size(int32_t size){
@@ -50,6 +50,11 @@ LongArrayList* long_array_list_init_size(int32_t size){
 	LongArrayList* list = (LongArrayList*)array_list_init( highestPowerof2(size*2), sizeof(long));
 
 	return list;
+}
+
+LongArrayList* _array_list_init_exact_size(int32_t size)
+{
+	return (LongArrayList*)array_list_init(size, sizeof(long));
 }
 
 LongArrayList* long_array_list_init_full(int32_t size, long value){
@@ -132,21 +137,6 @@ int32_t long_array_list_remove(LongArrayList* list, long data){
 	return long_array_list_remove_at(list, data, idx);
 }
 
-void long_array_list_insert_at(LongArrayList* list, long data, int32_t index){
-	if(list->size == list->max_size){
-		array_list_grow(list);
-	}
-
-	long* ldata = (long *)list->data;
-	long* to = ldata + index + 1;
-	long* from = ldata + index;
-	int32_t cpysize = list->size - index;
-
-	memcpy(to, from, cpysize * sizeof(long));
-	list->size++;
-
-}
-
 void long_array_list_extend(LongArrayList* dest, LongArrayList* src){
 	int32_t cmbsize = dest->size + src->size;
 
@@ -178,8 +168,16 @@ void long_array_list_sort(LongArrayList* list){
 	qsort(ldata, list->size, sizeof(long), long_compare);
 }
 
-void long_array_list_set_value_at(LongArrayList* list, long data, int32_t index){
+int32_t long_array_list_set_value_at(LongArrayList* list, long data, int32_t index){
+	
+	if(index >= list->size)
+	{
+		return 0;
+	}
+	
 	long* ldata = (long *)list->data;
 	ldata[index] = data;
+
+	return 1;
 }
 

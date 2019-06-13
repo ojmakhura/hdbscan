@@ -32,7 +32,7 @@
 int32_t highestPowerof2(int32_t n)
 {
 	int32_t p = (int32_t)log2(n);
-   return (int32_t)pow(2, p);
+   	return (int32_t)pow(2, p);
 }
 
 int32_t int_compare(const void * ptr_a, const void * ptr_b) {

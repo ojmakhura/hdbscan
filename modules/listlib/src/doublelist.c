@@ -42,12 +42,19 @@
 
 DoubleArrayList* double_array_list_init(){
 
-	return double_array_list_init_size(256);
+	return double_array_list_init_size(128);
 }
 
 DoubleArrayList* double_array_list_init_size(int32_t size){
 	assert(size > 0);
 	DoubleArrayList* list = (DoubleArrayList*)array_list_init( highestPowerof2(size*2), sizeof(double));
+
+	return list;
+}
+
+DoubleArrayList* double_array_list_init_exact_size(int32_t size){
+	assert(size > 0);
+	DoubleArrayList* list = (DoubleArrayList*)array_list_init(size, sizeof(double));
 
 	return list;
 }
@@ -189,10 +196,18 @@ void double_array_list_sort(DoubleArrayList* list){
 	qsort(ldata, list->size, sizeof(double), double_compare);
 }
 
-void double_array_list_set_value_at(DoubleArrayList* list, double data, int32_t index){
+int32_t double_array_list_set_value_at(DoubleArrayList* list, double data, int32_t index){
 
-	assert(list != NULL && index >= 0);
+	assert(list != NULL);
+	assert(index > 0);
+	if(index >= list->size)
+	{
+		return 0;
+	}
+
 	double* ldata = (double *)list->data;
 	ldata[index] = data;
+
+	return 1;
 }
 

@@ -69,6 +69,14 @@ typedef unsigned int uint;
 #define TRUE  (!FALSE)
 #endif
 
+enum HTYPES
+{
+    H_INT,
+    H_DOUBLE,
+    H_LONG,
+    H_SHORT
+};
+
 int32_t highestPowerof2(int32_t n);
 int32_t int_compare(const void * ptr_a, const void * ptr_b);
 int32_t double_compare(const void * ptr_a, const void * ptr_b);

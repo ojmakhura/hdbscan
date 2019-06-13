@@ -27,6 +27,7 @@
 #include "hdbscan/hdbscan.h"
 #include <assert.h>
 #include <time.h>
+#include <math.h>
 
 uint hdbscan_get_dataset_size(uint rows, uint cols, boolean rowwise){
     if(rowwise == 1){
@@ -247,8 +248,6 @@ int hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean rowwis
 
 	return hdbscan_do_run(sc);
 }
-
-
 
 /**
  * Calculates the number of constraints satisfied by the new clusters and virtual children of the
@@ -938,27 +937,147 @@ void hdbscan_destroy_distance_map(IntDistancesMap* table){
 	table = NULL;
 }
 
-void hdbscan_calculate_stats_helper(double* cr, double* dr, clustering_stats* stats){
-#pragma omp parallel
+/**
+ * Calculate skewness and kurtosis using the equations from 
+ * https://www.gnu.org/software/gsl/doc/html/statistics.html
+ */ 
+void hdbscan_skew_kurt_1(clustering_stats* stats, double sum_sc, double sum_sd, double sum_dc, double sum_dd)
 {
-// Calculating core distance statistics
-	stats->coreDistanceValues.mean = stats->coreDistanceValues.mean / stats->count;
+	int32_t N = stats->count;
+	stats->coreDistanceValues.skewness = sum_sc / (N * pow(stats->coreDistanceValues.standardDev, 3));
+	stats->intraDistanceValues.skewness = sum_sd / (N * pow(stats->intraDistanceValues.standardDev, 3));
+
+	stats->coreDistanceValues.kurtosis = (sum_dc / (N * pow(stats->coreDistanceValues.standardDev, 4))) - 3;
+	stats->intraDistanceValues.kurtosis = (sum_dd / (N *pow(stats->intraDistanceValues.standardDev, 4))) - 3;
+}
+
+/**
+ * Calculate skewness and kurtosis in the same way as in MS excel
+ * https://support.office.com/en-us/article/skew-function-bdf49d86-b1ef-4804-a046-28eaea69c9fa
+ * https://support.office.com/en-ie/article/kurt-function-bc3a265c-5da4-4dcb-b7fd-c237789095ab
+ */ 
+void hdbscan_skew_kurt_2(clustering_stats* stats, double sum_sc, double sum_sd, double sum_dc, double sum_dd)
+{
+
+	int32_t N = stats->count;
+	
+	// Calculate the skewness
+	if(stats->count >= 2){
+		double tmp1 = ((double)N) / ((N - 1) * (N - 2));
+		stats->coreDistanceValues.skewness = tmp1 * (sum_sc / pow(stats->coreDistanceValues.standardDev, 3));
+		stats->intraDistanceValues.skewness = tmp1 * (sum_sd / pow(stats->intraDistanceValues.standardDev, 3));
+	} else {
+		stats->coreDistanceValues.skewness = 0.0/0.0;
+		stats->intraDistanceValues.skewness = 0.0/0.0;
+	}
+
+	// Calculate the kurtosis
+	if(stats->count >= 3){
+		double tmp2 = (((double)N) * (N + 1)) / ((N - 1) * (N - 2) * (N - 3));
+		stats->coreDistanceValues.kurtosis = tmp2 * (sum_dc / pow(stats->coreDistanceValues.standardDev, 4));
+		stats->intraDistanceValues.kurtosis = tmp2 * (sum_dd / pow(stats->intraDistanceValues.standardDev, 4));
+	}
+
+	if(stats->count >= 3){
+		double tmp3 = (3 * (((double)N) - 1) * (N - 1)) / ((N - 2) * (N - 3));
+		stats->coreDistanceValues.kurtosis -= tmp3;
+		stats->intraDistanceValues.kurtosis -= tmp3;
+	} else {
+
+		stats->coreDistanceValues.kurtosis = 0.0/0.0;
+		stats->intraDistanceValues.kurtosis = 0.0/0.0;
+	}
+}
+
+/**
+ * Calculate the skewness and kurtosis using the the gsl library.
+ * 
+ * https://www.gnu.org/software/gsl/doc/html/statistics.html
+ */ 
+void hdbscan_skew_kurt_gsl(clustering_stats* stats, double* cr, double* dr)
+{
+	/*
 	stats->coreDistanceValues.standardDev = gsl_stats_sd(cr, 1, stats->count);
 	stats->coreDistanceValues.variance = gsl_stats_variance(cr, 1, stats->count);
-	stats->coreDistanceValues.kurtosis = gsl_stats_kurtosis(cr, 1, stats->count);
-	stats->coreDistanceValues.skewness = gsl_stats_skew(cr, 1, stats->count);
 	stats->coreDistanceValues.mean = gsl_stats_mean(cr, 1, stats->count);
+	stats->coreDistanceValues.kurtosis = gsl_stats_kurtosis_m_sd(cr, 1, stats->count, stats->coreDistanceValues.mean, stats->coreDistanceValues.standardDev);
+	stats->coreDistanceValues.skewness = gsl_stats_skew_m_sd(cr, 1, stats->count, stats->coreDistanceValues.mean, stats->coreDistanceValues.standardDev);
 	stats->coreDistanceValues.max = gsl_stats_max(cr, 1, stats->count);
 
 	// calculating intra distance statistics
-	stats->intraDistanceValues.mean = stats->intraDistanceValues.mean / stats->count;
 	stats->intraDistanceValues.standardDev = gsl_stats_sd(dr, 1, stats->count);
 	stats->intraDistanceValues.variance = gsl_stats_variance(dr, 1, stats->count);
-	stats->intraDistanceValues.kurtosis = gsl_stats_kurtosis(dr, 1, stats->count);
-	stats->intraDistanceValues.skewness = gsl_stats_skew(dr, 1, stats->count);
 	stats->intraDistanceValues.mean = gsl_stats_mean(dr, 1, stats->count);
+	stats->intraDistanceValues.kurtosis = gsl_stats_kurtosis_m_sd(dr, 1, stats->count, stats->coreDistanceValues.mean, stats->coreDistanceValues.standardDev);
+	stats->intraDistanceValues.skewness = gsl_stats_skew_m_sd(dr, 1, stats->count, stats->coreDistanceValues.mean, stats->coreDistanceValues.standardDev);
 	stats->intraDistanceValues.max = gsl_stats_max(dr, 1, stats->count);
+	*/
 }
+
+/**
+ * 
+ * 
+ */ 
+void hdbscan_calculate_stats_helper(double* cr, double* dr, clustering_stats* stats){
+	
+	stats->coreDistanceValues.mean = cr[0];
+	stats->coreDistanceValues.max = cr[0];
+
+	stats->intraDistanceValues.mean = dr[0];
+	stats->intraDistanceValues.max = dr[0];
+
+	for(int32_t i = 1; i < stats->count; i++)
+	{
+		// Core distance statistics
+		if(cr[i] > stats->coreDistanceValues.max)
+		{
+			stats->coreDistanceValues.max = cr[i];
+		}
+
+		stats->coreDistanceValues.mean += cr[i];
+
+		// Intra cluster distances
+		if(cr[i] > stats->intraDistanceValues.max)
+		{
+			stats->intraDistanceValues.max = dr[i];
+		}
+
+		stats->intraDistanceValues.mean += dr[i];
+	}
+
+	// Get the average
+	stats->coreDistanceValues.mean = stats->coreDistanceValues.mean/stats->count;
+	stats->intraDistanceValues.mean = stats->intraDistanceValues.mean/stats->count;
+
+	/// Calculate the variance
+	double sum_sc = 0;
+	double sum_sd = 0;
+	double sum_dc = 0;
+	double sum_dd = 0;
+	
+	for(int32_t i = 0; i < stats->count; i++)
+	{
+		double tmp_c = cr[i] - stats->coreDistanceValues.mean;
+		stats->coreDistanceValues.variance += tmp_c * tmp_c;
+		sum_sc += pow(tmp_c, 3);
+		sum_dc += pow(tmp_c, 4);
+
+		double tmp_d = dr[i] - stats->intraDistanceValues.mean;
+		stats->intraDistanceValues.variance += tmp_d * tmp_d;
+		sum_sd += pow(tmp_d, 3);
+		sum_dd += pow(tmp_d, 4);
+	}
+
+	stats->coreDistanceValues.variance = stats->coreDistanceValues.variance / (stats->count - 1);
+	stats->intraDistanceValues.variance = stats->intraDistanceValues.variance / (stats->count - 1);
+
+	stats->coreDistanceValues.standardDev = sqrt(stats->coreDistanceValues.variance);
+	stats->intraDistanceValues.standardDev = sqrt(stats->intraDistanceValues.variance);
+
+	//hdbscan_skew_kurt_1(stats, sum_sc, sum_sd, sum_dc, sum_dd);
+	hdbscan_skew_kurt_2(stats, sum_sc, sum_sd, sum_dc, sum_dd);
+	//hdbscan_skew_kurt_gsl(stats, cr, dr);
+	
 }
 
 void hdbscan_calculate_stats(IntDistancesMap* distanceMap, clustering_stats* stats){

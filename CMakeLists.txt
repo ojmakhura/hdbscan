@@ -65,7 +65,7 @@ foreach(p LIB BIN INCLUDE CMAKE SHARE)
   endif()
 endforeach()
 
-find_package(GSL REQUIRED) 
+#find_package(GSL REQUIRED) 
 
 #ensure we have pkg-config in the system
 find_package(PkgConfig)
@@ -120,7 +120,7 @@ configure_file(HdbscanConfig.cmake.in "${PROJECT_BINARY_DIR}/HdbscanConfig.cmake
 # ... for the install tree
 set(CONF_INCLUDE_DIRS "${INSTALL_INCLUDE_DIR}")
 set(CONF_LIB_DIRS "${INSTALL_LIB_DIR}")
-set(CONF_HDBSCAB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}")
+set(CONF_HDBSCAN_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}")
 message("HDBSCAN to be installed in ${CMAKE_INSTALL_PREFIX}")
 configure_file(HdbscanConfig.cmake.in "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/HdbscanConfig.cmake" @ONLY)
 

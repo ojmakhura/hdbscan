@@ -35,20 +35,24 @@
 
 
 /****************************************************************************************
- * Implementation of array lists
+ * Implementation of array lists for integers
  ****************************************************************************************/
 
 
 IntArrayList* int_array_list_init(){
 
-	return int_array_list_init_size(256);
+	return int_array_list_init_size(128);
 }
 
 IntArrayList* int_array_list_init_size(int32_t size){
 
 	IntArrayList* list = (IntArrayList*)array_list_init( highestPowerof2(size*2), sizeof(int32_t));
-
 	return list;
+}
+
+IntArrayList* int_array_list_init_exact_size(int32_t size)
+{
+	return (IntArrayList*)array_list_init(size, sizeof(int32_t));
 }
 
 IntArrayList* int_array_list_init_full(int32_t size, int32_t value){
@@ -120,12 +124,6 @@ int32_t int_array_list_remove_at(IntArrayList* list, int32_t idx){
 		ldata[i-1] = ldata[i];
 	}
 
-	/*int32_t* to = ldata + idx;
-	int32_t* from = ldata + idx +1;
-	int32_t cpysize = list->size - idx -1;
-
-	memcpy(to, from, cpysize * sizeof(int32_t));*/
-
 	list->size--;
 
 	return idx;
@@ -136,21 +134,6 @@ int32_t int_array_list_remove(IntArrayList* list, int32_t data){
 
 	int32_t idx = int_array_list_search(list, data);
 	return int_array_list_remove_at(list, idx);
-}
-
-void int_array_list_insert_at(IntArrayList* list, int32_t data, int32_t index){
-	if(list->size == list->max_size){
-		array_list_grow(list);
-	}
-
-	int32_t* ldata = (int32_t *)list->data;
-	int32_t* to = ldata + index + 1;
-	int32_t* from = ldata + index;
-	int32_t cpysize = list->size - index;
-
-	memcpy(to, from, cpysize * sizeof(int32_t));
-	list->size++;
-
 }
 
 void int_array_list_extend(IntArrayList* dest, IntArrayList* src){
@@ -178,10 +161,17 @@ int32_t* int_array_list_data(IntArrayList* list, int32_t idx){
 	return it;
 }
 
-void int_array_list_set_value_at(IntArrayList* list, int32_t data, int32_t index){
+int32_t int_array_list_set_value_at(IntArrayList* list, int32_t data, int32_t index)
+{
+	if(index >= list->size)
+	{
+		return 0;
+	}
 
 	int32_t* ldata = (int32_t *)list->data;
 	ldata[index] = data;
+
+	return 1;
 }
 
 void int_array_list_sort(IntArrayList* list){
