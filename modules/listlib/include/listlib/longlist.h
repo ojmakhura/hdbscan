@@ -28,6 +28,7 @@
  * SOFTWARE.
  */
 
+/** @file longlist.h */
 #ifndef CONTAINERS_LONGLIST_H_
 #define CONTAINERS_LONGLIST_H_
 
@@ -44,22 +45,131 @@ extern "C" {
  *
  *
  **************************************************************************/
+/**\typedef LongArrayList */
 typedef ArrayList LongArrayList;
 
+/**
+ * @brief 
+ * 
+ * @return LongArrayList* 
+ */
 LongArrayList* long_array_list_init();
+
+/**
+ * @brief 
+ * 
+ * @param size 
+ * @return LongArrayList* 
+ */
 LongArrayList* long_array_list_init_size(int32_t size);
+
+/**
+ * @brief 
+ * 
+ * @param size 
+ * @return LongArrayList* 
+ */
 LongArrayList* long_array_list_init_exact_size(int32_t size);
+
+/**
+ * @brief 
+ * 
+ * @param size 
+ * @param value 
+ * @return LongArrayList* 
+ */
 LongArrayList* long_array_list_init_full(int32_t size, long value);
+
+/**
+ * @brief 
+ * 
+ * @param list 
+ * @param data 
+ */
 void long_array_list_append(LongArrayList* list, long data);
+
+/**
+ * @brief 
+ * 
+ * @param list 
+ */
 void long_array_list_pop(LongArrayList* list);
+
+/**
+ * @brief 
+ * 
+ * @param list 
+ * @param data 
+ * @return int32_t 
+ */
 int32_t long_array_list_search(LongArrayList* list, long data);
+
+/**
+ * @brief 
+ * 
+ * @param list 
+ * @param data 
+ * @return int32_t 
+ */
 int32_t long_array_list_search_sorted(LongArrayList* list, long data);
+
+/**
+ * @brief 
+ * 
+ * @param list 
+ * @param data 
+ * @return int32_t 
+ */
 int32_t long_array_list_remove(LongArrayList* list, long data);
+
+/**
+ * @brief 
+ * 
+ * @param list 
+ */
 void long_array_list_delete(LongArrayList* list);
+
+/**
+ * @brief 
+ * 
+ * @param list 
+ * @param idx 
+ * @return long* 
+ */
 long* long_array_list_data(LongArrayList* list, int32_t idx);
+
+/**
+ * @brief 
+ * 
+ * @param list 
+ */
 void long_array_list_sort(LongArrayList* list);
-void long_array_list_extend(LongArrayList* dest, LongArrayList* src);
+
+/**
+ * @brief 
+ * 
+ * @param list 
+ */
+void long_array_list_extend(LongArrayList* list);
+
+/**
+ * @brief 
+ * 
+ * @param list 
+ * @param data 
+ * @param index 
+ * @return int32_t 
+ */
 int32_t long_array_list_set_value_at(LongArrayList* list, long data, int32_t index);
+
+/**
+ * @brief 
+ * 
+ * @param list 
+ * @param data 
+ * @param idx 
+ * @return int32_t 
+ */
 int32_t long_array_list_remove_at(LongArrayList* list, long data, int32_t idx);
 
 #ifdef __cplusplus

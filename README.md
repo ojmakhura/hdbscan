@@ -16,3 +16,5 @@ The library comes with 2 tester files in the samples folder. The file tester.c s
 
 To let the algorithm know which datatype you are working with, you pass the DATATYPE\_{FLOAT, DOUBLE, INT, SHORT, FLOAT} as a parameter to the run() method. Python code uses numpy and will determine the datatypes from the numpy array. The code expectes a 1 or two dimensional dataset.
 
+## Tests
+The listlib

@@ -23,6 +23,20 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
+/**
+ * @file undirected_graph.c
+ * 
+ * @author Onalenna Junior Makhura (ojmakhura@roguesystems.co.bw)
+ * 
+ * @brief UndirectedGraph implementation.
+ * 
+ * @version 3.1.6
+ * @date 2018-01-10
+ * 
+ * @copyright Copyright (c) 2018
+ * 
+ */
 #include "hdbscan/undirected_graph.h"
 //#include <omp.h>
 
@@ -31,7 +45,7 @@ UndirectedGraph* graph_init(UndirectedGraph* g, int32_t numVertices, IntArrayLis
 		g = (UndirectedGraph*)malloc(sizeof(UndirectedGraph));
 
 	if(g == NULL){
-		printf("Error: Could not allocate memory for verticesA");
+		printf("Error: Could not allocate memory for graph");
 		return NULL;
 	}
 
@@ -102,10 +116,6 @@ void graph_clean(UndirectedGraph* g) {
 	}
 }
 
-/**
- * Quicksorts the graph by edge weight in descending order. This quicksort implementation is
- * iterative and in-place.
- */
 void graph_quicksort_by_edge_weight(UndirectedGraph* g) {
 	int32_t esize = g->edgeWeights->size;
 	if (esize <= 1)
@@ -138,9 +148,6 @@ void graph_quicksort_by_edge_weight(UndirectedGraph* g) {
 			stackTop++;
 		}
 	}
-
-	//free(startIndexStack);
-	//free(endIndexStack);
 }
 
 int32_t graph_select_pivot_index(UndirectedGraph* g, int32_t startIndex, int32_t endIndex) {
@@ -174,18 +181,12 @@ void graph_swap_edges(UndirectedGraph* g, int32_t indexOne, int32_t indexTwo){
 		int32_t tempVertexB = *(int_array_list_data(g->verticesB, indexOne));
 		double tempEdgeDistance = *(double_array_list_data(g->edgeWeights, indexOne));
 
-		//g->verticesA[indexOne] = g->verticesA[indexTwo];
 		int_array_list_set_value_at(g->verticesA, *(int_array_list_data(g->verticesA, indexTwo)), indexOne);
-		//g->verticesB[indexOne] = g->verticesB[indexTwo];
 		int_array_list_set_value_at(g->verticesB, *(int_array_list_data(g->verticesB, indexTwo)), indexOne);
-		//g->edgeWeights[indexOne] = g->edgeWeights[indexTwo];
 		double_array_list_set_value_at(g->edgeWeights, *(double_array_list_data(g->edgeWeights, indexTwo)), indexOne);
 
-		//g->verticesA[indexTwo] = tempVertexA;
 		int_array_list_set_value_at(g->verticesA, tempVertexA, indexTwo);
-		//g->verticesB[indexTwo] = tempVertexB;
 		int_array_list_set_value_at(g->verticesB, tempVertexB, indexTwo);
-		//g->edgeWeights[indexTwo] = tempEdgeDistance;
 		double_array_list_set_value_at(g->edgeWeights, tempEdgeDistance, indexTwo);
 	}
 }

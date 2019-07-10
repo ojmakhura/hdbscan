@@ -26,31 +26,61 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
+/**
+ * @file primetests.c
+ * @author Onalenna Junior Makhura (ojmakhura@roguesystems.co.bw)
+ * 
+ * @brief CUnit tests for the primes.h/charge
+ *  
+ * @version 3.1.6
+ * @date 2019-06-10
+ * 
+ * @copyright Copyright (c) 2019
+ * 
+ */
 #include "listlib/primes.h"
 #include <CUnit/Basic.h>
 #include <stdio.h>
 #include <string.h>
 
-static FILE* temp_file = NULL;
-
+/**
+ * @brief Test the function find_prime_less_than
+ * 
+ */
 void test_find_prime_less_than()
 {
-    CU_ASSERT_TRUE_FATAL(29 == find_prime_less_than(10));
+    CU_ASSERT_TRUE_FATAL(7 == find_prime_less_than(10));
     CU_ASSERT_TRUE_FATAL(29 == find_prime_less_than(29));
     CU_ASSERT_TRUE_FATAL(91 == find_prime_less_than(93));
     CU_ASSERT_TRUE_FATAL(93 == find_prime_less_than(93));
 }
 
+/**
+ * @brief Initialise the test suite
+ * 
+ * @return int 
+ */
 int init_suite1(void)
 {
     return 0;
 }
 
+/**
+ * @brief Clean the test suite memory
+ * 
+ * @return int 
+ */
 int clean_suite1(void)
 {
     return 0;
 }
 
+/**
+ * @brief The main method to run the tests
+ * 
+ * @return int 
+ */
 int main()
 {
     CU_pSuite suite = NULL;

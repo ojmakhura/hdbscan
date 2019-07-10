@@ -14,7 +14,10 @@ OPTION (BUILD_PYTHON2 "Build python 2 bindings" ON)
 OPTION (BUILD_PYTHON3 "Build python 3 bindings" ON)
 OPTION (BUILD_JAVA "Build java bindings" ON)
 
-OPTION (USE_OpenMP "Use OpenMP" ON)
+OPTION (USE_CUDA "Use CUDA" OFF)
+IF(USE_CUDA)
+  #complete
+ENDIF()
 
 #detect architecture
 if("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")	
@@ -33,23 +36,28 @@ set(INSTALL_SHARE_DIR share/hdbscan CACHE PATH "Installation directory for exten
 
 set(MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/modules)
 set(LISTLIB_DIR ${MODULE_PATH}/listlib)
+set(UTILS_DIR ${MODULE_PATH}/utils)
 set(GNULIB_DIR ${MODULE_PATH}/gnulib)
 set(HDBSCAN_JAVA_DIR ${MODULE_PATH}/java)
 set(HDBSCAN_PYTHON_DIR ${MODULE_PATH}/python)
 
 set(HDBSCAN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(UTILS_INCLUDE_DIR ${UTILS_DIR}/include)
 set(GNULIB_INCLUDE_DIR ${GNULIB_DIR}/include)
 set(LISTLIB_INCLUDE_DIR ${LISTLIB_DIR}/include)
 
 set(GNULIB_LIBRARY gnulib)
+set(UTILS_LIBRARY utils)
 set(LISTLIB_LIBRARY listlib)
 set(HDBSCAN_LIBRARY hdbscan)
+
 set(HDBSCAN_LIB_DIR ${PROJECT_BINARY_DIR}/src)
+set(UTILS_LIB_DIR ${PROJECT_BINARY_DIR}/modules/utils/src)
 set(GNULIB_LIB_DIR ${PROJECT_BINARY_DIR}/modules/gnulib/src)
 set(LISTLIB_LIB_DIR ${PROJECT_BINARY_DIR}/modules/listlib/src)
 set(JAVA_LIB_DIR ${PROJECT_BINARY_DIR}/modules/java)
 
-set(PRIVATE_LIBS "-l${HDBSCAN_LIBRARY} -l${LISTLIB_LIBRARY} -l${GNULIB_LIBRARY}")
+set(PRIVATE_LIBS "-l${HDBSCAN_LIBRARY} -l${UTILS_LIBRARY} -l${LISTLIB_LIBRARY} -l${GNULIB_LIBRARY}")
 
 if(WIN32 AND NOT CYGWIN)
   set(DEF_INSTALL_CMAKE_DIR CMake)
@@ -95,7 +103,7 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Wall -fmessage-length=0 -fPIC -O3")
 configure_file(config.h.in "${PROJECT_BINARY_DIR}/config.h" @ONLY)# set up include-directories
 configure_file(hdbscan.pc.in "${PROJECT_BINARY_DIR}/hdbscan.pc" @ONLY)# set up include-directories
 
-include_directories("${PROJECT_BINARY_DIR}")  # to find config.h
+include_directories("${PROJECT_BINARY_DIR}" ${UTILS_INCLUDE_DIR})  # to find config.h
 
 add_subdirectory(src)
 add_subdirectory(modules)
@@ -138,6 +146,7 @@ install(FILES
  
 # Install the export set for use with the install-tree
 INSTALL (DIRECTORY ${HDBSCAN_INCLUDE_DIR}/hdbscan DESTINATION ${INSTALL_INCLUDE_DIR})
+INSTALL (DIRECTORY ${UTILS_INCLUDE_DIR}/hdbscan DESTINATION ${INSTALL_INCLUDE_DIR})
 INSTALL (DIRECTORY ${GNULIB_INCLUDE_DIR}/gnulib DESTINATION ${INSTALL_INCLUDE_DIR})
 INSTALL (DIRECTORY ${LISTLIB_INCLUDE_DIR}/listlib DESTINATION ${INSTALL_INCLUDE_DIR})
 INSTALL (FILES ${PROJECT_BINARY_DIR}/config.h DESTINATION ${INSTALL_INCLUDE_DIR}/gnulib)

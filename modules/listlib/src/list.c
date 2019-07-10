@@ -27,21 +27,26 @@
  * SOFTWARE.
  */
 
+/**
+ * @file list.c
+ * 
+ * @author Onalenna Junior Makhura (ojmakhura@roguesystems.co.bw)
+ * 
+ * @brief This file contains the implementation of the functions
+ * declared in list.h header.
+ * 
+ * @version 3.1.6
+ * @date 2017-10-03
+ * 
+ * @copyright Copyright (c) 2018
+ * 
+ */
+
 #include "listlib/list.h"
 #include <string.h>
 #include <assert.h>
-#include "listlib/utils.h"
+#include "hdbscan/utils.h"
 
-/**
- * Initialises the array list. The list data pointer is allocated as
- * bytes. It therefore requires multiplication by the size of the
- * individual data elements that will be stored. 
- *
- * @param initial_size: the initial maximum number of elements the array can hold
- * @param step: the memory size of each element in the list
- * 
- * @return the list or NULL in case of failed allocation.
- */
 ArrayList* array_list_init(size_t initial_size, size_t step)
 {
 	assert(initial_size > 0);
@@ -55,23 +60,15 @@ ArrayList* array_list_init(size_t initial_size, size_t step)
 						// clean up the memory allocated for the list.
 			return NULL;
 		}
-
-		list->max_size = initial_size;
-		list->size = 0;
-		list->step = step;
 	}
+
+	list->max_size = initial_size;
+	list->size = 0;
+	list->step = step;
 
 	return list;
 }
 
-/**
- * Get the pointer to the element at pos. The array in the list is treated as an
- * array of bytes. As such we actually return the pointer to the byte at 
- * list->size * list->step.
- * 
- * @param list: the list
- * @param pos
- */
 void* array_list_value_at(ArrayList* list, int32_t pos)
 {
 	if(pos < 0 || pos >= list->size){
@@ -82,51 +79,45 @@ void* array_list_value_at(ArrayList* list, int32_t pos)
 	return list->data + p;
 }
 
-/**
- * Grows the list data array by twice the current maximum size. We
- * also make sure that the new size is a power of 2.
- * 
- * @param 
- */
 int32_t array_list_grow(ArrayList* list){
 
 	int32_t newmax = highestPowerof2(list->max_size*2);
-	void* newdata = realloc(list->data, newmax * list->step);
+	list->data = realloc(list->data, newmax * list->step);
 
-	if(newdata == NULL){
+	if(list->data == NULL){
 		return -1;
 	}
 
-	list->data = newdata;
 	list->max_size = newmax;
 
 	return 1;
 }
 
-/**
- * Delete the list. Note the data deletions is simply deallocation
- * of the array memory. The actual data in this case is being managed
- * from somewhere else and the user should be responsible for cleaning 
- * that up too.
- */ 
 ArrayList* array_list_delete(ArrayList* list){
-	if(list != NULL){
+	if(list != NULL){ /// Make sure the list is not NULL
 		if(list->data != NULL){
-			free(list->data);
+			free(list->data);		/// Free the data pointer
 		}
 
-		free(list);
+		free(list);				/// Free the ArrayList structure
+		list->max_size = 0;
+		list->size = 0;
 		list = NULL;
 	}
 
-	return NULL;
+	return list;
 }
 
-
 /**
- * Helper function for inserting at the location index in the list's
- * array.
- */ 
+ * @brief Helper function for inserting at the location index in the list's
+ * array. We use *memcpy* to copy list->step bytes from *data* into *list->data*
+ * at location index * list->step
+ * 
+ * @param list The list
+ * @param data The data
+ * @param index The location where to insert
+ * @return int32_t 
+ */
 int32_t array_list_insertion_helper(ArrayList* list, void* data, int32_t index)
 {
 	// Calculate the location of the byte where to start the
@@ -138,14 +129,10 @@ int32_t array_list_insertion_helper(ArrayList* list, void* data, int32_t index)
 
 	// Copy the 'step' bytes from data into np
 	memcpy(np, data, list->step);
+
 	return 1;
 }
 
-/**
- * Insert the data at the specified location. This function
- * makes sure you only insert in locations that contain data
- * because we are only replacing what is already there. 
- */ 
 int32_t array_list_insert_at(ArrayList* list, void* data, int32_t index){
 
 	if(index < 0 || index >= list->size)
@@ -156,13 +143,6 @@ int32_t array_list_insert_at(ArrayList* list, void* data, int32_t index){
 	return array_list_insertion_helper(list, data, index);
 }
 
-/**
- * Append the data to the end of the list. If the data
- * you want to save in the list is originally a pointer,
- * you should create a pointer to the pointer and pass
- * it to this function. In that case, data will actually
- * void** data.
- */ 
 int32_t array_list_append(ArrayList* list, void* data)
 {
 	if(list->size == list->max_size){

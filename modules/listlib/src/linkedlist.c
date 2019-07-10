@@ -27,6 +27,19 @@
  * SOFTWARE.
  */
 
+/**
+ * @file linkedlist.c
+ * @author Onalenna Junior Makhura (ojmakhura@roguesystems.co.bw)
+ * 
+ * @brief Linked list implementation.
+ * 
+ * @version 3.1.6
+ * @date 2017-10-03
+ * 
+ * @copyright Copyright (c) 2018
+ * 
+ */
+
 #include "listlib/linkedlist.h"
 
 void linkedlist_node_unhook(linkedlist* list, node* nd);
@@ -94,7 +107,11 @@ int32_t node_destroy(node* nd, enum HTYPES type)
     {
         LongArrayList* lst = (LongArrayList *)nd->value;
         double_array_list_delete(lst);
-    }
+    } else if(type == H_VOID)
+    {
+        ArrayList* lst = (ArrayList *)nd->value;
+        array_list_delete(lst);
+    } 
 
     free(nd);
     nd = NULL;
@@ -162,10 +179,14 @@ node* linkedlist_node_tail_add(linkedlist* list, int32_t key, void* value)
 }
 
 /**
- * Add an item to the array list based on the type. Since we are using 
+ * @brief Add an item to the array list based on the type. Since we are using 
  * printive data type pointers, and their respective array lists take 
  * actual values, we do not to maintain the values allowing for temporary
  * values. 
+ * 
+ * @param al 
+ * @param type 
+ * @param value 
  */
 void arraylist_add_by_type(ArrayList* al, enum HTYPES type, void* value)
 {
@@ -180,11 +201,14 @@ void arraylist_add_by_type(ArrayList* al, enum HTYPES type, void* value)
     {
         long* tmp = (long *)value;
         long_array_list_append(al, *tmp);
+    } else if(type == H_VOID)
+    {
+        array_list_append(al, value);
     } 
 }
 
 /**
- * Add at the front of the list. If the key does not exist, crate a new
+ * Add at the front of the list. If the key does not exist, create a new
  * node with the list and add it to the list.
  */
 ArrayList* linkedlist_front_add(linkedlist* list, int32_t key, void* value)
@@ -205,6 +229,9 @@ ArrayList* linkedlist_front_add(linkedlist* list, int32_t key, void* value)
             nd = linkedlist_node_front_add(list, key, al);
         } else if(list->type == H_LONG){
             LongArrayList* al = long_array_list_init();
+            nd = linkedlist_node_front_add(list, key, al);
+        } else if(list->type == H_VOID){
+            ArrayList* al = array_list_init(64, sizeof(void *));
             nd = linkedlist_node_front_add(list, key, al);
         }
     }
@@ -238,7 +265,11 @@ ArrayList* linkedlist_tail_add(linkedlist* list, int32_t key, void* value)
             nd = linkedlist_node_tail_add(list, key, al);
         } else if(list->type == H_LONG)
         {
-            DoubleArrayList* al = long_array_list_init();
+            LongArrayList* al = long_array_list_init();
+            nd = linkedlist_node_tail_add(list, key, al);
+        } else if(list->type == H_LONG)
+        {
+            ArrayList* al = array_list_init(64, sizeof(void *));
             nd = linkedlist_node_tail_add(list, key, al);
         }
     }

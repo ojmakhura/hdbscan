@@ -27,17 +27,28 @@
  * SOFTWARE.
  */
 
+/**
+ * @file intlist.c
+ * @author Onalenna Junior Makhura (ojmakhura@roguesystems.co.bw)
+ * 
+ * @brief Implementation of the int array list
+ * 
+ * @version 3.1.6
+ * @date 2019-07-10
+ * 
+ * @copyright Copyright (c) 2019
+ * 
+ */
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
 #include "listlib/intlist.h"
-#include "listlib/utils.h"
+#include "hdbscan/utils.h"
 
 
 /****************************************************************************************
  * Implementation of array lists for integers
  ****************************************************************************************/
-
 
 IntArrayList* int_array_list_init(){
 
@@ -46,7 +57,7 @@ IntArrayList* int_array_list_init(){
 
 IntArrayList* int_array_list_init_size(int32_t size){
 
-	IntArrayList* list = (IntArrayList*)array_list_init( highestPowerof2(size*2), sizeof(int32_t));
+	IntArrayList* list = (IntArrayList*)array_list_init( highestPowerof2(size), sizeof(int32_t));
 	return list;
 }
 
@@ -136,20 +147,12 @@ int32_t int_array_list_remove(IntArrayList* list, int32_t data){
 	return int_array_list_remove_at(list, idx);
 }
 
-void int_array_list_extend(IntArrayList* dest, IntArrayList* src){
-	int32_t cmbsize = dest->size + src->size;
+void int_array_list_extend(IntArrayList* list){
+	int32_t cmbsize = list->size + list->size;
 	
-	if(cmbsize >= dest->size){
-		array_list_grow(dest);
+	if(cmbsize >= list->size){
+		array_list_grow(list);
 	}
-
-	int32_t* ddata = (int32_t *)dest->data;
-	int32_t* sdata = (int32_t *)src->data;
-	if(dest->data != NULL){
-		int32_t* to = ddata + dest->size;
-		memcpy(to, sdata, (src->size)*sizeof(int32_t));
-	}
-
 }
 
 void int_array_list_delete(IntArrayList* list){

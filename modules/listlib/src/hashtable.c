@@ -26,10 +26,27 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
+/**
+ * @file hashtable.c
+ * 
+ * @author your name (you@domain.com)
+ * 
+ * @brief 
+ * @version 0.1
+ * @date 2019-06-10
+ * 
+ * @copyright Copyright (c) 2019
+ * 
+ */
+
 #include "listlib/hashtable.h"
 #include "listlib/list.h"
 
-linkedlist** hashtable_access_location(ArrayList *list, int32_t bucket);
+/**
+ * Get the linked list at the location indexed by bucket.
+ */ 
+linkedlist** hashtable_access_bucket(ArrayList *list, int32_t bucket);
 
 /**
  * 
@@ -81,7 +98,7 @@ hashtable* hashtable_init(int32_t buckets, enum HTYPES type)
  * Basically we are bypassing the array_list_value_at() function and going 
  * directly to the data array in the list.
  */
-linkedlist** hashtable_access_location(ArrayList *list, int32_t bucket)
+linkedlist** hashtable_access_bucket(ArrayList *list, int32_t bucket)
 {
     /// Should guard against accessing beyond the array memory
     if(bucket > list->max_size)
@@ -100,7 +117,7 @@ linkedlist** hashtable_access_location(ArrayList *list, int32_t bucket)
 int32_t hashtable_insert(hashtable* htbl, int32_t key, void* value)
 {
     int32_t bucket = key % htbl->buckets; // hash the key
-    linkedlist** lnk = hashtable_access_location(htbl->table, bucket);
+    linkedlist** lnk = hashtable_access_bucket(htbl->table, bucket);
 
     if(lnk == NULL)
     {
@@ -155,7 +172,7 @@ ArrayList* hashtable_lookup(hashtable* htbl, int32_t key)
     int32_t bucket = key % htbl->buckets; // hash the key
     // The linked lists were already initialised so no need to check
     // validity.
-    linkedlist** lnk = hashtable_access_location(htbl->table, bucket);
+    linkedlist** lnk = hashtable_access_bucket(htbl->table, bucket);
     
     if((*lnk)->size == 0) // If no data has been added to the bucket
     {
@@ -163,4 +180,77 @@ ArrayList* hashtable_lookup(hashtable* htbl, int32_t key)
     }
 
     return linkedlist_lookup(*lnk, key, 0);
+}
+
+/**
+ * Remove all the key and it's associated value from the hashtable
+ * 
+ * @param htbl
+ * @param key
+ * @return 
+ */ 
+int32_t hashtable_remove(hashtable* htbl, int32_t key)
+{
+    int32_t bucket = key % htbl->buckets; // hash the key
+    // The linked lists were already initialised so no need to check
+    // validity.
+    linkedlist** lnk = hashtable_access_bucket(htbl->table, bucket);
+    
+    if(lnk == NULL || (*lnk)->size == 0 || *lnk == NULL) // If no data has been added to the bucket
+    {
+        return 0;
+    }
+    int32_t tsize = (*lnk)->size;
+
+    // Once we have successfully removed the data, we have to reduce the 
+    // size of htbl and remove the key from the keys set.
+    int32_t rt = 0;
+    if((rt = linkedlist_remove(*lnk, key)) == 1)
+    {
+        htbl->size--;
+        gl_oset_remove(htbl->keys, key);
+
+        // If we just removed onw of the colliding keys, we should 
+        // reduce htbl->collisions
+        if(tsize < (*lnk)->size)
+        {
+            htbl->collisions--;
+        }
+    }
+
+    return rt;
+}
+
+/**
+ * Remove all items in the hash table.
+ * 
+ * @param htbl - the hashtable to clear.
+ */
+int32_t hashtable_clear(hashtable* htbl)
+{
+    /// Loop through the keys and remove each one.
+    for(int32_t i = 0; i < gl_oset_size(htbl->keys); i++)
+    {
+        int32_t key = gl_oset_value_at(htbl->keys, i, &key);
+        hashtable_remove(htbl, key);
+    }
+   
+    return 1;
+}
+
+/**
+ * Delete the hashtable and clean up all the allocated memory.
+ * 
+ * @param htbl - the hashtable
+ */ 
+int32_t hashtable_destroy(hashtable* htbl)
+{
+    if(hashtable_clear(htbl))
+    {
+        free(htbl);
+    } else {
+        return 0;
+    }
+
+    return 1;
 }

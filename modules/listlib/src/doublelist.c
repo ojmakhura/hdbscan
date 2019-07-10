@@ -27,18 +27,30 @@
  * SOFTWARE.
  */
 
+/**
+ * @file doublelist.c
+ * 
+ * @author Onalenna Junior Makhura (ojmakhura@roguesystems.co.bw)
+ * 
+ * @brief The double array list implementation
+ * 
+ * @version 3.1.6
+ * @date 2017-10-03
+ * 
+ * @copyright Copyright (c) 2018
+ * 
+ */
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
 #include "listlib/doublelist.h"
-#include "listlib/utils.h"
+#include "hdbscan/utils.h"
 
 
 /****************************************************************************************
  * Implementation of array lists
  ****************************************************************************************/
-
 
 DoubleArrayList* double_array_list_init(){
 
@@ -47,7 +59,7 @@ DoubleArrayList* double_array_list_init(){
 
 DoubleArrayList* double_array_list_init_size(int32_t size){
 	assert(size > 0);
-	DoubleArrayList* list = (DoubleArrayList*)array_list_init( highestPowerof2(size*2), sizeof(double));
+	DoubleArrayList* list = (DoubleArrayList*)array_list_init( highestPowerof2(size), sizeof(double));
 
 	return list;
 }
@@ -81,7 +93,6 @@ void double_array_list_append(DoubleArrayList* list, double data){
 	list->size++;
 }
 
-
 void double_array_list_pop(DoubleArrayList* list){
 	assert(list != NULL);
 	list->size--;
@@ -101,7 +112,6 @@ int32_t double_array_list_search(DoubleArrayList* list, double data){
 
 	return idx;
 }
-
 
 int32_t double_array_list_search_sorted(DoubleArrayList* list, double data){
 	assert(list != NULL);
@@ -141,65 +151,41 @@ int32_t double_array_list_remove(DoubleArrayList* list, double data){
 	return double_array_list_remove_at(list, data, idx);
 }
 
-void double_array_list_insert_at(DoubleArrayList* list, double data, int32_t index){
-	assert(list != NULL && index >= 0);
-	if(list->size == list->max_size){
+void double_array_list_extend(DoubleArrayList* list)
+{
+	assert(list != NULL);
+	int32_t cmbsize = list->size + list->size;
+
+	if(cmbsize >= list->size){
 		array_list_grow(list);
 	}
-
-	double* ldata = (double *)list->data;
-	double* to = ldata + index + 1;
-	double* from = ldata + index;
-	int32_t cpysize = list->size - index;
-
-	memcpy(to, from, cpysize * sizeof(double));
-	list->size++;
-
 }
 
-void double_array_list_extend(DoubleArrayList* dest, DoubleArrayList* src){
-
-	assert(dest != NULL && src != NULL);
-	int32_t cmbsize = dest->size + src->size;
-
-	if(cmbsize >= dest->size){
-		array_list_grow(dest);
-	}
-
-	double* ddata = (double *)dest->data;
-	double* sdata = (double *)src->data;
-	if(dest->data != NULL){
-		double* to = ddata + dest->size;
-		memcpy(to, sdata, (src->size)*sizeof(double));
-	}
-
-}
-
-void double_array_list_delete(DoubleArrayList* list){
-
+void double_array_list_delete(DoubleArrayList* list)
+{
 	assert(list != NULL);
 	array_list_delete(list);
 }
 
-double* double_array_list_data(DoubleArrayList* list, int32_t idx){
-
+double* double_array_list_data(DoubleArrayList* list, int32_t idx)
+{
 	assert(list != NULL && idx >= 0);
 	double* it = (double *) array_list_value_at(list, idx);
 	return it;
 }
 
 
-void double_array_list_sort(DoubleArrayList* list){
-
+void double_array_list_sort(DoubleArrayList* list)
+{
 	assert(list != NULL);
 	double* ldata = list->data;
 	qsort(ldata, list->size, sizeof(double), double_compare);
 }
 
-int32_t double_array_list_set_value_at(DoubleArrayList* list, double data, int32_t index){
-
+int32_t double_array_list_set_value_at(DoubleArrayList* list, double data, int32_t index)
+{
 	assert(list != NULL);
-	assert(index > 0);
+	assert(index >= 0);
 	if(index >= list->size)
 	{
 		return 0;

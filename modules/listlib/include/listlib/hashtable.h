@@ -26,7 +26,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
+/** @file hashtable.h */
 #ifndef HASHTABLE_H_
 #define HASHTABLE_H_
 
@@ -37,55 +37,90 @@ extern "C" {
 #include "linkedlist.h"
 #include "list.h"
 #include "primes.h"
-#include "utils.h"
+#include "hdbscan/utils.h"
 #include "gnulib/gl_array_oset.h"
 
 /**
- * The structure of the hashtable. We are implementing this as a
+ * \struct HASHTABLE_
+ * \brief The structure of the hashtable. 
+ * 
+ * We are implementing this as a
  * chained hash table. The structure of the hashtable is such that
  * the buckects are made up of a pointer ArrayList. The contents 
  * of each bucket are linkedlist's in which each node contains a
  * a key which is an int and an Arraylist value whose content datatype
  * is determined by the HTYPES enum.
+ * 
+ * \typedef hashtable
  */ 
 typedef struct HASHTABLE_
 {
-    int32_t buckets;          /// Number of buckets in the table
-    int32_t size;             /// The size of table
-    enum HTYPES type;         /// The type of the data of the values
-    ArrayList* table;         /// An array list for storing linked list 
-                              /// pointers.
-    gl_oset_t keys;           /// A set of all the keys in the table.
-    int32_t collisions;       /// For diagnostic information on the collision
-    int32_t max_collisions;   /// The largest number of keys that collided
+    int32_t buckets;          //! Number of buckets in the table
+    int32_t size;             //! The size of table
+    enum HTYPES type;         //! The type of the data of the values
+    ArrayList* table;         //! An array list for storing linked list pointers.
+    gl_oset_t keys;           //! A set of all the keys in the table.
+    int32_t collisions;       //! For diagnostic information on the collision
+    int32_t max_collisions;   //! The largest number of keys that collided
 } hashtable;
 
 /**
- * Initialise a chained hash table.
+ * \brief Initialise a chained hash table.
  * 
  * @param buckets - number of possible locations to hash to
  * @param type    - the type of data
+ * @return hashtable* 
  */ 
 hashtable* hashtable_init(int32_t buckets, enum HTYPES type);
 
 /**
- * Insert the value into the table. The void pointer does not have to
+ * \brief Insert the value into the table. 
+ * 
+ * The void pointer does not have to
  * survive as long as the table since the data will be copied to the
  * location that was aloocated when the list was being created.
- */ 
+ * 
+ * \param htbl 
+ * \param key 
+ * \param value 
+ * \return int32_t 
+ */
 int32_t hashtable_insert(hashtable* htbl, int32_t key, void* value);
 
 /**
- * Find the linked list located at the key's hash location.
+ * @brief Find the linked list located at the key's hash location.
  * 
- */ 
+ * @param htbl 
+ * @param key 
+ * @return ArrayList* 
+ */
 ArrayList* hashtable_lookup(hashtable* htbl, int32_t key);
 
 /**
+ * @brief Remove all the key and it's associated value from the hashtable
  * 
- * 
+ * @param htbl
+ * @param key
+ * @return 
  */ 
 int32_t hashtable_remove(hashtable* htbl, int32_t key);
+
+/**
+ * @brief Remove all items in the hash table.
+ * 
+ * @param htbl - the hashtable to clear.
+ * @return int32_t 
+ */
+int32_t hashtable_clear(hashtable* htbl);
+
+/**
+ * @brief Delete the hashtable and clean up all the allocated memory.
+ * 
+ * @param htbl - the hashtable
+ * @return int32_t 
+ */ 
+int32_t hashtable_destroy(hashtable* htbl);
+
 
 #ifdef __cplusplus
 };

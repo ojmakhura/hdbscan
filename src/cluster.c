@@ -23,6 +23,20 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
+/**
+ * @file cluster.c
+ * 
+ * @author Onalenna Junior Makhura (ojmakhura@roguesystems.co.bw)
+ * 
+ * @brief Implementation of the functions from cluster.h
+ * 
+ * @version 3.1.6
+ * @date 2018-01-10
+ * 
+ * @copyright Copyright (c) 2019
+ * 
+ */
 #include "config.h"
 #include "hdbscan/cluster.h"
 

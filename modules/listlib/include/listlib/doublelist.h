@@ -26,7 +26,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
+/** @file doublelist.h */
 #ifndef INCLUDE_CONTAINERS_DOUBLELIST_H_
 #define INCLUDE_CONTAINERS_DOUBLELIST_H_
 
@@ -43,22 +43,133 @@ extern "C" {
  *
  *
  **************************************************************************/
+
+/** \typedef DoubleArrayList */
 typedef ArrayList DoubleArrayList;
 
+/**
+ * @brief 
+ * 
+ * @return DoubleArrayList
+ * 
+ */
 DoubleArrayList* double_array_list_init();
+
+/**
+ * @brief 
+ * 
+ * @param size 
+ * @return DoubleArrayList* 
+ */
 DoubleArrayList* double_array_list_init_size(int32_t size);
+
+/**
+ * @brief 
+ * 
+ * @param size 
+ * @return DoubleArrayList* 
+ */
 DoubleArrayList* double_array_list_init_exact_size(int32_t size);
+
+/**
+ * @brief 
+ * 
+ * @param size 
+ * @param value 
+ * @return DoubleArrayList* 
+ */
 DoubleArrayList* double_array_list_init_full(int32_t size, double value);
+
+/**
+ * @brief 
+ * 
+ * @param list 
+ * @param data 
+ */
 void double_array_list_append(DoubleArrayList* list, double data);
+
+/**
+ * @brief 
+ * 
+ * @param list 
+ */
 void double_array_list_pop(DoubleArrayList* list);
+
+/**
+ * @brief 
+ * 
+ * @param list 
+ * @param data 
+ * @return int32_t 
+ */
 int32_t double_array_list_search(DoubleArrayList* list, double data);
+
+/**
+ * @brief 
+ * 
+ * @param list 
+ * @param data 
+ * @return int32_t 
+ */
 int32_t double_array_list_search_sorted(DoubleArrayList* list, double data);
+
+/**
+ * @brief 
+ * 
+ * @param list 
+ * @param data 
+ * @return int32_t 
+ */
 int32_t double_array_list_remove(DoubleArrayList* list, double data);
+
+/**
+ * @brief 
+ * 
+ * @param list 
+ */
 void double_array_list_delete(DoubleArrayList* list);
+
+/**
+ * @brief 
+ * 
+ * @param list 
+ * @param idx 
+ * @return double* 
+ */
 double* double_array_list_data(DoubleArrayList* list, int32_t idx);
+
+/**
+ * @brief 
+ * 
+ * @param list 
+ */
 void double_array_list_sort(DoubleArrayList* list);
-void double_array_list_extend(DoubleArrayList* dest, DoubleArrayList* src);
+
+/**
+ * @brief 
+ * 
+ * @param list 
+ */
+void double_array_list_extend(DoubleArrayList* list);
+
+/**
+ * @brief 
+ * 
+ * @param list 
+ * @param data 
+ * @param index 
+ * @return int32_t 
+ */
 int32_t double_array_list_set_value_at(DoubleArrayList* list, double data, int32_t index);
+
+/**
+ * @brief 
+ * 
+ * @param list 
+ * @param data 
+ * @param idx 
+ * @return int32_t 
+ */
 int32_t double_array_list_remove_at(DoubleArrayList* list, double data, int32_t idx);
 
 #ifdef __cplusplus

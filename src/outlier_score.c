@@ -23,6 +23,20 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
+/**
+ * @file outlier_score.c
+ * 
+ * @author Onalenna Junior Makhura (ojmakhura@roguesystems.co.bw)
+ * 
+ * @brief Implementation of the outlier_score functions
+ * 
+ * @version 3.1.6
+ * @date 2018-01-10
+ * 
+ * @copyright Copyright (c) 2018
+ * 
+ */
 #include "hdbscan/outlier_score.h"
 
 outlier_score* create_outlier_score(outlier_score* os, double score, double coreDistance, int id){

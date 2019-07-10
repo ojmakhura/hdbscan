@@ -1,5 +1,5 @@
-/*
- * utils.c
+/**
+ * utils.h
  *
  *  Created on: 16 Sep 2017
  *      Author: junior
@@ -26,13 +26,13 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include "listlib/utils.h"
-#include <math.h>
+
+#include "hdbscan/utils.h"
 
 int32_t highestPowerof2(int32_t n)
 {
 	int32_t p = (int32_t)log2(n);
-   	return (int32_t)pow(2, p);
+   	return (int32_t)pow(2, p+1);
 }
 
 int32_t int_compare(const void * ptr_a, const void * ptr_b) {
@@ -63,7 +63,7 @@ int32_t double_compare(const void * ptr_a, const void * ptr_b){
 	if (a == b) {
 		return (0);
 	}
-	/* default: a < b */
+    
 	return (-1);
 
 }
@@ -80,7 +80,7 @@ int32_t short_compare(const void * ptr_a, const void * ptr_b){
 	if (a == b) {
 		return (0);
 	}
-	/* default: a < b */
+    
 	return (-1);
 
 }
@@ -96,7 +96,7 @@ int32_t long_compare(const void * ptr_a, const void * ptr_b){
 	if (a == b) {
 		return (0);
 	}
-	/* default: a < b */
+    
 	return (-1);
 }
 
@@ -111,6 +111,6 @@ int32_t float_compare(const void * ptr_a, const void * ptr_b){
 	if (a == b) {
 		return (0);
 	}
-	/* default: a < b */
+    
 	return (-1);
 }

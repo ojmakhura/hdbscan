@@ -15,6 +15,7 @@
    You should have received a copy of the GNU General Public License
    along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
+/** @file size_max.h */
 #ifndef GNULIB_SIZE_MAX_H
 #define GNULIB_SIZE_MAX_H
 

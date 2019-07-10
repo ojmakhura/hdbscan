@@ -52,18 +52,35 @@
 
 hdbscan* scan = NULL;
 
+/**
+ * @brief PyHdbscan object
+ * 
+ */
 typedef struct {
 	PyObject_HEAD
 	PyObject *labels;
 	uint minPoints, cols, rows;     /// TODO: change rows and cols to use long or ulong
 } PyHdbscan;
 
+/**
+ * @brief Cleanup
+ * 
+ * @param self 
+ */
 static void PyHdbscan_dealloc(PyHdbscan* self){
 	hdbscan_clean(scan);
     Py_XDECREF(self->labels);
     Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
+/**
+ * @brief Create a new PyHdbscan object
+ * 
+ * @param type 
+ * @param args 
+ * @param kwds 
+ * @return PyObject* 
+ */
 static PyObject *
 PyHdbscan_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
@@ -80,6 +97,14 @@ PyHdbscan_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return (PyObject *)self;
 }
 
+/**
+ * @brief 
+ * 
+ * @param self 
+ * @param args 
+ * @param kwds 
+ * @return int 
+ */
 static int
 PyHdbscan_init(PyHdbscan *self, PyObject *args, PyObject *kwds)
 {
@@ -97,12 +122,25 @@ PyHdbscan_init(PyHdbscan *self, PyObject *args, PyObject *kwds)
     return 0;
 }
 
+/**
+ * @brief Get the labels object
+ * 
+ * @param self 
+ * @param labels 
+ */
 void get_labels(PyHdbscan *self, int32_t *labels){
 	for(uint i = 0; i < self->rows; i++){
 		PyList_Append(self->labels, Py_BuildValue("i", labels[i]));
 	}
 }
 
+/**
+ * @brief 
+ * 
+ * @param self 
+ * @param args 
+ * @return PyObject* 
+ */
 static PyObject *PyHdbscan_run(PyHdbscan *self, PyObject *args){
 	/// TODO: check for errors
 	PyObject *dataset;
@@ -117,23 +155,23 @@ static PyObject *PyHdbscan_run(PyHdbscan *self, PyObject *args){
     /// Determine the datatype from the array
     if(typenum == NPY_DOUBLE)
     {
-        datatype = DATATYPE_DOUBLE;
+        datatype = H_DOUBLE;
     } 
     else if(typenum == NPY_FLOAT32)
     {
-        datatype = DATATYPE_FLOAT;
+        datatype = H_FLOAT;
     }
     else if(typenum == NPY_INT32)
     {
-        datatype = DATATYPE_INT;
+        datatype = H_INT;
     }
     else if(typenum == NPY_LONG)
     {
-        datatype = DATATYPE_LONG;
+        datatype = H_LONG;
     }
     else if(typenum == NPY_SHORT)
     {
-        datatype = DATATYPE_SHORT;
+        datatype = H_SHORT;
     }
     else{
         printf("Unsupported datatype.\n");
@@ -170,6 +208,13 @@ static PyObject *PyHdbscan_run(PyHdbscan *self, PyObject *args){
 	return Py_BuildValue("i", err);
 }
 
+/**
+ * @brief 
+ * 
+ * @param self 
+ * @param args 
+ * @return PyObject* 
+ */
 static PyObject *PyHdbscan_rerun(PyHdbscan *self, PyObject *args){
 	Py_XDECREF(self->labels); 
     if (!PyArg_ParseTuple(args, "i", &self->minPoints))
@@ -189,12 +234,20 @@ static PyObject *PyHdbscan_rerun(PyHdbscan *self, PyObject *args){
 	return Py_BuildValue("i", err);
 }
 
+/**
+ * @brief PyHdbscan methods
+ * 
+ */
 static PyMethodDef PyHdbscan_methods[] = {
     {"run", (PyCFunction)PyHdbscan_run, METH_VARARGS, "Run the clustering algorithm and extract cluster labels"},
     {"rerun", (PyCFunction)PyHdbscan_rerun, METH_VARARGS, "Extract clusters using old dataset and new minPoints"},
     {NULL}  /* Sentinel */
 };
 
+/**
+ * @brief PyHdbscan members
+ * 
+ */
 static PyMemberDef PyHdbscan_members[] = {
     {"labels", T_OBJECT_EX, offsetof(PyHdbscan, labels), 0, "Cluster labels"},
     {"minPoints", T_INT, offsetof(PyHdbscan, minPoints), 0, "Minimum number of point in a cluster"},
@@ -203,6 +256,10 @@ static PyMemberDef PyHdbscan_members[] = {
     {NULL}  /* Sentinel */
 };
 
+/**
+ * @brief The PyTypeObject definition
+ * 
+ */
 static PyTypeObject PyHdbscanType = {
    PyVarObject_HEAD_INIT(NULL, 0)
    "PyHdbscan.PyHdbscan",               /* tp_name */
@@ -244,6 +301,10 @@ static PyTypeObject PyHdbscanType = {
    PyHdbscan_new,             /* tp_new */
 };
 
+/**
+ * @brief Construct a new mod init object
+ * 
+ */
 MOD_INIT(PyHdbscan)
 {
     PyObject *m;

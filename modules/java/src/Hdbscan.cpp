@@ -23,6 +23,20 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
+/**
+ * @file Hdbscan.cpp
+ * 
+ * @author Onalenna Junior Makhura (ojmakhura@roguesystems.co.bw)
+ * 
+ * @brief Implementation of the JNI functions.
+ * 
+ * @version 3.1.6
+ * @date 2018-01-10
+ * 
+ * @copyright Copyright (c) 2018
+ * 
+ */
 #include "hdbscan_Hdbscan.h"
 #include "hdbscan/hdbscan.hpp"
 #include <iostream>
@@ -57,7 +71,7 @@ JNIEXPORT jintArray JNICALL Java_hdbscan_Hdbscan_runImpl(JNIEnv *env, jobject ob
 			dIdx++;
 		}
 	}
-	scan.run(dset, rows, cols, TRUE, DATATYPE_DOUBLE);
+	scan.run(dset, rows, cols, TRUE, H_DOUBLE);
 	
 	delete dset;
 	

@@ -23,7 +23,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
+/** @file distance.h */
 #ifndef DISTANCE_H_
 #define DISTANCE_H_
 
@@ -34,7 +34,8 @@ extern "C" {
 #include <omp.h>
 #include <math.h>
 #include <stdint.h>
-typedef unsigned int uint;
+#include "hdbscan/utils.h"
+
 
 #define DISTANCE_SUCCESS 1
 #define DISTANCE_ERROR 0
@@ -50,23 +51,13 @@ namespace clustering {
 #ifndef _EUCLIDEAN
 #define _EUCLIDEAN 		1
 #endif
-
+/*
 #define DATATYPE_FLOAT			0
 #define DATATYPE_DOUBLE			1
 #define DATATYPE_INT			2
 #define DATATYPE_LONG			3
 #define DATATYPE_SHORT			4
-
-/**
- * Calculate the triangular number of n
- * 
- * @param n
- */ 
-inline uint TRIANGULAR(uint n) {
-	return (n * n + n) / 2;
-}
-
-//#define TRIANGULAR(n)((((n) * (n)) + (n)) / 2)
+*/
 
 /*
 #ifndef MANHATTAN
@@ -74,11 +65,9 @@ inline uint TRIANGULAR(uint n) {
 #endif
 */
 /*
-
 #ifndef PEARSON
 #define PEARSON			3
 #endif
-
 #ifndef SUPREMUM
 #define SUPREMUM		4
 #endif
@@ -86,6 +75,10 @@ inline uint TRIANGULAR(uint n) {
 
 typedef unsigned int calculator;
 
+/**
+ * \struct Distance
+ * @brief The distance structure.
+ */
 struct Distance{
 	double* distances;
 	double* coreDistances;
@@ -93,13 +86,35 @@ struct Distance{
 	uint internalRows, internalCols;
 	int numNeighbors;
 	calculator cal;
-	uint datatype;
+	enum HTYPES datatype;
 
 #ifdef __cplusplus
 public:
+	/**
+	 * @brief Construct a new Distance object
+	 * 
+	 * @param cal 
+	 */
 	Distance(calculator cal);
+
+	/**
+	 * @brief Construct a new Distance object
+	 * 
+	 */
 	Distance();
-	Distance(calculator cal, int32_t type);
+
+	/**
+	 * @brief Construct a new Distance object
+	 * 
+	 * @param cal 
+	 * @param type 
+	 */
+	Distance(calculator cal, enum HTYPES type);
+
+	/**
+	 * @brief Destroy the Distance object
+	 * 
+	 */
 	~Distance();
 
 	/**
@@ -108,55 +123,97 @@ public:
 	 *
 	 */
     double getDistance(uint row, uint col);
+
+	/**
+	 * @brief Get the Core Distances object
+	 * 
+	 * @param numNeighbors 
+	 */
     void getCoreDistances(int32_t numNeighbors);
 
 private:
+	/**
+	 * @brief Set the Dimenstions object
+	 * 
+	 * @param rows 
+	 * @param cols 
+	 */
     void setDimenstions(uint rows, uint cols);
 	
+	/**
+	 * @brief C++ version of distance_compute
+	 * 
+	 * @param dis 
+	 * @param dataset 
+	 * @param rows 
+	 * @param cols 
+	 * @param numNeighbors 
+	 */
 	void computeDistance(Distance* dis, void* dataset, int rows, int cols, int numNeighbors);
 #endif
 };
 
-
-typedef struct Distance distance;
-
-/**
- * 
- * 
- */ 
-distance* distance_init(distance* dis, calculator cal, uint datatype);
+typedef struct Distance distance; /**\typedef distance */
 
 /**
+ * @brief 
  * 
- */ 
+ * @param dis 
+ * @param cal 
+ * @param datatype 
+ * @return distance* 
+ */
+distance* distance_init(distance* dis, calculator cal, enum HTYPES datatype);
+
+/**
+ * @brief Free all distance dynamic memory including emod allocated for d
+ * 
+ * @param d Distance object
+ */
 void distance_destroy(distance* d);
 
 /**
+ * @brief Clean internal dynamic memory leaving d.
  * 
- * 
- */ 
+ * @param d 
+ */
 void distance_clean(distance* d);
 
 /**
+ * @brief Get the distance between row and col
  * 
+ * It should be noted that the distace matrix is only storing the lower half
+ * of the distance matrix. See distance_compute() for more information. 
  * 
- */ 
+ * @param dis 
+ * @param row 
+ * @param col 
+ * @return double 
+ */
 double distance_get(distance* dis, uint row, uint col);
 
 /**
- * Computes the euclidean distance between two points, d = sqrt((x1-y1)^2 + (x2-y2)^2 + ... + (xn-yn)^2).
+ * @brief Computes the euclidean distance between two points, 
  * 
- * @param dis 			-> distance pointer
- * @param dataset 		-> the dataset
- * @param rows			-> The number of data points in the dataset
- * @param cols			-> The size of each data point
- * @param numNeighbours	-> The number of points for the core distance
- */ 
+ * The distance is calculated as d = sqrt((x1-y1)^2 + (x2-y2)^2 + ... + (xn-yn)^2). 
+ * The function takes advantage of the fact that when calculating distance between
+ * dataset entries, the distances above the principal diagonal are reflected about
+ * the diagonal with the diagonal itself having 0. As such we can reduce memory
+ * and computational costs by only calculating (rows * rows -rows)/2 values instead
+ * of rows * rows.
+ * 
+ * @param dis Distance object
+ * @param dataset The dataset
+ * @param rows number of rows
+ * @param cols numer of columns
+ * @param numNeighbors minimum number of neighbours
+ */
 void distance_compute(distance* dis, void* dataset, int rows, int cols, int numNeighbors);
 
 /**
- *
- *
+ * @brief Find the core distances based on the number of neighbours
+ * 
+ * @param dis 
  */
 void distance_get_core_distances(distance *dis);
 

@@ -1,6 +1,9 @@
 # the build directory
 build
 
+# ignore documentation directory
+docs
+
 # The generated config.h
 modules/gnulib/include/config.h
 .vscode

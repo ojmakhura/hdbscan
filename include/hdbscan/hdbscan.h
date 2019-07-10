@@ -24,6 +24,8 @@
  * SOFTWARE.
  */
 
+/** @file hdbscan.h */
+
 #ifndef HDBSCAN_H_
 #define HDBSCAN_H_
 
@@ -67,6 +69,12 @@ typedef GHashTable IntDistancesMap;
 namespace clustering {
 #endif
 
+/**
+ * \struct distance_values
+ * 
+ * @brief The structure for keeping the intra and core
+ * distance min, max and confidence values.
+ */
 typedef struct distance_values{
 	double min_cr;				/// Minimum core distance in the cluster
 	double max_cr;				/// Maximum core distance in the cluster
@@ -75,36 +83,56 @@ typedef struct distance_values{
 	double max_dr;				/// Minimum actual distance in the cluster
 	double min_dr;				/// Maximum actua distance in the cluster
 	double dr_confidence;		/// Cluster confidence based on actual distances
-} distance_values;
+} distance_values; /** \typedef distance_values */
 
-struct stats_values{
+/**
+ * \struct stats_values
+ * @brief The statistical values
+ */
+typedef struct stats_values{
 	double mean;
 	double standardDev;
 	double variance;
 	double max;					///
 	double kurtosis;
 	double skewness;
-};
+} stats_values; /** \typedef stats_values */
 
+/**
+ * \struct _clustering_stats
+ * @brief Clustering statistics for the intra and core distances
+ * 
+ */
 typedef struct _clustering_stats{
 	int32_t count;
-	struct stats_values coreDistanceValues;
-	struct stats_values intraDistanceValues;
-} clustering_stats;
+	stats_values coreDistanceValues;
+	stats_values intraDistanceValues;
+} clustering_stats; /** \typedef clustering_stats */
 
+/**
+ * \struct _hierarchy_entry
+ * @brief An entry into the hierarchy
+ * 
+ */
 typedef struct _hierarchy_entry{
 	double edgeWeight;
 	int32_t* labels;
-} hierarchy_entry;
+} hierarchy_entry; /** \typedef hierarchy_entry */
 
+/**\typedef LongHierarchyEntryMap*/
 typedef GHashTable LongHierarchyEntryMap;
 
+/**
+ * \struct hdbscan
+ * @brief Main HDBSCAN object
+ * 
+ */
 struct hdbscan {
-	distance distanceFunction;
-	double* dataSet;
-	UndirectedGraph* mst;
-	ConstraintList* constraints;
-	double* coreDistances;
+	distance distanceFunction;				/// The distance function calculator object
+	double* dataSet;						/// The dataset
+	UndirectedGraph* mst;					/// The dendogram graph
+	ConstraintList* constraints;			/// Constraints
+	double* coreDistances;					/// Core distances
 	ClusterPtrList* clusters;
 	outlier_score* outlierScores;
 	int32_t* clusterLabels;
@@ -116,253 +144,361 @@ struct hdbscan {
 #ifdef __cplusplus
 
 public:
-
+	/**
+	 * @brief Construct a new hdbscan object
+	 * 
+	 */
 	hdbscan();
+
+	/**
+	 * @brief Construct a new hdbscan object
+	 * 
+	 * @param minPts 
+	 */
 	hdbscan(uint minPts);
+
+	/**
+	 * @brief Destroy the hdbscan object
+	 * 
+	 */
 	~hdbscan();
 
 	/**
-	 *
+	 * @brief Find the clusters in the data for the first time. This function
+	 * must be called before calling reRun
+	 * 
+	 * @param dataset 
+	 * @param rows 
+	 * @param cols 
+	 * @param rowwise 
+	 * @param datatype 
 	 */
 	void run(void* dataset, uint rows, uint cols, boolean rowwise, uint datatype);
+
+	/**
+	 * @brief Re-runs HDBSCAN without re-calculating the distances. It MUST be run after run()
+	 * 
+	 * @param minPts 
+	 */
 	void reRun(int32_t minPts);
 
 	/**
-	 * Calculates the core distances for each point in the data set, given some value for k.
-	 * @param dataSet A vector<double>[] where index [i][j] indicates the jth attribute of data point i
-	 * @param k Each point's core distance will be it's distance to the kth nearest neighbor
-	 * @param distanceFunction A DistanceCalculator to compute distances between points
+	 * @brief Calculates the core distances for each point in the data set.
+	 * 
+	 * @param dataSet 
+	 * @param rows 
+	 * @param cols 
 	 */
 	void calculateCoreDistances(void* dataSet, uint rows, uint cols);
 
+	
 	/**
-	 * Constructs the minimum spanning tree of mutual reachability distances for the data set, given
+	 * @brief Constructs the minimum spanning tree of mutual reachability distances for the data set, given
 	 * the core distances for each point.
-	 * @param dataSet A vector<double>[] where index [i][j] indicates the jth attribute of data point i
-	 * @param coreDistances An array of core distances for each data point
-	 * @param selfEdges If each point should have an edge to itself with weight equal to core distance
-	 * @param distanceFunction A DistanceCalculator to compute distances between points
+	 * 
 	 */
 	void constructMST();
 
 	/**
-	 * Computes the hierarchy and cluster tree from the minimum spanning tree, writing both to file,
-	 * and returns the cluster tree.  Additionally, the level at which each point becomes noise is
+	 * @brief Computes the hierarchy and cluster tree from the minimum spanning tree,
+	 * and returns the cluster tree.  
+	 * 
+	 * Additionally, the level at which each point becomes noise is
 	 * computed.  Note that the minimum spanning tree may also have self edges (meaning it is not
 	 * a true MST).
-	 * @param mst A minimum spanning tree which has been sorted by edge weight in descending order
-	 * @param minClusterSize The minimum number of points which a cluster needs to be a valid cluster
-	 * @param compactHierarchy Indicates if hierarchy should include all levels or only levels at
-	 * which clusters first appear
-	 * @param constraints An optional vector of Constraints to calculate cluster constraint satisfaction
-	 * @param hierarchyOutputFile The path to the hierarchy output file
-	 * @param treeOutputFile The path to the cluster tree output file
-	 * @param delimiter The delimiter to be used while writing both files
-	 * @param pointNoiseLevels A vector<double> to be filled with the levels at which each point becomes noise
-	 * @param pointLastClusters An vector<int> to be filled with the last label each point had before becoming noise
+	 * 
+	 * @param compactHierarchy 
+	 * @param pointNoiseLevels A double array to be filled with the levels at which each point becomes noise
+	 * @param pointLastClusters An int array to be filled with the last label each point had before becoming noise
 	 */
 	void computeHierarchyAndClusterTree(boolean compactHierarchy, double* pointNoiseLevels, int32_t* pointLastClusters);
 
 	/**
-	 * Propagates constraint satisfaction, stability, and lowest child death level from each child
+	 * @brief Propagates constraint satisfaction, stability, and lowest child death level from each child
 	 * cluster to each parent cluster in the tree.  This method must be called before calling
-	 * findProminentClusters() or calculateOutlierScores().
-	 * @param clusters A list of Clusters forming a cluster tree
-	 * @return true if there are any clusters with infinite stability, false otherwise
+	 * 
+	 * @return boolean true if there are any clusters with infinite stability, false otherwise
 	 */
 	boolean propagateTree();
 
 	/**
-	 * Produces a flat clustering result using constraint satisfaction and cluster stability, and
+	 * @brief Produces a flat clustering result using constraint satisfaction and cluster stability, and
 	 * returns an array of labels.  propagateTree() must be called before calling this method.
-	 * @param clusters A list of Clusters forming a cluster tree which has already been propagated
-	 * @param hierarchyFile The path to the hierarchy input file
-	 * @param flatOutputFile The path to the flat clustering output file
-	 * @param delimiter The delimiter for both files
-	 * @param numPoints The number of points in the original data set
+	 * 
 	 * @param infiniteStability true if there are any clusters with infinite stability, false otherwise
 	 */
 	void findProminentClusters(boolean infiniteStability);
 
 	/**
-	 * Produces the outlier score for each point in the data set, and returns a sorted list of outlier
-	 * scores.  propagateTree() must be called before calling this method.
-	 * @param clusters A list of Clusters forming a cluster tree which has already been propagated
-	 * @param pointNoiseLevels A vector<double> with the levels at which each point became noise
-	 * @param pointLastClusters An vector<int> with the last label each point had before becoming noise
-	 * @param coreDistances An array of core distances for each data point
-	 * @param outlierScoresOutputFile The path to the outlier scores output file
-	 * @param delimiter The delimiter for the output file
+	 * @brief Produces the outlier score for each point in the data set, and returns a sorted list of outlier
+	 * scores.  
+	 * 
+	 * propagateTree() must be called before calling this method.
+	 * 
+	 * @param pointNoiseLevels A double array with the levels at which each point became noise
+	 * @param pointLastClusters An int array with the last label each point had before becoming noise
 	 * @param infiniteStability true if there are any clusters with infinite stability, false otherwise
 	 */
 	void calculateOutlierScores(double* pointNoiseLevels, int* pointLastClusters, boolean infiniteStability);
 
+	/**
+	 * @brief C++ version of hdbscan_clean
+	 * 
+	 */
 	void clean();
 #endif
-
-
 };
 
+/**\typedef hdbscan */
 typedef struct hdbscan hdbscan;
 
 /**
- * Initialise hdbcsan parameters
- *
+ * @brief Initialise hdbcsan parameters
+ * 
+ * @param sc 
+ * @param minPoints HDBSCAN's minPts parameter
+ * @return hdbscan* 
  */
 hdbscan* hdbscan_init(hdbscan* sc, uint minPoints);
 
 /**
- * Deallocate all memory including for the sc itself
+ * @brief Deallocate all memory including for the sc itself
+ * 
+ * @param sc 
  */
 void hdbscan_destroy(hdbscan* sc);
 
 /**
- * Clean up the memory for the attributes of hbdscan without deallocating
+ * @brief Clean up the memory for the attributes of hbdscan without deallocating
  * the memory of the hdbscan itself
+ * 
+ * @param sc 
  */
 void hdbscan_clean(hdbscan* sc);
 
 /**
- * Cluster the dataset
+ * @brief Run HDBSCAN cluster detection on the dataset.
+ * 
+ * @param sc 
+ * @param dataset 
+ * @param rows 
+ * @param cols 
+ * @param rowwise 
+ * @param datatype 
+ * @return int 
  */
 int hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean rowwise, uint datatype);
 
 /**
- * hdbscan_rerun
- * @param sc
- * @param minPts
- *
- * In case you need to re-cluster with a differnt minPts without changing the dataset.
+ * @brief In case you need to re-cluster with a differnt minPts without changing the dataset.
  * This function will do that by just recalculating the core distances from the existing
  * distances.
- *
+ * 
+ * @param sc 
+ * @param minPts 
+ * @return int 
  */
 int hdbscan_rerun(hdbscan* sc, int32_t minPts);
 
 /**
- * Given min and max values of minPts, select the best minPts from min
+ * @brief Given min and max values of minPts, select the best minPts from min
  * to max inclusive.
+ * 
+ * @param min 
+ * @param max 
+ * @param dataset 
+ * @param datatype 
+ * @param selection 
+ * @param val 
+ * @param numClusters 
+ * @return int32_t 
  */
 int32_t hdbscan_select_min_pts(int32_t min, int32_t max, void* dataset, int32_t datatype, IntIntListMap* selection, int32_t *val, int32_t *numClusters);
 
 /**
- * Create the minimum spanning tree
+ * @brief Create the minimum spanning tree
+ * 
+ * @param sc 
+ * @return int 
  */
 int hdbscan_construct_mst(hdbscan* sc);
 
 /**
- * Computes the hierarchy and cluster tree from the minimum spanning tree, writing both to file,
+ * @brief Computes the hierarchy and cluster tree from the minimum spanning tree, writing both to file,
  * and returns the cluster tree.  Additionally, the level at which each point becomes noise is
  * computed.  Note that the minimum spanning tree may also have self edges (meaning it is not
  * a true MST).
- * @param mst A minimum spanning tree which has been sorted by edge weight in descending order
- * @param minClusterSize The minimum number of points which a cluster needs to be a valid cluster
- * @param compactHierarchy Indicates if hierarchy should include all levels or only levels at
- * which clusters first appear
- * @param constraints An optional vector of Constraints to calculate cluster constraint satisfaction
- * @param hierarchyOutputFile The path to the hierarchy output file
- * @param treeOutputFile The path to the cluster tree output file
- * @param delimiter The delimiter to be used while writing both files
- * @param pointNoiseLevels A vector<double> to be filled with the levels at which each point becomes noise
- * @param pointLastClusters An vector<int> to be filled with the last label each point had before becoming noise
+ * 
+ * @param sc 
+ * @param compactHierarchy 
+ * @param pointNoiseLevels A double array to be filled with the levels at which each point becomes noise
+ * @param pointLastClusters An int array to be filled with the last label each point had before becoming noise
+ * @return int32_t 
  */
 int32_t hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int32_t compactHierarchy, double* pointNoiseLevels, int32_t* pointLastClusters);
 
 /**
- * Propagates constraint satisfaction, stability, and lowest child death level from each child
+ * @brief Propagates constraint satisfaction, stability, and lowest child death level from each child
  * cluster to each parent cluster in the tree.  This method must be called before calling
  * findProminentClusters() or calculateOutlierScores().
- * @param clusters A list of Clusters forming a cluster tree
- * @return true if there are any clusters with infinite stability, false otherwise
+ * 
+ * @param sc 
+ * @return boolean true if there are any clusters with infinite stability, false otherwise
  */
 boolean hdbscan_propagate_tree(hdbscan* sc);
 
 /**
- * Produces a flat clustering result using constraint satisfaction and cluster stability, and
- * returns an array of labels.  propagateTree() must be called before calling this method.
- * @param clusters A list of Clusters forming a cluster tree which has already been propagated
- * @param hierarchyFile The path to the hierarchy input file
- * @param flatOutputFile The path to the flat clustering output file
- * @param delimiter The delimiter for both files
- * @param numPoints The number of points in the original data set
+ * @brief Produces a flat clustering result using constraint satisfaction and cluster stability, and
+ * returns an array of labels.  hdbscan_propagate_tree() must be called before calling this method.
+ * 
+ * @param sc 
  * @param infiniteStability true if there are any clusters with infinite stability, false otherwise
  */
 void hdbscan_find_prominent_clusters(hdbscan* sc, int32_t infiniteStability);
 
 /**
- * Produces the outlier score for each point in the data set, and returns a sorted list of outlier
- * scores.  propagateTree() must be called before calling this method.
- * @param clusters A list of Clusters forming a cluster tree which has already been propagated
+ * @brief Produces the outlier score for each point in the data set, and returns a sorted list of outlier
+ * scores.  hdbscan_propagate_tree() must be called before calling this method.
+ * 
+ * @param sc 
  * @param pointNoiseLevels A vector<double> with the levels at which each point became noise
  * @param pointLastClusters An vector<int> with the last label each point had before becoming noise
- * @param coreDistances An array of core distances for each data point
- * @param outlierScoresOutputFile The path to the outlier scores output file
- * @param delimiter The delimiter for the output file
  * @param infiniteStability true if there are any clusters with infinite stability, false otherwise
+ * @return int 
  */
 int hdbscsan_calculate_outlier_scores(hdbscan* sc, double* pointNoiseLevels, int* pointLastClusters, boolean infiniteStability);
 
 /**
- * Given an array of labels, create a hash table where the keys are the labels and the values are the indices.
- **/
+ * @brief Given an array of labels, create a hash table where the keys are the labels and the values are the indices.
+ * 
+ * @param labels 
+ * @param begin 
+ * @param end 
+ * @return IntIntListMap* 
+ */
 IntIntListMap* hdbscan_create_cluster_map(int32_t* labels, int32_t begin, int32_t end);
 
 /**
- * Create a hash table that maps the different statistical values to their values.
+ * @brief Create a hash table that maps the different statistical values to their values.
  * The statistical value names are declared in the hdbscan.h header file. They are in the form
  * of NAME_{CR, DR}, where name is the name of the value and CR is for the value calculated using
  * the core distance values and DR is for
- *
+ * 
+ * @param distanceMap 
+ * @param stats 
  */
 void hdbscan_calculate_stats(IntDistancesMap* distanceMap, clustering_stats* stats);
 
+/**
+ * @brief A helper function for calculating statical values
+ * 
+ * @param cr 
+ * @param dr 
+ * @param stats 
+ */
 void hdbscan_calculate_stats_helper(double* cr, double* dr, clustering_stats* stats);
 
 /**
- * Create a hash table for statistical values describing the clustering results
+ * @brief Create a hash table for statistical values describing the clustering results
+ * 
+ * @param stats 
+ * @return int32_t 
  */
 int32_t hdbscan_analyse_stats(clustering_stats* stats);
 
 /**
- * Get the minimum and maximum core and intra-cluster distances
+ * @brief Get the minimum and maximum core and intra-cluster distances
+ * 
+ * @param sc 
+ * @param clusterTable 
+ * @return IntDistancesMap* 
  */
 IntDistancesMap* hdbscan_get_min_max_distances(hdbscan* sc, IntIntListMap* clusterTable);
 
 /**
- * Sorts the clusters using the distances in the distanceMap.
+ * @brief Sorts the clusters using the distances in the distanceMap.
+ * 
+ * @param distanceMap 
+ * @param clusters 
+ * @param distanceType 
+ * @return IntArrayList* 
  */
 IntArrayList* hdbscan_sort_by_similarity(IntDistancesMap* distanceMap, IntArrayList *clusters, int32_t distanceType);
 
 /**
- * Sorts clusters according to how long the cluster is
+ * @brief Sorts clusters according to how the size of the clusters
+ * 
+ * @param clusterTable 
+ * @param clusters 
+ * @return IntArrayList* 
  */
 IntArrayList* hdbscan_sort_by_length(IntIntListMap* clusterTable, IntArrayList *clusters);
 
 /**
- * Uses quick sort algorithm to sort clusters based on the data
+ * @brief Uses quick sort algorithm to sort clusters based on the data
+ * 
+ * @param clusters 
+ * @param sortData 
+ * @param left 
+ * @param right 
  */
 void hdbscan_quicksort(IntArrayList *clusters, DoubleArrayList *sortData, int32_t left, int32_t right);
 
 /**
- *
- * Destroy the hash tables
+ * @brief Deallocate the memory used for the cluster map
+ * 
+ * @param table 
  */
 void hdbscan_destroy_cluster_map(IntIntListMap* table);
+
+/**
+ * @brief Deallocate the memory used for the distance map.
+ * 
+ * @param table 
+ */
 void hdbscan_destroy_distance_map(IntDistancesMap* table);
 
 /**
- *
+ * @brief 
+ * 
+ * @return hierarchy_entry* 
  */
 hierarchy_entry* hdbscan_create_hierarchy_entry();
 
-/**
- * Printing the hash tables
- *
- */
+//!
+//! @brief Print the cluster map
+//! 
+//! @param table 
 void hdbscan_print_cluster_map(IntIntListMap* table);
+
+/**
+ * @brief Print the cluster sizes
+ * 
+ * @param table 
+ */
 void hdbscan_print_cluster_sizes(IntIntListMap* table);
+
+/**
+ * @brief Printing the distance map to the console
+ * 
+ * @param table 
+ */
 void hdbscan_print_distance_map(IntDistancesMap* table);
+
+/**
+ * @brief Print the stastical values
+ * 
+ * @param stats 
+ */
 void hdbscan_print_stats(clustering_stats* stats);
+
+/**
+ * @brief Print the cluster hierarchy
+ * 
+ * @param hierarchy 
+ * @param numPoints 
+ * @param filename 
+ */
 void hdbscan_print_hierarchies(LongHierarchyEntryMap* hierarchy, uint numPoints, char *filename);
 #ifdef __cplusplus
 };

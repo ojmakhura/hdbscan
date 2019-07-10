@@ -32,7 +32,7 @@ using namespace clustering;
 
 void dummy_tester(int minPts){
 	hdbscan scan(minPts);
-	scan.run(dataset, rows, cols, TRUE, DATATYPE_DOUBLE);
+	scan.run(dataset, rows, cols, TRUE, H_DOUBLE);
 	bool rerun = false;
 	for(int i = 0; i < 10; i++){
 		printf("%d ------- ***********************************************************************************\n", scan.minPoints);
@@ -59,7 +59,7 @@ void dummy_tester(int minPts){
 
 		for(size_t i = 0; i < sorted.size(); i++){
 			map_t::iterator it = clusterTable.find(sorted[i]);
-			printf("%d : %d\n", sorted[i], it->second.size());
+			printf("%d : %ld\n", sorted[i], it->second.size());
 		}
 		printf("]\n\n");
 

@@ -15,6 +15,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/** @file gl_array_oset.h */
 #ifndef _GL_ARRAY_OSET_H
 #define _GL_ARRAY_OSET_H
 //#include "config.h"
@@ -28,7 +29,10 @@ extern const struct gl_oset_implementation gl_array_oset_implementation;
 #define GL_ARRAY_OSET &gl_array_oset_implementation
 
 
-/* Concrete gl_oset_impl type, valid for this file only.  */
+/** 
+ * \struct gl_oset_impl
+ * \brief Concrete gl_oset_impl type, valid for this file only.  
+ */
 struct gl_oset_impl {
 	struct gl_oset_impl_base base;
 	/* An array of ALLOCATED elements, of which the first COUNT are used.

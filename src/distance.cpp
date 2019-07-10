@@ -24,21 +24,35 @@
  * SOFTWARE.
  */
 
-
+/**
+ * @file distance.cpp
+ * @author Onalenna Junior Makhura (ojmakhura@roguesystems.co.bw)
+ * 
+ * @brief The file implements the functions in hdbscan.hpp. These are
+ * functions that are mainly C++ versions of the functions in hdbscan.h
+ * but are not part of the hdbscan class and are implemented using C++
+ * specific constructs such as vectors and maps.
+ * 
+ * @version 3.1.6
+ * @date 2019-07-10
+ * 
+ * @copyright Copyright (c) 2019
+ * 
+ */
 #ifdef __cplusplus
 #include "hdbscan/distance.h"
 #include <stdlib.h>
 namespace clustering {
 
 Distance::Distance(){
-	distance_init(this, _EUCLIDEAN, DATATYPE_DOUBLE);
+	distance_init(this, _EUCLIDEAN, H_DOUBLE);
 }
 
 Distance::Distance(calculator cal){
-	distance_init(this, cal, DATATYPE_DOUBLE);
+	distance_init(this, cal, H_DOUBLE);
 }
 
-Distance::Distance(calculator cal, int32_t type){
+Distance::Distance(calculator cal, enum HTYPES type){
 	distance_init(this, cal, type);
 }
 
@@ -46,7 +60,7 @@ Distance::~Distance(){
 	distance_clean(this);
 }
 
-void Distance::getCoreDistances(int32_t numNeighbors){
+void Distance::getCoreDistances(int numNeighbors){
 	this->numNeighbors = numNeighbors;
 	distance_get_core_distances(this);
 }

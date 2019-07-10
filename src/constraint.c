@@ -24,6 +24,18 @@
  * SOFTWARE.
  */
 
+/**
+ * @file constraint.c
+ * @author Onalenna Junior Makhura (ojmakhura@roguesystems.co.bw)
+ * 
+ * @brief Implementation of the functions in constraint.h
+ * 
+ * @version 0.1
+ * @date 2019-07-10
+ * 
+ * @copyright Copyright (c) 2019
+ * 
+ */
 #include "hdbscan/constraint.h"
 #include <stdio.h>
 

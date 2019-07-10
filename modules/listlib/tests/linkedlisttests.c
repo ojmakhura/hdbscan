@@ -26,6 +26,19 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
+/**
+ * @file linkedlisttests.c
+ * 
+ * @author Onalenna Junior Makhura (ojmakh@essex.ac.uk)
+ * 
+ * @brief 
+ * @version 0.1
+ * @date 2019-06-10
+ * 
+ * @copyright Copyright (c) 2019
+ * 
+ */
 #include "listlib/linkedlist.h"
 #include <CUnit/Basic.h>
 #include <stdio.h>

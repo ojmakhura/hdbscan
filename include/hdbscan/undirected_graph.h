@@ -24,6 +24,7 @@
  * SOFTWARE.
  */
 
+/** @file undirected_graph.h */
 #ifndef UNDIRECTED_GRAPH_H_
 #define UNDIRECTED_GRAPH_H_
 
@@ -31,7 +32,7 @@
 extern "C" {
 #endif
 
-#include "listlib/utils.h"
+#include "hdbscan/utils.h"
 #include "listlib/intlist.h"
 #include "listlib/doublelist.h"
 
@@ -42,8 +43,8 @@ extern "C" {
 namespace clustering {
 #endif
 /**
- * An undirected graph, with weights assigned to each edge.  Vertices in the graph are 0 indexed.
- * @author junior
+ * \struct UndirectedGraph 
+ * \brief An undirected graph, with weights assigned to each edge.  Vertices in the graph are 0 indexed.
  */
 struct UndirectedGraph {
 
@@ -59,48 +60,78 @@ public:
 	// ------------------------------ CONSTRUCTORS ------------------------------
 
 	/**
-	 * Constructs a new UndirectedGraph, including creating an edge list for each vertex from the
+	 * 
+	 * @param numVertices The number of vertices in the graph (indexed 0 to numVertices-1)
+	 * @param verticesA An array of vertices corresponding to the array of edges
+	 * @param verticesB An array of vertices corresponding to the array of edges
+	 * @param edgeWeights An array of edges corresponding to the arrays of vertices
+	 */
+
+	/**
+	 * @brief Constructs a new UndirectedGraph, including creating an edge list for each vertex from the
 	 * vertex arrays.  For an index i, verticesA[i] and verticesB[i] share an edge with weight
 	 * edgeWeights[i].
+	 * 
 	 * @param numVertices The number of vertices in the graph (indexed 0 to numVertices-1)
 	 * @param verticesA An array of vertices corresponding to the array of edges
 	 * @param verticesB An array of vertices corresponding to the array of edges
 	 * @param edgeWeights An array of edges corresponding to the arrays of vertices
 	 */
 	UndirectedGraph(int32_t numVertices, IntArrayList* verticesA, IntArrayList* verticesB, DoubleArrayList* edgeWeights);
+
+	/**
+	 * @brief Construct a new Undirected Graph object
+	 * 
+	 */
 	UndirectedGraph();
 
 	// ------------------------------ PUBLIC METHODS ------------------------------
 
 	/**
-	 * Quicksorts the graph by edge weight in descending order.  This quicksort implementation is
+	 * @brief Quicksorts the graph by edge weight in descending order.  This quicksort implementation is
 	 * iterative and in-place.
+	 * 
 	 */
 	void quicksortByEdgeWeight();
+
 	/**
-	 * Remove vb from edge list of va
+	 * @brief Remove vb from edge list of va
+	 * 
+	 * @param va 
+	 * @param vb 
 	 */
 	void removeEdge(int va, int vb);
 
+	/**
+	 * @brief Print the graph
+	 * 
+	 */
 	void print();
 
+	/**
+	 * @brief Clean the graph without deallocating its memory
+	 * 
+	 */
 	void clean();
 
 #endif
 };
 
+/** \typedef UndirectedGraph */
 typedef struct UndirectedGraph UndirectedGraph;
 
 /**
- * Quicksorts the graph in the interval [startIndex, endIndex] by edge weight.
+ * @brief Quicksorts the graph in the interval [startIndex, endIndex] by edge weight.
+ * 
  * @param startIndex The lowest index to be included in the sort
  * @param endIndex The highest index to be included in the sort
  */
 void graph_quicksort(UndirectedGraph* g, int32_t startIndex, int32_t endIndex);
 
 /**
- * Returns a pivot index by finding the median of edge weights between the startIndex, endIndex,
+ * @brief Returns a pivot index by finding the median of edge weights between the startIndex, endIndex,
  * and middle.
+ * 
  * @param startIndex The lowest index from which the pivot index should come
  * @param endIndex The highest index from which the pivot index should come
  * @return A pivot index
@@ -108,7 +139,8 @@ void graph_quicksort(UndirectedGraph* g, int32_t startIndex, int32_t endIndex);
 int32_t graph_select_pivot_index(UndirectedGraph* g, int32_t startIndex, int32_t endIndex);
 
 /**
- * Partitions the array in the interval [startIndex, endIndex] around the value at pivotIndex.
+ * @brief Partitions the array in the interval [startIndex, endIndex] around the value at pivotIndex.
+ * 
  * @param startIndex The lowest index to  partition
  * @param endIndex The highest index to partition
  * @param pivotIndex The index of the edge weight to partition around
@@ -117,7 +149,8 @@ int32_t graph_select_pivot_index(UndirectedGraph* g, int32_t startIndex, int32_t
 int32_t graph_partition(UndirectedGraph* g, int32_t startIndex, int32_t endIndex, int32_t pivotIndex);
 
 /**
- * Swaps the vertices and edge weights between two index locations in the graph.
+ * @brief Swaps the vertices and edge weights between two index locations in the graph.
+ * 
  * @param indexOne The first index location
  * @param indexTwo The second index location
  */
@@ -126,50 +159,113 @@ void graph_swap_edges(UndirectedGraph* g, int32_t indexOne, int32_t indexTwo);
 // ------------------------------ CONSTRUCTORS ------------------------------
 
 /**
- * Constructs a new UndirectedGraph, including creating an edge list for each vertex from the
+ * @brief 
+ * 
+ * 
+ */
+
+/**
+ * @brief Constructs a new UndirectedGraph, including creating an edge list for each vertex from the
  * vertex arrays.  For an index i, verticesA[i] and verticesB[i] share an edge with weight
  * edgeWeights[i].
+ * 
+ * @param g 
  * @param numVertices The number of vertices in the graph (indexed 0 to numVertices-1)
  * @param verticesA An array of vertices corresponding to the array of edges
  * @param verticesB An array of vertices corresponding to the array of edges
  * @param edgeWeights An array of edges corresponding to the arrays of vertices
+ * @return UndirectedGraph* 
  */
 UndirectedGraph* graph_init(UndirectedGraph* g, int32_t numVertices, IntArrayList* verticesA, IntArrayList* verticesB, DoubleArrayList* edgeWeights) ;
 
 /**
- * Deallocate memory for UndirectedGraph components and for the graph itself
+ * @brief Deallocate memory for UndirectedGraph components and for the graph itself
+ * 
+ * @param g 
  */
 void graph_destroy(UndirectedGraph* g);
 
 /**
- * Deallocate memory for UndirectedGraph components
+ * @brief Deallocate memory for UndirectedGraph components
+ * 
+ * @param g 
  */
 void graph_clean(UndirectedGraph* g);
 
 /**
- * Quicksorts the graph by edge weight in descending order.  This quicksort implementation is
+ * @brief Quicksorts the graph by edge weight in descending order.  This quicksort implementation is
  * iterative and in-place.
+ * 
+ * @param g 
  */
 void graph_quicksort_by_edge_weight(UndirectedGraph* g);
 
 // ------------------------------ GETTERS & SETTERS ------------------------------
 
+/**
+ * @brief 
+ * 
+ * @return int32_t 
+ */
 int32_t graph_get_num_vertices();
 
+/**
+ * @brief 
+ * 
+ * @return int32_t 
+ */
 int32_t graph_get_num_edges();
 
+/**
+ * @brief 
+ * 
+ * @param g 
+ * @param index 
+ * @return int32_t 
+ */
 int32_t graph_get_first_vertex_at_index(UndirectedGraph* g, int32_t index);
 
+/**
+ * @brief 
+ * 
+ * @param g 
+ * @param index 
+ * @return int32_t 
+ */
 int32_t graph_get_second_vertex_at_index(UndirectedGraph* g, int32_t index);
 
+/**
+ * @brief 
+ * 
+ * @param g 
+ * @param index 
+ * @return double 
+ */
 double graph_get_edge_weight_at_index(UndirectedGraph* g, int32_t index);
 
-IntArrayList* graph_get_edge_list_for_vertex(UndirectedGraph* g, int32_t vertex);
 /**
- * Remove vb from edge list of va
+ * @brief 
+ * 
+ * @param g 
+ * @param vertex 
+ * @return IntArrayList* 
+ */
+IntArrayList* graph_get_edge_list_for_vertex(UndirectedGraph* g, int32_t vertex);
+
+/**
+ * @brief Remove vb from edge list of va
+ * 
+ * @param g 
+ * @param va 
+ * @param vb 
  */
 void graph_remove_edge(UndirectedGraph* g, int32_t va, int32_t vb);
 
+/**
+ * @brief 
+ * 
+ * @param g 
+ */
 void graph_print(UndirectedGraph* g);
 
 #ifdef __cplusplus

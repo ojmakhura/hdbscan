@@ -27,20 +27,46 @@
  * SOFTWARE.
  */
 
+/**
+ * @file hashtabletests.c
+ * 
+ * @author Onalenna Junior Makhura (ojmakh@essex.ac.uk)
+ * 
+ * @brief CUnit tests for the tash table
+ * @version 0.1
+ * @date 2019-06-10
+ * 
+ * @copyright Copyright (c) 2019
+ * 
+ */
 #include <CUnit/Basic.h>
 #include <stdio.h>
 #include "listlib/hashtable.h"
 
+/**
+ * @brief Initialise the hashtable test suite.
+ * 
+ * @return int 
+ */
 int init_hashtable_suite(void)
 {
     return 0;
 }
 
+/**
+ * @brief Clean the hashtable test suite.
+ * 
+ * @return int 
+ */
 int clean_hashtable_suite(void)
 {
     return 0;
 }
 
+/**
+ * @brief Run the hashtable tests
+ * 
+ */
 void hash_table_test()
 {
     //Testing creation of a hashtable
@@ -63,7 +89,6 @@ void hash_table_test()
     htbl->table->size = htbl->buckets;
     for(int32_t i = 0; i < htbl->buckets; i++)
     {
-        //linkedlist** tmp = htbl->table->data + p;
         linkedlist** tmp = array_list_value_at(htbl->table, i);
          CU_ASSERT_PTR_NOT_NULL(*tmp);
          CU_ASSERT_PTR_NULL((*tmp)->head);
@@ -122,8 +147,35 @@ void hash_table_test()
     CU_ASSERT_EQUAL_FATAL(htbl->collisions, 1);
     CU_ASSERT_EQUAL_FATAL(htbl->max_collisions, 2);
 
+    // Add another key
+    x = 8;
+    hashtable_insert(htbl, 5, &x);
+    CU_ASSERT_EQUAL_FATAL(htbl->size, 4);
+    CU_ASSERT_EQUAL_FATAL(gl_oset_size(htbl->keys), 4);
+    CU_ASSERT_EQUAL_FATAL(htbl->collisions, 1);
+    CU_ASSERT_EQUAL_FATAL(htbl->max_collisions, 2);
+
+    x = 43;
+    hashtable_insert(htbl, 5, &x);
+    CU_ASSERT_EQUAL_FATAL(htbl->size, 4);
+    CU_ASSERT_EQUAL_FATAL(gl_oset_size(htbl->keys), 4);
+    CU_ASSERT_EQUAL_FATAL(htbl->collisions, 1);
+    CU_ASSERT_EQUAL_FATAL(htbl->max_collisions, 2);
+
+    // test another collision
+    x = -2;
+    hashtable_insert(htbl, 48, &x);
+    CU_ASSERT_EQUAL_FATAL(htbl->size, 5);
+    CU_ASSERT_EQUAL_FATAL(gl_oset_size(htbl->keys), 5);
+    CU_ASSERT_EQUAL_FATAL(htbl->collisions, 2);
+    CU_ASSERT_EQUAL_FATAL(htbl->max_collisions, 2);
+
     printf("Hash table has %d elements.\n", htbl->size);
 
+    /**
+     * @brief Iteration over the hash table
+     * 
+     */
     for(size_t i = 0; i < gl_oset_size(htbl->keys); i++)
     {
         int key;
@@ -136,9 +188,20 @@ void hash_table_test()
 		}
 		printf("]\n");
     }
+
+    // Test removing a key
+    hashtable_remove(htbl, 5);
+    CU_ASSERT_EQUAL_FATAL(htbl->size, 4);
+    CU_ASSERT_EQUAL_FATAL(gl_oset_size(htbl->keys), 4);
+    //CU_ASSERT_EQUAL_FATAL(htbl->collisions, 2);
+    //CU_ASSERT_EQUAL_FATAL(htbl->max_collisions, 2);
 }
 
-
+/**
+ * @brief Run the test suite
+ * 
+ * @return int 
+ */
 int main()
 {
     CU_pSuite suite = NULL;
@@ -168,5 +231,6 @@ int main()
     CU_basic_set_mode(CU_BRM_VERBOSE);
     CU_basic_run_tests();
     CU_cleanup_registry();
+    
     return CU_get_error();
 }

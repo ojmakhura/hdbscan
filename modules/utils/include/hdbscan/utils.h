@@ -1,4 +1,4 @@
-/*
+/**
  * utils.h
  *
  *  Created on: 16 Sep 2017
@@ -27,6 +27,7 @@
  * SOFTWARE.
  */
 
+/** @file utils.h */
 #ifndef HDBSCAN_UTILS_H_
 #define HDBSCAN_UTILS_H_
 
@@ -38,6 +39,7 @@ extern "C" {
 #include <stdio.h>
 #include <string.h>
 #include <glib.h>
+#include <math.h>
 
 typedef GList ListNode;
 typedef GList ClusterList;
@@ -69,20 +71,90 @@ typedef unsigned int uint;
 #define TRUE  (!FALSE)
 #endif
 
+/// \enum Types of data that HDBSCAN handles
 enum HTYPES
 {
     H_INT,
     H_DOUBLE,
+    H_FLOAT,
     H_LONG,
-    H_SHORT
+    H_SHORT,
+    H_VOID
 };
 
+/**
+ * @brief Find the higherst power of 2 greater than n
+ * 
+ * @param n 
+ * @return int32_t 
+ */
 int32_t highestPowerof2(int32_t n);
-int32_t int_compare(const void * ptr_a, const void * ptr_b);
+
+/**
+ * @brief Compare integers
+ * 
+ * @param ptr_a 
+ * @param ptr_b 
+ * @return int32_t 
+ */
+int32_t int_compare(const void * ptr_a, const void * ptr_b) ;
+
+/**
+ * @brief Compare doubles
+ * 
+ * @param ptr_a 
+ * @param ptr_b 
+ * @return int32_t 
+ */
 int32_t double_compare(const void * ptr_a, const void * ptr_b);
+
+/**
+ * @brief Compare short
+ * 
+ * @param ptr_a 
+ * @param ptr_b 
+ * @return int32_t 
+ */
 int32_t short_compare(const void * ptr_a, const void * ptr_b);
+
+/**
+ * @brief Compare long
+ * 
+ * @param ptr_a 
+ * @param ptr_b 
+ * @return int32_t 
+ */
 int32_t long_compare(const void * ptr_a, const void * ptr_b);
+
+/**
+ * @brief Compare float
+ * 
+ * @param ptr_a 
+ * @param ptr_b 
+ * @return int32_t 
+ */
 int32_t float_compare(const void * ptr_a, const void * ptr_b);
+
+/**
+ * @brief Calculate the triangular number of n
+ * 
+ * @param n 
+ * @return uint 
+ */
+inline uint TRIANGULAR_H(uint n) {
+	return (n * n + n) / 2;
+}
+
+/**
+ * @brief Find the first triangle number greater than p
+ * 
+ * @param p 
+ * @return uint 
+ */
+inline uint hostFistTriangleNum(uint p)
+{
+    return ceil((sqrt(8 * p + 1) - 1) / 2);
+}
 
 #ifdef __cplusplus
 }

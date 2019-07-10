@@ -1,7 +1,7 @@
 /*
- * undirected_graph.cpp
+ * cuda_distance.h
  *
- * Copyright 2018 Onalenna Junior Makhura
+ * Copyright 2019 Onalenna Junior Makhura
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation files
@@ -23,30 +23,38 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+/** @file cuda_distance.h */
+#ifndef CUDA_DISTANCE_H_
+#define CUDA_DISTANCE_H_
+
+#include <cuda.h>
+#include <cuda_runtime.h>
+#include <cuda_runtime_api.h>
 
 /**
- * @file undirected_graph.cpp
- * @author Onalenna Junior Makhura (ojmakhura@roguesystems.co.bw)
+ * @brief 
  * 
- * @brief C++ version of the UndirectedGraph.
- * 
- * @version 3.1.6
- * @date 2018-01-10
- * 
- * @copyright Copyright (c) 2018
- * 
+ * @param n 
+ * @return uint 
  */
-#ifdef __cplusplus
-#include "hdbscan/undirected_graph.h"
-namespace clustering {
+uint TRIANGULAR_D(uint n);
 
-UndirectedGraph::UndirectedGraph(){
-	graph_init(this, 0, NULL, NULL, NULL);
-}
+/**
+ * @brief 
+ * 
+ * @param p 
+ * @return uint 
+ */
+uint deviceFistTriangleNum(uint p);
 
-UndirectedGraph::~UndirectedGraph(){
-	graph_clean(this);
-}
-
-};
+/**
+ * @brief 
+ * 
+ * @param a_in 
+ * @param d_out 
+ * @param w 
+ * @param h 
+ * @param d 
+ */
+void distance_compute_kernel(double* a_in, double *d_out, uint w, uint h, uint d);
 #endif

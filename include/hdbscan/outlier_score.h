@@ -24,6 +24,7 @@
  * SOFTWARE.
  */
 
+/** @file outlier_score.h */
 #ifndef OUTLIER_SCORE_H_
 #define OUTLIER_SCORE_H_
 
@@ -34,7 +35,7 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include "listlib/utils.h"
+#include "hdbscan/utils.h"
 
 #define OUTLIERSCORE_SUCCESS 1
 #define OUTLIERSCORE_ERROR 0
@@ -43,12 +44,12 @@ extern "C" {
 namespace clustering {
 #endif
 /**
- * Simple storage class that keeps the outlier score, core distance, and id (index) for a single point.
+ * \struct OutlierScore
+ * @brief Simple storage class that keeps the outlier score, core distance, and id (index) for a single point.
+ * 
  * OutlierScores are sorted in ascending order by outlier score, with core distances used to break
  * outlier score ties, and ids used to break core distance ties.
- * @author junior
  */
-
 struct OutlierScore{
 	double score;
 	double coreDistance;
@@ -63,22 +64,66 @@ public:
 	 * @param id The id (index) of the point
 	 */
 	OutlierScore(float score, float coreDistance, int id);
+
+	/**
+	 * @brief Construct a new Outlier Score object
+	 * 
+	 */
 	OutlierScore();
+
+	/**
+	 * @brief Destroy the Outlier Score object
+	 * 
+	 */
 	virtual ~OutlierScore();
 
 	// ------------------------------ PUBLIC METHODS ------------------------------
-
+	/**
+	 * @brief 
+	 * 
+	 * @param other 
+	 * @return boolean 
+	 */
 	boolean operator<(const OutlierScore& other);
+
+	/**
+	 * @brief 
+	 * 
+	 * @param other 
+	 * @return int 
+	 */
 	int compareTO(const OutlierScore& other);
 #endif
 };
 
+/** \typedef outlier_score */
 typedef struct OutlierScore outlier_score;
 
+/**
+ * @brief 
+ * 
+ * @param os 
+ * @param score 
+ * @param coreDistance 
+ * @param id 
+ * @return outlier_score* 
+ */
 outlier_score* outlier_score_init(outlier_score* os, double score, double coreDistance, int32_t id);
+
+/**
+ * @brief 
+ * 
+ * @param os 
+ */
 void outlier_score_destroy(outlier_score* os);
 
-
+/**
+ * @brief 
+ * 
+ * @param score1 
+ * @param score2 
+ * @return int 
+ */
 int outlier_score_compare(const void* score1, const void* score2);
 
 #ifdef __cplusplus

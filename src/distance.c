@@ -23,6 +23,19 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
+/**
+ * @file distance.c
+ * @author Onalenna Junior Makhura (ojmakhura@roguesystems.co.bw)
+ * 
+ * @brief Implementation of the distance calculations for HDBSCAN
+ * 
+ * @version 3.1.6
+ * @date 2019-07-10
+ * 
+ * @copyright Copyright (c) 2018
+ * 
+ */
 #include <stdlib.h>
 #include <omp.h>
 #include <stdio.h>
@@ -30,6 +43,11 @@
 
 #include "hdbscan/distance.h"
 
+/**
+ * @brief Function pointer for the difference calculator function that will
+ * be selected based on type of data.
+ * 
+ */
 double (*get_diff)(distance* dis, void* dataset, uint i, uint j, uint k);
 
 double get_double_diff(distance* dis, void* dataset, uint i, uint j, uint k){
@@ -39,6 +57,16 @@ double get_double_diff(distance* dis, void* dataset, uint i, uint j, uint k){
 	return (double)(num1 - num2);
 }
 
+/**
+ * @brief Get the int diff object
+ * 
+ * @param dis 
+ * @param dataset 
+ * @param i 
+ * @param j 
+ * @param k 
+ * @return double 
+ */
 double get_int_diff(distance* dis, void* dataset, uint i, uint j, uint k){
 	int* dt = (int*)dataset;
     int num1 = dt[i * dis->cols + k];
@@ -46,6 +74,16 @@ double get_int_diff(distance* dis, void* dataset, uint i, uint j, uint k){
 	return (double)(num1 - num2);
 }
 
+/**
+ * @brief Get the float diff object
+ * 
+ * @param dis 
+ * @param dataset 
+ * @param i 
+ * @param j 
+ * @param k 
+ * @return double 
+ */
 double get_float_diff(distance* dis, void* dataset, uint i, uint j, uint k){
 	float* dt = (float*)dataset;
     float num1 = dt[i * dis->cols + k];
@@ -54,6 +92,16 @@ double get_float_diff(distance* dis, void* dataset, uint i, uint j, uint k){
 	return (double)(num1 - num2);
 }
 
+/**
+ * @brief Get the long diff object
+ * 
+ * @param dis 
+ * @param dataset 
+ * @param i 
+ * @param j 
+ * @param k 
+ * @return double 
+ */
 double get_long_diff(distance* dis, void* dataset, uint i, uint j, uint k){
 	long* dt = (long*)dataset;
     long num1 = dt[i * dis->cols + k];
@@ -61,6 +109,16 @@ double get_long_diff(distance* dis, void* dataset, uint i, uint j, uint k){
 	return (double)(num1 - num2);
 }
 
+/**
+ * @brief Get the short diff object
+ * 
+ * @param dis 
+ * @param dataset 
+ * @param i 
+ * @param j 
+ * @param k 
+ * @return double 
+ */
 double get_short_diff(distance* dis, void* dataset, uint i, uint j, uint k){
 	short* dt = (short*)dataset;
     short num1 = dt[i * dis->cols + k];
@@ -68,6 +126,13 @@ double get_short_diff(distance* dis, void* dataset, uint i, uint j, uint k){
 	return (double)(num1 - num2);
 }
 
+/**
+ * @brief Compare integer functions
+ * 
+ * @param ptr_a 
+ * @param ptr_b 
+ * @return int 
+ */
 int cmpint(const void * ptr_a, const void * ptr_b) {
 
 	int a, b;
@@ -84,6 +149,13 @@ int cmpint(const void * ptr_a, const void * ptr_b) {
 	return (-1);
 }
 
+/**
+ * @brief Compare double values
+ * 
+ * @param ptr_a 
+ * @param ptr_b 
+ * @return int 
+ */
 int cmpdouble(const void * ptr_a, const void * ptr_b) {
 	double a, b;
 	a = *(double *) ptr_a;
@@ -99,7 +171,7 @@ int cmpdouble(const void * ptr_a, const void * ptr_b) {
 	return (-1);
 }
 
-distance* distance_init(distance* dis, calculator cal, uint datatype) {
+distance* distance_init(distance* dis, calculator cal, enum HTYPES datatype) {
 	if(dis == NULL)
 		dis = (distance*)malloc(sizeof(distance));
 
@@ -112,21 +184,21 @@ distance* distance_init(distance* dis, calculator cal, uint datatype) {
 		dis->distances = NULL;
 		dis->datatype = datatype;
 
-		if(dis->datatype == DATATYPE_FLOAT){
+		if(dis->datatype == H_FLOAT){
 			get_diff = get_float_diff;
 
-		} else if(dis->datatype == DATATYPE_DOUBLE){
+		} else if(dis->datatype == H_DOUBLE){
 			get_diff = get_double_diff;
 
-		}else if(dis->datatype == DATATYPE_INT){
+		}else if(dis->datatype == H_INT){
 
 			get_diff = get_int_diff;
 
-		}	else if(dis->datatype == DATATYPE_LONG){
+		}	else if(dis->datatype == H_LONG){
 
 			get_diff = get_long_diff;
 
-		}else if(dis->datatype == DATATYPE_SHORT){
+		}else if(dis->datatype == H_SHORT){
 
 			get_diff = get_short_diff;
 		}
@@ -134,9 +206,6 @@ distance* distance_init(distance* dis, calculator cal, uint datatype) {
 	return dis;
 }
 
-/**
- *
- */
 void distance_destroy(distance* d) {
 	distance_clean(d);
 	if(d != NULL)
@@ -156,7 +225,11 @@ void distance_clean(distance* d){
 }
 
 /**
- *
+ * @brief Calculate the L2 norm
+ * 
+ * @param u 
+ * @param n 
+ * @return double 
  */
 double l2_norm(double const* u, uint n) {
 	double accum = 0.;
@@ -174,16 +247,24 @@ double l2_norm(double const* u, uint n) {
 double distance_get(distance* dis, uint row, uint col) {
 	uint idx;
 	if (row < col) {
-		idx = (dis->rows * row + col) - TRIANGULAR(row + 1);
+		idx = (dis->rows * row + col) - TRIANGULAR_H(row + 1);
 
 	} else if (row == col) {
 		return 0;
 	} else {
-		idx = (dis->rows * col + row) - TRIANGULAR(col + 1);
+		idx = (dis->rows * col + row) - TRIANGULAR_H(col + 1);
 	}
 	return dis->distances[idx];
 }
 
+/**
+ * @brief Set the Dimenstions  of the data. We also calculate the size 
+ * of the distance matrix using (rows * rows -rows)/2
+ * 
+ * @param dis 
+ * @param rows 
+ * @param cols 
+ */
 void setDimenstions(distance* dis, int rows, int cols){
 
     dis->rows = rows;
@@ -197,7 +278,7 @@ void distance_compute(distance* dis, void* dataset, int rows, int cols, int numN
 	dis->numNeighbors = numNeighbors;
 	setDimenstions(dis, rows, cols);
 
-#pragma omp parallel for
+#pragma omp parallel for   /// Use omp to speed up calculations
 	for (uint i = 0; i < dis->rows; i++) {
 		for (uint j = i + 1; j < dis->rows; j++) {
 			double sum, diff = 0.0;
@@ -212,7 +293,7 @@ void distance_compute(distance* dis, void* dataset, int rows, int cols, int numN
 
 			// Calculate the linearised upper triangular matrix offset
 			uint offset = i * dis->rows + j;
-			int c = offset - TRIANGULAR(i + 1);				
+			int c = offset - TRIANGULAR_H(i + 1);				
 			dis->distances[c] = sum;
 			
 		}

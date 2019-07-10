@@ -23,7 +23,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
+/** @file constraint.h */
 #ifndef CONSTRAINT_H_
 #define CONSTRAINT_H_
 
@@ -43,6 +43,10 @@ extern "C" {
 namespace clustering {
 #endif
 
+/**
+ * \enum  CONSTRAINT_TYPE
+ * 
+ */
 typedef enum _CONSTRAINT_TYPE {
 	NULL_LINK, MUST_LINK, CANNOT_LINK
 } CONSTRAINT_TYPE;
@@ -55,10 +59,12 @@ char** CANNOT_LINK_TAG = "cl";
 */
 
 /**
- * A clustering constraint (either a must-link or cannot-link constraint between two points).
- * @author junior
+ * \struct Constraint
+ * 
+ * @brief A clustering constraint (either a must-link or cannot-link constraint between two points).
+ * 
+ * \typedef Constraint
  */
-
 typedef struct Constraint{
 	CONSTRAINT_TYPE type;
 	int32_t pointA;
@@ -80,7 +86,22 @@ public:
 
 } constraint;
 
+/**
+ * @brief Create a new constraint and allocate all needed memory
+ * 
+ * @param c 
+ * @param pointA 
+ * @param pointB 
+ * @param type 
+ * @return constraint* 
+ */
 constraint* constraint_init(constraint* c, int pointA, int pointB, CONSTRAINT_TYPE type);
+
+/**
+ * @brief Free all dynamically allocate memory
+ * 
+ * @param cons 
+ */
 void constraint_destroy(constraint* cons);
 #ifdef __cplusplus
 };

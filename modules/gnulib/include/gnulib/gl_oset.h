@@ -15,6 +15,7 @@
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/** @file gl_oset.h */
 #ifndef _GL_OSET_H
 #define _GL_OSET_H
 

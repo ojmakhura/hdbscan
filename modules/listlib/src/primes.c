@@ -1,9 +1,6 @@
 /*
  * primes.c
  *
- *  Created on: 10 Jun 2019
- *      Author: ojmakh
- * 
  * Copyright 2019 Onalenna Junior Makhura
  *
  * Permission is hereby granted, free of charge, to any person
@@ -27,14 +24,20 @@
  * SOFTWARE.
  */
 
+/**
+ * @file primes.c
+ * @author Onalenna Junior Makhura (ojmakhura@roguesystems.co.bw)
+ * 
+ * @brief Functions for handling prime numbers for using the with the hashtable
+ * 
+ * @version 3.1.6
+ * @date 2019-06-10
+ * 
+ * @copyright Copyright (c) 2019
+ * 
+ */
 #include "listlib/primes.h"
 
-/**
- * Get a prime number larger that the parameter min. This function
- * is relatively simple but not designed for speed. As such, we are
- * assumming the required prime is not too big. Certainly not 
- * bigger than the limit of 32 bit integer.
- */ 
 int32_t get_prime(int32_t min)
 {
     int32_t prime, n_primes = 0;
@@ -59,14 +62,6 @@ int32_t get_prime(int32_t min)
     return prime;
 }
 
-// A recursive binary search function. It returns 
-// location of x in given array arr[l..r] is present, 
-// otherwise -1
-//
-// This function does not search for the exact value, rather, it looks
-// the first number less than or equals to x.
-// This search is used when for initialising the number of buckets in the
-// chained hash table
 int32_t binary_search_primes(int32_t l, int32_t r, int32_t x) 
 { 
     // If the number is less than the first prime, then return

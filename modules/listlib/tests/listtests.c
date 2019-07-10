@@ -1,9 +1,4 @@
-/*
- * listtests.c
- *
- *  Created on: 10 Jun 2019
- *      Author: ojmakh
- * 
+/** 
  * Copyright 2019 Onalenna Junior Makhura
  *
  * Permission is hereby granted, free of charge, to any person
@@ -26,6 +21,23 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
+/**
+ * @file listtests.c
+ * @author Onalenna Junior Makhura (ojmakhura@roguesystems.co.bw)
+ * @brief This is a CUnit test file for testing the lsit implementations.
+ * The file test each of the void*, int and other primitive datatype
+ * lists.
+ * 
+ * @TODO implements other primitive datatype tests
+ * 
+ * @version 3.1.6
+ * @date 2019-07-10
+ * 
+ * @copyright Copyright (c) 2019
+ * 
+ */
+
 #include "listlib/list.h"
 #include "listlib/doublelist.h"
 #include "listlib/intlist.h"
@@ -33,11 +45,21 @@
 #include <CUnit/Basic.h>
 #include <stdio.h>
 
+/**
+ * @brief Initialise the int array list test suite
+ * 
+ * @return int 
+ */
 int init_array_list_suite(void)
 {
     return 0;
 }
 
+/**
+ * @brief Clean the int array list test suite
+ * 
+ * @return int 
+ */
 int clean_array_list_suite(void)
 {
     return 0;
@@ -46,6 +68,11 @@ int clean_array_list_suite(void)
  * IntArrayList tests
  * 
  ********************************************************************/
+
+/**
+ * @brief Runing the tests for the int array list
+ * 
+ */
 void int_array_list_test()
 {
     IntArrayList* list = NULL;
@@ -87,10 +114,11 @@ void int_array_list_test()
 }
 
 /**
- * Just testing that we can use the generic ArrayList to
- * safely work with int, long and double. The list created
+ * @brief Testing that we can use the generic ArrayList to
+ * safely work with void *, int, long and double. The list created
  * in this test is for storing 
- */ 
+ * 
+ */
 void int_ptr_array_list_test()
 {
     ArrayList* list = NULL;
@@ -132,6 +160,11 @@ void int_ptr_array_list_test()
     CU_ASSERT_EQUAL_FATAL(*l2d, *l3d);
 }
 
+/**
+ * @brief Run the tests
+ * 
+ * @return int 
+ */
 int main()
 {
     CU_pSuite suite = NULL;

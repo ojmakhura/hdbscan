@@ -24,11 +24,12 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
+/** @file hdbscan.hpp */
 #ifndef HDBSCAN_HPP_
 #define HDBSCAN_HPP_
 
 #ifdef __cplusplus
-
 
 #include "hdbscan.h"
 
@@ -45,39 +46,94 @@ typedef set<int> set_t;
 
 
 namespace clustering {
+	
 	/**
-	 *
-	 **/
+	 * @brief Create a Cluster Map object
+	 * 
+	 * @param labels 
+	 * @param begin 
+	 * @param end 
+	 * @return map_t 
+	 */
 	map_t createClusterMap(int32_t* labels, int32_t begin, int32_t end);
+
+	/**
+	 * @brief Get the Min Max Distances object
+	 * 
+	 * @param scan 
+	 * @param clusterTable 
+	 * @return map<int32_t, distance_values> 
+	 */
 	map<int32_t, distance_values> getMinMaxDistances(hdbscan& scan, map_t& clusterTable);
+
+	/**
+	 * @brief 
+	 * 
+	 * @param distanceMap 
+	 * @param stats 
+	 */
 	void calculateStats(map<int32_t, distance_values>& distanceMap, clustering_stats& stats);
 
 	/**
-	 *
-	 *
+	 * @brief 
+	 * 
+	 * @param stats 
+	 * @return int32_t 
 	 */
 	int32_t analyseStats(clustering_stats& stats);
 
+	/**
+	 * @brief 
+	 * 
+	 * @param table 
+	 */
 	void printClusterMap(map_t& table);
 
+	/**
+	 * @brief 
+	 * 
+	 * @param table 
+	 */
 	void printClusterSizes(map_t& table);
 
+	/**
+	 * @brief 
+	 * 
+	 * @param distancesMap 
+	 */
 	void printDistanceMap(map<int32_t, distance_values>& distancesMap);
 
+	/**
+	 * @brief 
+	 * 
+	 * @param stats 
+	 */
 	void printStats(clustering_stats& stats);
 
 	/**
-	 * Sorts the clusters using the distances in the distanceMap.
+	 * @brief Sorts the clusters using the distances in the distanceMap.
+	 * 
+	 * @param distanceMap 
+	 * @param clusters 
+	 * @param distanceType 
 	 */
 	void sortBySimilarity(map<int32_t, distance_values>& distanceMap, vector<int32_t>& clusters, int32_t distanceType);
-
+	
 	/**
-	 * Sorts clusters according to how long the cluster is
+	 * @brief Sorts clusters according to how long the cluster is
+	 * 
+	 * @param clusterTable 
+	 * @param clusters 
 	 */
 	void sortByLength(map_t& clusterTable, vector<int32_t>& clusters);
 
 	/**
-	 * Uses quick sort algorithm to sort clusters based on the data
+	 * @brief 
+	 * 
+	 * @param clusters 
+	 * @param sortData 
+	 * @param left 
+	 * @param right 
 	 */
 	void quickSort(vector<int32_t>& clusters, vector<double>& sortData, int32_t left, int32_t right);
 };

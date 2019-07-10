@@ -27,6 +27,7 @@
  * SOFTWARE.
  */
 
+/** @file primes.h */
 #ifndef PRIMES_H_
 #define PRIMES_H_
 
@@ -37,8 +38,38 @@ extern "C" {
 #include <stdint.h>
 #include <limits.h>
 
+/**
+ * @brief  Find the largest prime number less than num
+ * 
+ * @param num 
+ * @return int32_t 
+ */
 int32_t find_prime_less_than(int32_t num);
+
+/**
+ * @brief Get a prime number larger that the parameter min. This function
+ * is relatively simple but not designed for speed. As such, we are
+ * assumming the required prime is not too big. Certainly not bigger than
+ * the limit of 32 bit integer.
+ * 
+ * @param min 
+ * @return int32_t 
+ */
 int32_t get_prime(int32_t min);
+
+/**
+ * @brief A recursive binary search function. It returns 
+ * location of x in given array arr[l..r] is present, otherwise -1
+ * 
+ * This function does not search for the exact value, rather, it looks
+ * the first number less than or equals to x. This search is used when 
+ * for initialising the number of buckets in the chained hash table
+ * 
+ * @param l 
+ * @param r 
+ * @param x 
+ * @return int32_t 
+ */
 int32_t binary_search_primes(int32_t l, int32_t r, int32_t x) ;
 
 #define sz 200

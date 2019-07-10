@@ -27,18 +27,28 @@
  * SOFTWARE.
  */
 
-
+/**
+ * @file longlist.c
+ * @author Onalenna Junior Makhura (ojmakhura@roguesystems.co.bw)
+ * 
+ * @brief Implementation of a long array list
+ * 
+ * @version 3.1.6
+ * @date 2017-10-03
+ * 
+ * @copyright Copyright (c) 2017
+ * 
+ */
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
 #include "listlib/longlist.h"
-#include "listlib/utils.h"
+#include "hdbscan/utils.h"
 
 
 /****************************************************************************************
  * Implementation of array lists
  ****************************************************************************************/
-
 
 LongArrayList* long_array_list_init(){
 
@@ -79,7 +89,6 @@ void long_array_list_append(LongArrayList* list, long data){
 	list->size++;
 }
 
-
 void long_array_list_pop(LongArrayList* list){
 	list->size--;
 }
@@ -98,7 +107,6 @@ int32_t long_array_list_search(LongArrayList* list, long data){
 	return idx;
 }
 
-
 int32_t long_array_list_search_sorted(LongArrayList* list, long data){
 
 	int32_t idx = -1;
@@ -111,7 +119,6 @@ int32_t long_array_list_search_sorted(LongArrayList* list, long data){
 
 	return idx;
 }
-
 
 int32_t long_array_list_remove_at(LongArrayList* list, long data, int32_t idx){
 	if(idx < 0 || idx > list->size){
@@ -137,20 +144,12 @@ int32_t long_array_list_remove(LongArrayList* list, long data){
 	return long_array_list_remove_at(list, data, idx);
 }
 
-void long_array_list_extend(LongArrayList* dest, LongArrayList* src){
-	int32_t cmbsize = dest->size + src->size;
+void long_array_list_extend(LongArrayList* list){
+	int32_t cmbsize = list->size + list->size;
 
-	if(cmbsize >= dest->size){
-		array_list_grow(dest);
+	if(cmbsize >= list->size){
+		array_list_grow(list);
 	}
-
-	long* ddata = (long *)dest->data;
-	long* sdata = (long *)src->data;
-	if(dest->data != NULL){
-		long* to = ddata + dest->size;
-		memcpy(to, sdata, (src->size)*sizeof(long));
-	}
-
 }
 
 void long_array_list_delete(LongArrayList* list){

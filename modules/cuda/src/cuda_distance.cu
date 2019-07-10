@@ -1,7 +1,7 @@
 /*
- * undirected_graph.cpp
+ * cuda_distance.cu
  *
- * Copyright 2018 Onalenna Junior Makhura
+ * Copyright 2019 Onalenna Junior Makhura
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation files
@@ -23,30 +23,36 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include "hdbscan/cuda_distance.h"
 
-/**
- * @file undirected_graph.cpp
- * @author Onalenna Junior Makhura (ojmakhura@roguesystems.co.bw)
- * 
- * @brief C++ version of the UndirectedGraph.
- * 
- * @version 3.1.6
- * @date 2018-01-10
- * 
- * @copyright Copyright (c) 2018
- * 
- */
-#ifdef __cplusplus
-#include "hdbscan/undirected_graph.h"
-namespace clustering {
-
-UndirectedGraph::UndirectedGraph(){
-	graph_init(this, 0, NULL, NULL, NULL);
+__device__
+uint TRIANGULAR_D(uint n) {
+	return (n * n + n) / 2;
 }
 
-UndirectedGraph::~UndirectedGraph(){
-	graph_clean(this);
+__device__
+uint deviceFistTriangleNum(uint p) {
+	return ceilf((sqrtf(8 * p + 1) - 1) / 2);
 }
 
-};
-#endif
+__global__
+void distance_compute_kernel(double* a_in, double *d_out, uint w, uint h, uint d) {
+	uint i = blockDim.x * blockIdx.x + threadIdx.x;
+
+	if (i < d) {
+		uint r = deviceFistTriangleNum(i+1);
+		uint tmp = TRIANGULAR_D(r);
+		uint c = i + r - tmp;
+		double sum = 0.0, diff = 0.0;
+
+		for (uint k = 0; k < w; k++) {
+			double num1 = a_in[r * w + k];
+			double num2 = a_in[c * w + k];
+			diff = num1 - num2;
+			sum += (diff * diff);
+		}
+
+		sum = sqrtf(sum);
+		d_out[i] = sum;
+	}
+}
