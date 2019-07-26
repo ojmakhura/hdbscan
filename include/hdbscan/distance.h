@@ -23,7 +23,12 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/** @file distance.h */
+
+/** 
+ * @file distance.h 
+ * 
+ * @brief This header file declares the distance struct and functions.
+ */
 #ifndef DISTANCE_H_
 #define DISTANCE_H_
 
@@ -51,27 +56,7 @@ namespace clustering {
 #ifndef _EUCLIDEAN
 #define _EUCLIDEAN 		1
 #endif
-/*
-#define DATATYPE_FLOAT			0
-#define DATATYPE_DOUBLE			1
-#define DATATYPE_INT			2
-#define DATATYPE_LONG			3
-#define DATATYPE_SHORT			4
-*/
 
-/*
-#ifndef MANHATTAN
-#define MANHATTAN		2
-#endif
-*/
-/*
-#ifndef PEARSON
-#define PEARSON			3
-#endif
-#ifndef SUPREMUM
-#define SUPREMUM		4
-#endif
-*/
 
 typedef unsigned int calculator;
 

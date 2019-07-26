@@ -171,6 +171,15 @@ int cmpdouble(const void * ptr_a, const void * ptr_b) {
 	return (-1);
 }
 
+/**
+ * @brief Initialise the struct. We set the get_diff function based on the
+ * datatype.
+ * 
+ * @param dis 
+ * @param cal 
+ * @param datatype 
+ * @return distance* 
+ */
 distance* distance_init(distance* dis, calculator cal, enum HTYPES datatype) {
 	if(dis == NULL)
 		dis = (distance*)malloc(sizeof(distance));

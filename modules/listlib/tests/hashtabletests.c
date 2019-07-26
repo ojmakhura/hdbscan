@@ -33,7 +33,7 @@
  * @author Onalenna Junior Makhura (ojmakh@essex.ac.uk)
  * 
  * @brief CUnit tests for the tash table
- * @version 0.1
+ * @version 3.1.6
  * @date 2019-06-10
  * 
  * @copyright Copyright (c) 2019

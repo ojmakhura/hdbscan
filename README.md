@@ -2,6 +2,7 @@
 This is an implementation of the hdbscan algorithm RICARDO J. G. B. CAMPELLO et al. This is a translation from Java to C/C++. The build uses cmake to compile. You will need the math library and the glib2 installed.
 
 ## Compile
+To install the library at /usr/local:
 1. git clone https://github.com/ojmakhura/hdbscan.git
 2. cd hdbscan
 3. mkdir build
@@ -16,5 +17,3 @@ The library comes with 2 tester files in the samples folder. The file tester.c s
 
 To let the algorithm know which datatype you are working with, you pass the DATATYPE\_{FLOAT, DOUBLE, INT, SHORT, FLOAT} as a parameter to the run() method. Python code uses numpy and will determine the datatypes from the numpy array. The code expectes a 1 or two dimensional dataset.
 
-## Tests
-The listlib

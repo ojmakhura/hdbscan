@@ -227,18 +227,18 @@ int hdbscan_do_run(hdbscan* sc){
 		return HDBSCAN_ERROR;
 	}
 
-	printf("graph_quicksort_by_edge_weight\n");
+	//printf("graph_quicksort_by_edge_weight\n");
 	graph_quicksort_by_edge_weight(sc->mst);
 
 	double pointNoiseLevels[sc->numPoints];
 	int pointLastClusters[sc->numPoints];
 
-	printf("hdbscan_compute_hierarchy_and_cluster_tree\n");
+	//printf("hdbscan_compute_hierarchy_and_cluster_tree\n");
 	hdbscan_compute_hierarchy_and_cluster_tree(sc, 0, pointNoiseLevels, pointLastClusters);
-	printf("hdbscan_propagate_tree\n");
+	//printf("hdbscan_propagate_tree\n");
 	int infiniteStability = hdbscan_propagate_tree(sc);
 
-	printf("hdbscan_find_prominent_clusters\n");
+	//printf("hdbscan_find_prominent_clusters\n");
 	hdbscan_find_prominent_clusters(sc, infiniteStability);
 	return HDBSCAN_SUCCESS;
 }
@@ -268,10 +268,10 @@ int hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean rowwis
 		printf("hdbscan_run: sc has not been initialised.\n");
 		return HDBSCAN_ERROR;
 	}
-	printf("distance_init\n");
+	//printf("distance_init\n");
 	distance_init(&sc->distanceFunction, _EUCLIDEAN, datatype);
 
-	printf("hdbscan_get_dataset_size\n");
+	//printf("hdbscan_get_dataset_size\n");
 	sc->numPoints = hdbscan_get_dataset_size(rows, cols, rowwise);
 	distance_compute(&(sc->distanceFunction), dataset, rows, cols, sc->minPoints-1);
 
@@ -617,7 +617,7 @@ void print_graph_components(IntArrayList *nearestMRDNeighbors, IntArrayList *oth
 }
 
 int hdbscan_construct_mst(hdbscan* sc){
-	printf("hdbscan_construct_mst begin\n");
+	//printf("hdbscan_construct_mst begin\n");
 	double*  coreDistances = sc->distanceFunction.coreDistances;
 
 	int selfEdgeCapacity = 0;
@@ -633,7 +633,7 @@ int hdbscan_construct_mst(hdbscan* sc){
 		attachedPoints[i] = FALSE;
 	}
 
-	printf("1 -- hdbscan_construct_mst\n");
+	//printf("1 -- hdbscan_construct_mst\n");
 	//The MST is expanded starting with the last point in the data set:
 	int currentPoint = size - 1;
 	attachedPoints[size - 1] = TRUE;
@@ -641,13 +641,13 @@ int hdbscan_construct_mst(hdbscan* sc){
 	//Each point has a current neighbor point in the tree, and a current nearest distance:
 	int ssize = size - 1 + selfEdgeCapacity;
 	IntArrayList* nearestMRDNeighbors = int_array_list_init_full(ssize, 0);
-	printf("2 -- hdbscan_construct_mst\n");
+	//printf("2 -- hdbscan_construct_mst\n");
 	if(nearestMRDNeighbors == NULL){
 		printf("ERROR: hdbscan_construct_mst - Could not construct nearestMRDNeighbors");
 		return HDBSCAN_ERROR;
 	}
 
-	printf("2 -- hdbscan_construct_mst\n");
+	//printf("2 -- hdbscan_construct_mst\n");
 	//Create an array for vertices in the tree that each point attached to:
 	IntArrayList* otherVertexIndices = int_array_list_init_full(ssize, 0);
 
@@ -680,9 +680,9 @@ int hdbscan_construct_mst(hdbscan* sc){
 			if (attachedPoints[neighbor] == TRUE) {
 				continue;
 			}
-			printf("5 -- hdbscan_construct_mst neighbor = %d and currentPoint = %d\n", neighbor, currentPoint);
+			//printf("5 -- hdbscan_construct_mst neighbor = %d and currentPoint = %d\n", neighbor, currentPoint);
 			double mutualReachabiltiyDistance = distance_get(&sc->distanceFunction, neighbor, currentPoint);
-			printf("5 -- hdbscan_construct_mst mutualReachabiltiyDistance = %f \n", mutualReachabiltiyDistance);
+			//printf("5 -- hdbscan_construct_mst mutualReachabiltiyDistance = %f \n", mutualReachabiltiyDistance);
 
 			if (coreDistances[currentPoint] > mutualReachabiltiyDistance) {
 				mutualReachabiltiyDistance = coreDistances[currentPoint];
@@ -729,7 +729,7 @@ int hdbscan_construct_mst(hdbscan* sc){
 		return HDBSCAN_ERROR;
 	}
 
-	printf("hdbscan_construct_mst end\n");
+	//printf("hdbscan_construct_mst end\n");
 	return HDBSCAN_SUCCESS;
 }
 
@@ -808,7 +808,7 @@ void hdbscan_find_prominent_clusters(hdbscan* sc, int infiniteStability){
 		node = g_list_next(node);
 	}
 
-	sc->clusterLabels = (int *)malloc(sc->numPoints * sizeof(int));
+	sc->clusterLabels = (int32_t *)calloc(sc->numPoints, sizeof(int));
 	for (int i = 0; i < sc->numPoints; i++) {
 		(sc->clusterLabels)[i] = 0;
 	}

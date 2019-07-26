@@ -23,6 +23,17 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
+/**
+ * @file PyHdbscan.c
+ * @author Onalenna Junior Makhura (ojmakhura@roguesystems.co.bw)
+ * @brief Implementation of the python 2 and 3 bindings.
+ * @version 3.1.6
+ * @date 2018-01-10
+ * 
+ * @copyright Copyright (c) 2018
+ * 
+ */
  
 #if PY_MAJOR_VERSION >= 3
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
