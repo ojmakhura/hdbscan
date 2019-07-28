@@ -68,7 +68,7 @@ cluster* cluster_init(cluster* cl, int32_t label, cluster* parent, double birthL
 			cl->parent->hasChildren = TRUE;
 		cl->hasChildren = FALSE;
 		cl->virtualChildCluster = gl_oset_nx_create_empty (GL_ARRAY_OSET, (gl_setelement_compar_fn) int_compare, NULL);
-		cl->propagatedDescendants = NULL;
+		cl->propagatedDescendants = ptr_array_list_init(8);
 	}
 
 	return cl;
@@ -82,7 +82,7 @@ void cluster_destroy(cluster* cl){
 		}
 
 		if(cl->propagatedDescendants != NULL){
-			g_list_free(cl->propagatedDescendants);
+			array_list_delete(cl->propagatedDescendants);
 			cl->propagatedDescendants = NULL;
 		}
 		free(cl);
@@ -92,7 +92,6 @@ void cluster_destroy(cluster* cl){
 
 int cluster_detach_points(cluster* cl, int numPoints, double level){
 
-	//printf("Cluster::detachPoints: incoming points %d cl points %d birthlevel %f\n", numPoints, cl->numPoints, cl->birthLevel);
 	cl->numPoints -= numPoints;
 	cl->stability += (numPoints * (1 / level - 1 / cl->birthLevel));
 
@@ -118,50 +117,41 @@ void cluster_propagate(cluster* cl){
 			cl->parent->propagatedLowestChildDeathLevel = cl->propagatedLowestChildDeathLevel;
 		}
 
-		if (cl->hasChildren == FALSE) {
+		if (cl->hasChildren == FALSE || cl->numConstraintsSatisfied > cl->propagatedNumConstraintsSatisfied) {
 			cl->parent->propagatedNumConstraintsSatisfied += cl->numConstraintsSatisfied;
 			cl->parent->propagatedStability += cl->stability;
-			cl->parent->propagatedDescendants = g_list_append(cl->parent->propagatedDescendants, cl);
+			array_list_append(cl->parent->propagatedDescendants, &cl);
 		}
-		else if (cl->numConstraintsSatisfied > cl->propagatedNumConstraintsSatisfied) {
-			cl->parent->propagatedNumConstraintsSatisfied += cl->numConstraintsSatisfied;
-			cl->parent->propagatedStability += cl->stability;
-			cl->parent->propagatedDescendants = g_list_append(cl->parent->propagatedDescendants, cl);
-		}
-
 		else if (cl->numConstraintsSatisfied < cl->propagatedNumConstraintsSatisfied) {
-			//printf("other one:\n ");
+
 			cl->parent->propagatedNumConstraintsSatisfied += cl->propagatedNumConstraintsSatisfied;
 			cl->parent->propagatedStability += cl->propagatedStability;
-			
-			ListNode* node = g_list_first(cl->propagatedDescendants);
 
-			while(node != NULL){
-				cl->parent->propagatedDescendants = g_list_append(cl->parent->propagatedDescendants, node->data);
-				node = g_list_next(node);
+			for(int32_t i = 0; i < cl->propagatedDescendants->size; i++)
+			{
+				cluster** c = array_list_value_at(cl->propagatedDescendants, i);
+				cluster* tmp = *c;
+				array_list_append(cl->parent->propagatedDescendants, &tmp);
 			}
-			//cl->parent->propagatedDescendants = g_list_concat(cl->parent->propagatedDescendants, cl->propagatedDescendants);
 		}
-
 		else if (cl->numConstraintsSatisfied == cl->propagatedNumConstraintsSatisfied) {
 			//Chose the parent over descendants if there is a tie in stability:
 			if (cl->stability >= cl->propagatedStability) {
 				cl->parent->propagatedNumConstraintsSatisfied += cl->numConstraintsSatisfied;
 				cl->parent->propagatedStability += cl->stability;
-				cl->parent->propagatedDescendants = g_list_append(cl->parent->propagatedDescendants, cl);
+				array_list_append(cl->parent->propagatedDescendants, &cl);
 			}
 
 			else {
 				cl->parent->propagatedNumConstraintsSatisfied += cl->propagatedNumConstraintsSatisfied;
 				cl->parent->propagatedStability += cl->propagatedStability;
-				
-				ListNode* node = g_list_first(cl->propagatedDescendants);
 
-				while(node != NULL){
-					cl->parent->propagatedDescendants = g_list_append(cl->parent->propagatedDescendants, node->data);
-					node = g_list_next(node);
+				for(int32_t i = 0; i < cl->propagatedDescendants->size; i++)
+				{
+					cluster **c = array_list_value_at(cl->propagatedDescendants, i);
+					cluster *tmp = *c;
+					array_list_append(cl->parent->propagatedDescendants, &tmp);
 				}
-				//cl->parent->propagatedDescendants = g_list_concat(cl->parent->propagatedDescendants, cl->propagatedDescendants);
 			}
 		}
 	}
@@ -176,23 +166,10 @@ int cluster_add_points_to_virtual_child_cluster(cluster* cl, gl_oset_t points){
 		gl_oset_nx_add(cl->virtualChildCluster, d);
 	}
 
-	/**ListNode* node = g_list_first(points);
-	guint s = 0; // dummy size we won't be using for anything
-
-	while(node != NULL){
-
-		int *d = (int *)node->data;
-		cl->virtualChildCluster = set_int_insert(cl->virtualChildCluster, *d, &s);
-
-		node = node->next;
-	}*/
-
 	return 1;
 }
 
 boolean cluster_virtual_child_contains_point(cluster* cl, int32_t point){
-	//ListNode* node = g_list_find_custom(cl->virtualChildCluster, &point, (GCompareFunc)gint_compare);
-
 	return gl_oset_search(cl->virtualChildCluster, point);
 }
 

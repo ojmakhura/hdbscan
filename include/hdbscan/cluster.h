@@ -32,6 +32,7 @@ extern "C" {
 #endif
 
 #include "hdbscan/utils.h"
+#include "listlib/list.h"
 #include "gnulib/gl_array_oset.h"
 
 #define CLUSTER_SUCCESS 1
@@ -64,7 +65,8 @@ struct Cluster {
 	int32_t propagatedNumConstraintsSatisfied;
 	gl_oset_t virtualChildCluster;
 	struct Cluster* parent;
-	ClusterList* propagatedDescendants;
+	//ClusterList* propagatedDescendants;
+	ArrayList* propagatedDescendants;
 	boolean hasChildren;
 
 #ifdef __cplusplus
@@ -231,9 +233,9 @@ public:
 	/**
 	 * @brief Get the Propagated Descendants object
 	 * 
-	 * @return ClusterList* 
+	 * @return ArayList* 
 	 */
-	ClusterList* getPropagatedDescendants();
+	ArrayList* getPropagatedDescendants();
 
 	/**
 	 * @brief Get the Virtual Child Cluster object

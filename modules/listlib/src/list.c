@@ -53,7 +53,7 @@ ArrayList* array_list_init(size_t initial_size, size_t step)
 	ArrayList* list = (ArrayList *)malloc(sizeof(ArrayList));
 
 	if(list != NULL){
-		list->data = malloc(initial_size * step);
+		list->data = calloc(initial_size, step); /// Make sure all values are NULL/0
 
 		if(list->data == NULL){
 			free(list);	// Since the data memory was no allocated, we should
@@ -69,6 +69,20 @@ ArrayList* array_list_init(size_t initial_size, size_t step)
 	return list;
 }
 
+ArrayList* ptr_array_list_init(size_t initial_size)
+{
+	return array_list_init(initial_size, sizeof(void *));
+}
+
+/**
+ * @brief Returns the pointer at pos
+ * 
+ * Care should be taken with this since we give back exactly what you gave us.
+ * 
+ * @param list 
+ * @param pos 
+ * @return void* 
+ */
 void* array_list_value_at(ArrayList* list, int32_t pos)
 {
 	if(pos < 0 || pos >= list->size){
@@ -76,9 +90,16 @@ void* array_list_value_at(ArrayList* list, int32_t pos)
 	}
 
 	size_t p = pos * list->step; /// Calculate the location of the proper byte
-	return list->data + p;
+
+	return ((char *)list->data) + p; 
 }
 
+/**
+ * @brief 
+ * 
+ * @param list 
+ * @return int32_t 
+ */
 int32_t array_list_grow(ArrayList* list){
 
 	int32_t newmax = highestPowerof2(list->max_size*2);
@@ -93,6 +114,12 @@ int32_t array_list_grow(ArrayList* list){
 	return 1;
 }
 
+/**
+ * @brief 
+ * 
+ * @param list 
+ * @return ArrayList* 
+ */
 ArrayList* array_list_delete(ArrayList* list){
 	if(list != NULL){ /// Make sure the list is not NULL
 		if(list->data != NULL){
@@ -110,8 +137,11 @@ ArrayList* array_list_delete(ArrayList* list){
 
 /**
  * @brief Helper function for inserting at the location index in the list's
- * array. We use *memcpy* to copy list->step bytes from *data* into *list->data*
- * at location index * list->step
+ * array. 
+ * 
+ * We use *memcpy* to copy list->step bytes from *data* into *list->data*
+ * at location index * list->step. To make sure of datatype consistency,
+ * we first cast list->data to a char * in order to count byte by byte.
  * 
  * @param list The list
  * @param data The data
@@ -125,11 +155,11 @@ int32_t array_list_insertion_helper(ArrayList* list, void* data, int32_t index)
 	size_t p = index * list->step;
 
 	// Memory location of the byte where to start copying.
-	void* np = list->data + p;
+	void* np = ((char *)list->data) + p;
 
 	// Copy the 'step' bytes from data into np
 	memcpy(np, data, list->step);
-
+	
 	return 1;
 }
 
@@ -160,4 +190,9 @@ int32_t array_list_append(ArrayList* list, void* data)
 	list->size++;
 
 	return 1;
+}
+
+int32_t array_list_size(ArrayList* list)
+{
+	return list == NULL ? 0 : list->size;
 }

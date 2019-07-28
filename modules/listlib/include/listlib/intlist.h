@@ -179,6 +179,14 @@ int32_t int_array_list_set_value_at(IntArrayList* list, int32_t data, int32_t in
  */
 int32_t int_array_list_remove_at(IntArrayList* list, int32_t idx);
 
+/**
+ * @brief This is an overload of array_list_size from list.h
+ * 
+ * @param list 
+ * @return int32_t 
+ */
+int32_t int_array_list_size(IntArrayList* list);
+
 #ifdef __cplusplus
 }
 #endif

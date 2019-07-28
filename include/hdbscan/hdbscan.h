@@ -131,9 +131,9 @@ struct hdbscan {
 	distance distanceFunction;				/// The distance function calculator object
 	double* dataSet;						/// The dataset
 	UndirectedGraph* mst;					/// The dendogram graph
-	ConstraintList* constraints;			/// Constraints
+	ArrayList* constraints;					/// Constraints
 	double* coreDistances;					/// Core distances
-	ClusterPtrList* clusters;
+	ArrayList* clusters;
 	outlier_score* outlierScores;
 	int32_t* clusterLabels;
 	LongHierarchyEntryMap* hierarchy;

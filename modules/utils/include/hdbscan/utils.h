@@ -41,13 +41,6 @@ extern "C" {
 #include <glib.h>
 #include <math.h>
 
-typedef GList ListNode;
-typedef GList ClusterList;
-typedef GList ConstraintList;
-
-typedef GPtrArray ClusterPtrList;
-typedef GPtrArray ConstraintPtrList;
-
 typedef GHashTable IntIntListMap;			// Hash table with keys as int and values as a list of integers
 typedef GHashTable LongIntListMap;
 typedef GHashTable LongIntPointerMap;

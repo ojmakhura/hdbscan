@@ -122,12 +122,14 @@ void int_array_list_test()
 void int_ptr_array_list_test()
 {
     ArrayList* list = NULL;
-    list = array_list_init( 4, sizeof(int32_t *));
+    list = array_list_init( 4, sizeof(void *));
     CU_ASSERT_PTR_NOT_NULL(list);
 
     // Testing inserting integers
     int32_t a1 = 55;
-    CU_ASSERT_EQUAL_FATAL(array_list_append(list, &a1), 1);
+    int32_t* _a1 = malloc(sizeof(int32_t));
+    *_a1 = a1;
+    CU_ASSERT_EQUAL_FATAL(array_list_append(list, _a1), 1);
     CU_ASSERT_EQUAL_FATAL(list->size, 1);
     int32_t *a1_ptr = array_list_value_at(list, 0);
     CU_ASSERT_EQUAL_FATAL(a1, *a1_ptr); 
@@ -143,6 +145,7 @@ void int_ptr_array_list_test()
 
     // Testing inserting other lists
     IntArrayList* l2 = int_array_list_init_exact_size(5);
+    printf("\nl2 is %ld\n", l2);
     int_array_list_append(l2, 12);
     int_array_list_append(l2, 1);
     int_array_list_append(l2, 120);
@@ -153,6 +156,7 @@ void int_ptr_array_list_test()
 
     IntArrayList** tmp = array_list_value_at(list, 2);
     IntArrayList* l3 = *tmp;
+
     CU_ASSERT_EQUAL_FATAL(l3->size, 5);
     CU_ASSERT_PTR_EQUAL(l2, l3);
     int32_t* l3d = array_list_value_at(l3, 4);

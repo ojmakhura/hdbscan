@@ -53,19 +53,20 @@ extern "C" {
 #include <stdlib.h>
 #include <assert.h>
 
-/*************************************************
+/*********************************************************
  * \struct ArrayList
  * 
  * \brief A generic array list capable of storing any
  * datatype. 
  * 
- * It sould be noted that at the lowest
- * level, the void* pointer is addressed byte by
- * byte. As such it is necessary to use the step
+ * It sould be noted that at the lowest level, the void* 
+ * pointer is addressed based on the pointer size which 
+ * will not work for datatypes that are not of the same
+ * size. As such it is necessary to use the step
  * to jump over the size of the actual data in the
  * array if one wants to work with the void* pointer
  * directly. 
- *************************************************/ 
+ *********************************************************/ 
 struct ArrayList{
 	void* data;		    /// The pointer to the data
 	int32_t size;		/// Current number of items in the list
@@ -90,6 +91,14 @@ typedef struct ArrayList ArrayList;
  * @return ArrayList* the list or NULL in case of failed allocation.
  */
 ArrayList* array_list_init(size_t initial_size, size_t step);
+
+/**
+ * @brief Initialise an array list for pointers.
+ * 
+ * @param initial_size 
+ * @return ArrayList* 
+ */
+ArrayList* ptr_array_list_init(size_t initial_size);
 
 /**
  * @brief Get the pointer to the element at pos. 
@@ -157,6 +166,13 @@ int32_t array_list_insert_at(ArrayList* list, void* data, int32_t pos);
  */
 int32_t array_list_append(ArrayList* list, void* data);
 
+/**
+ * @brief Get the size of the list.
+ * 
+ * @param list 
+ * @return int32_t 
+ */
+int32_t array_list_size(ArrayList* list);
 
 #ifdef __cplusplus
 }

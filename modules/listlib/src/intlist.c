@@ -182,3 +182,7 @@ void int_array_list_sort(IntArrayList* list){
 	qsort(ldata, list->size, sizeof(int32_t), int_compare);
 }
 
+int32_t int_array_list_size(IntArrayList* list)
+{
+	return array_list_size(list);
+}
