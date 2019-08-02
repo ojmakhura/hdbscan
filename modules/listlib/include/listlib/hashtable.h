@@ -36,9 +36,19 @@ extern "C" {
 
 #include "linkedlist.h"
 #include "list.h"
+#include "set.h"
 #include "primes.h"
 #include "hdbscan/utils.h"
 #include "gnulib/gl_array_oset.h"
+
+typedef struct HTBL_ENTRY
+{
+    void* key;
+    void* data;
+    int32_t (*key_compare)(const void *a, const void *b);
+    struct HTBL_ENTRY *next;
+    struct HTBL_ENTRY *prev;
+} hashtable_entry;
 
 /**
  * \struct HASHTABLE_
@@ -55,23 +65,35 @@ extern "C" {
  */ 
 typedef struct HASHTABLE_
 {
-    int32_t buckets;          //! Number of buckets in the table
-    int32_t size;             //! The size of table
-    enum HTYPES type;         //! The type of the data of the values
-    ArrayList* table;         //! An array list for storing linked list pointers.
-    gl_oset_t keys;           //! A set of all the keys in the table.
-    int32_t collisions;       //! For diagnostic information on the collision
-    int32_t max_collisions;   //! The largest number of keys that collided
+    size_t buckets;            //! Number of buckets in the table
+    size_t size;               //! The size of table
+    enum HTYPES ktype;               //! The type of the data of the keys
+    enum HTYPES dtype;               //! The type of the data of the values
+    linkedlist** table;           //! An array list for storing linked list pointers.
+    set_t* keys;                //! A set of all the keys in the table.
+    int32_t collisions;         //! For diagnostic information on the collision
+    int32_t (*key_compare)(const void *a, const void *b);
+    void (*key_deallocate)(void *key);
+    int32_t (*key_hash)(void* key, size_t buckets);
 } hashtable;
+
+/**
+ * @brief Compare hashtable entries using keys
+ * 
+ * @param a 
+ * @param b 
+ * @return int32_t 
+ */
+//int32_t hashtable_entry_compare(const void* a, const void* b);
 
 /**
  * \brief Initialise a chained hash table.
  * 
- * @param buckets - number of possible locations to hash to
- * @param type    - the type of data
- * @return hashtable* 
+ * \param buckets - number of possible locations to hash to
+ * \param type    - the type of data
+ * \return hashtable* 
  */ 
-hashtable* hashtable_init(int32_t buckets, enum HTYPES type);
+hashtable* hashtable_init(size_t buckets, enum HTYPES ktype, enum HTYPES dtype, int32_t (*compare)(const void *a, const void *b));
 
 /**
  * \brief Insert the value into the table. 
@@ -83,9 +105,9 @@ hashtable* hashtable_init(int32_t buckets, enum HTYPES type);
  * \param htbl 
  * \param key 
  * \param value 
- * \return int32_t 
+ * \return int32_t 0 if failed, 1 if new entry created, -1 if replaced the data
  */
-int32_t hashtable_insert(hashtable* htbl, int32_t key, void* value);
+int32_t hashtable_insert(hashtable* htbl, void* key, void* value);
 
 /**
  * @brief Find the linked list located at the key's hash location.
@@ -94,7 +116,7 @@ int32_t hashtable_insert(hashtable* htbl, int32_t key, void* value);
  * @param key 
  * @return ArrayList* 
  */
-ArrayList* hashtable_lookup(hashtable* htbl, int32_t key);
+int32_t hashtable_lookup(hashtable* htbl, void* key, void* data);
 
 /**
  * @brief Remove all the key and it's associated value from the hashtable
@@ -103,24 +125,45 @@ ArrayList* hashtable_lookup(hashtable* htbl, int32_t key);
  * @param key
  * @return 
  */ 
-int32_t hashtable_remove(hashtable* htbl, int32_t key);
+int32_t hashtable_remove(hashtable* htbl, void* key, void* data);
 
 /**
- * @brief Remove all items in the hash table.
+ * @brief Remove all items in the hash table. If the key and value are
+ * dynamically allocated, key_destroy and value_destroy functions must
+ * be provided to avoid memory leaks.
  * 
  * @param htbl - the hashtable to clear.
+ * @param key_destroy - the function to clean up key memory
+ * @param value_destroy - the function to clean up data memory
  * @return int32_t 
  */
-int32_t hashtable_clear(hashtable* htbl);
+int32_t hashtable_clear(hashtable* htbl, void (*key_destroy)(void *key), void (*value_destroy)(void *value));
 
 /**
  * @brief Delete the hashtable and clean up all the allocated memory.
+ * If the key and value are dynamically allocated, key_destroy and
+ * value_destroy functions must be provided to avoid memory leaks.
  * 
  * @param htbl - the hashtable
+ * @param key_destroy - the function to clean up key memory
+ * @param value_destroy - the function to clean up data memory
  * @return int32_t 
  */ 
-int32_t hashtable_destroy(hashtable* htbl);
+int32_t hashtable_destroy(hashtable* htbl, void (*key_destroy)(void *key), void (*value_destroy)(void *value));
 
+/**
+ * \brief  get the size of the table
+ * 
+ */
+size_t hashtable_size(hashtable* htbl);
+
+/**
+ * @brief Check if the hashtable is empty
+ * 
+ * @param htbl 
+ * @return int32_t 1 if empty and 0 if not
+ */
+int32_t hashtable_empty(hashtable* htbl);
 
 #ifdef __cplusplus
 };

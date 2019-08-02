@@ -287,7 +287,7 @@ void distance_compute(distance* dis, void* dataset, int rows, int cols, int numN
 	dis->numNeighbors = numNeighbors;
 	setDimenstions(dis, rows, cols);
 
-#pragma omp parallel for   /// Use omp to speed up calculations
+//#pragma omp parallel for   /// Use omp to speed up calculations
 	for (uint i = 0; i < dis->rows; i++) {
 		for (uint j = i + 1; j < dis->rows; j++) {
 			double sum, diff = 0.0;

@@ -136,7 +136,7 @@ void long_array_list_delete(LongArrayList* list);
  * @param idx 
  * @return long* 
  */
-long* long_array_list_data(LongArrayList* list, int32_t idx);
+int32_t long_array_list_data(LongArrayList* list, int32_t idx, long* it);
 
 /**
  * @brief 

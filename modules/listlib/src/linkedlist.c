@@ -41,6 +41,7 @@
  */
 
 #include "listlib/linkedlist.h"
+#include <string.h>
 
 void linkedlist_node_unhook(linkedlist* list, node* nd);
 void arraylist_add_by_type(ArrayList* al, enum HTYPES type, void* value);
@@ -48,7 +49,7 @@ void arraylist_add_by_type(ArrayList* al, enum HTYPES type, void* value);
 /**
  * Initialise a linked list.
  */ 
-linkedlist *linkedlist_init(enum HTYPES type)
+linkedlist *linkedlist_init(size_t step)
 {
     linkedlist *list = (linkedlist *)malloc(sizeof(linkedlist));
 
@@ -60,15 +61,32 @@ linkedlist *linkedlist_init(enum HTYPES type)
     list->size = 0;
     list->head = NULL;
     list->tail = NULL;
-    list->type = type;
+    list->step = step;
 
     return list;
 }
 
 /**
- * Create a new node with the key and value
+ * @brief Sets the node data based on the type.
+ * 
+ * @param nd 
+ * @param data 
+ * @param type 
  */
-node* node_creator(int32_t key, void* value)
+void node_set_data(node* nd, void* data, size_t step)
+{    
+    nd->data = malloc(step);
+    memcpy(nd->data, data, step);
+}
+
+/**
+ * @brief Create a new node with the data
+ * 
+ * @param data 
+ * @param type 
+ * @return node* 
+ */
+node* node_creator(void* data, enum HTYPES type)
 {
     node* nd = (node *)malloc(sizeof(node));
 
@@ -77,42 +95,28 @@ node* node_creator(int32_t key, void* value)
         return NULL;
     }
     
-    nd->key = key;
     nd->prev = NULL;
     nd->next = NULL;
-    nd->value = value;
+
+    node_set_data(nd, data, type);
     
     return nd;
 }
 
 /**
- * Destroy a node and deallocate all memory
- */ 
+ * @brief Destroy a node and deallocate all memory
+ * 
+ * @param nd 
+ * @param type 
+ * @return int32_t 
+ */
 int32_t node_destroy(node* nd, enum HTYPES type)
 {
     if(nd == NULL)
     {
         return 0;
     }
-
-    if(type == H_INT)
-    {
-        IntArrayList* lst = (IntArrayList *)nd->value;
-        int_array_list_delete(lst);
-    } else if(type == H_DOUBLE)
-    {
-        DoubleArrayList* lst = (DoubleArrayList *)nd->value;
-        double_array_list_delete(lst);
-    } else if(type == H_LONG)
-    {
-        LongArrayList* lst = (LongArrayList *)nd->value;
-        double_array_list_delete(lst);
-    } else if(type == H_VOID)
-    {
-        ArrayList* lst = (ArrayList *)nd->value;
-        array_list_delete(lst);
-    } 
-
+    free(nd->data);
     free(nd);
     nd = NULL;
 
@@ -120,19 +124,17 @@ int32_t node_destroy(node* nd, enum HTYPES type)
 }
 
 /**
- * Create a list node and inser it at the front
+ * Create a list node and insert it at the front
  * 
  */ 
-node* linkedlist_node_front_add(linkedlist* list, int32_t key, void* value)
+node* linkedlist_node_front_add(linkedlist* list, void* data)
 {
-    node* nd = node_creator(key, value);
+    node* nd = node_creator(data, list->step);
 
     if(nd == NULL)
     {
         return NULL;
     }
-
-    nd->prev = NULL; // inserting at the head, nd->prev should be NULL
 
     // If the list was not empty, assign the previous head's prev to the new node
     if(list->size > 0)
@@ -142,7 +144,9 @@ node* linkedlist_node_front_add(linkedlist* list, int32_t key, void* value)
     } else {
         list->tail = nd; // When list is empty, the tail should point to the node too.
     }
+    //printf("%ld : %ld\n", list->head, nd);
     list->head = nd;
+    //printf("%ld : %ld\n", list->head, nd);
     list->size += 1;
 
     return nd;
@@ -150,18 +154,15 @@ node* linkedlist_node_front_add(linkedlist* list, int32_t key, void* value)
 
 /**
  * Create a list node and insert it at the back
- * 
  */ 
-node* linkedlist_node_tail_add(linkedlist* list, int32_t key, void* value)
+node* linkedlist_node_tail_add(linkedlist* list, void* data)
 {
-    node* nd = node_creator(key, value);
+    node* nd = node_creator(data, list->step);
 
     if(nd == NULL)
     {
         return NULL;
     }
-
-    nd->next = NULL; // inserting at the end, nd->next should be NULL
 
     // If the list was not empty, assign the previous tails's 
     // next to the new node
@@ -172,6 +173,7 @@ node* linkedlist_node_tail_add(linkedlist* list, int32_t key, void* value)
     } else {
         list->head = nd; // When list is empty, the head should point to the node too.
     }
+
     list->tail = nd; // nd is the new tail
     list->size += 1;
 
@@ -179,108 +181,35 @@ node* linkedlist_node_tail_add(linkedlist* list, int32_t key, void* value)
 }
 
 /**
- * @brief Add an item to the array list based on the type. Since we are using 
- * printive data type pointers, and their respective array lists take 
- * actual values, we do not to maintain the values allowing for temporary
- * values. 
- * 
- * @param al 
- * @param type 
- * @param value 
+ * Add at the front of the list.
  */
-void arraylist_add_by_type(ArrayList* al, enum HTYPES type, void* value)
+int32_t linkedlist_front_add(linkedlist* list, void* data)
 {
-    if(type == H_INT){
-        int32_t* tmp = (int32_t *)value;
-        int_array_list_append(al, *tmp);
-    } else if(type == H_DOUBLE)
-    {
-        double* tmp = (double *)value;
-        double_array_list_append(al, *tmp);
-    } else if(type == H_LONG)
-    {
-        long* tmp = (long *)value;
-        long_array_list_append(al, *tmp);
-    } else if(type == H_VOID)
-    {
-        array_list_append(al, value);
-    } 
-}
 
-/**
- * Add at the front of the list. If the key does not exist, create a new
- * node with the list and add it to the list.
- */
-ArrayList* linkedlist_front_add(linkedlist* list, int32_t key, void* value)
-{
-    node *nd = linkedlist_lookup_helper(list, key);
+    node *nd = linkedlist_node_front_add(list, data);
 
-    // If the key does not already exist
-    // we create new lists and add them to 
-    // the linked list. 
-    if(nd == NULL)
+    if(!nd)
     {
-        if(list->type == H_INT){
-            IntArrayList* al = int_array_list_init();
-            nd = linkedlist_node_front_add(list, key, al);
-            
-        } else if(list->type == H_DOUBLE){
-            DoubleArrayList* al = double_array_list_init();
-            nd = linkedlist_node_front_add(list, key, al);
-        } else if(list->type == H_LONG){
-            LongArrayList* al = long_array_list_init();
-            nd = linkedlist_node_front_add(list, key, al);
-        } else if(list->type == H_VOID){
-            ArrayList* al = array_list_init(64, sizeof(void *));
-            nd = linkedlist_node_front_add(list, key, al);
-        }
+        return 0;
     }
 
-    if(nd != NULL)
-    {        
-        arraylist_add_by_type(nd->value, list->type, value);
-        return nd->value;
-    }
-
-    return NULL;
+    return 1;
 }
 
 /**
  * Add at the back of the list. If the key does not exist, crate a new
  * node with the list and add it to the list.
  */
-ArrayList* linkedlist_tail_add(linkedlist* list, int32_t key, void* value)
+int32_t linkedlist_tail_add(linkedlist* list, void* data)
 {
-    node *nd = linkedlist_lookup_helper(list, key);
+    node *nd = linkedlist_node_tail_add(list, data);
 
-    // If the key already exists, 
-    if(nd == NULL)
+    if(!nd)
     {
-        if(list->type == H_INT){
-            IntArrayList* al = int_array_list_init();
-            nd = linkedlist_node_tail_add(list, key, al);
-        } else if(list->type == H_DOUBLE)
-        {
-            DoubleArrayList* al = double_array_list_init();
-            nd = linkedlist_node_tail_add(list, key, al);
-        } else if(list->type == H_LONG)
-        {
-            LongArrayList* al = long_array_list_init();
-            nd = linkedlist_node_tail_add(list, key, al);
-        } else if(list->type == H_LONG)
-        {
-            ArrayList* al = array_list_init(64, sizeof(void *));
-            nd = linkedlist_node_tail_add(list, key, al);
-        }
+        return 0;
     }
 
-    if(nd != NULL)
-    {
-        arraylist_add_by_type(nd->value, list->type, value);
-        return nd->value;  
-    }
-
-    return NULL;
+    return 1;
 }
 
 /**
@@ -291,15 +220,15 @@ ArrayList* linkedlist_tail_add(linkedlist* list, int32_t key, void* value)
  * @param key - the id of the node
  * @param remove - option to remove the node after finding it. 0 means no removal and 1 means removal
  */
-node* linkedlist_lookup_helper(linkedlist *list, int32_t key)
+node* linkedlist_lookup_helper(linkedlist *list, void* data, int32_t (*d_compare)(const void *a, const void* b))
 {
     node* tmp = list->head;
 
     /// Iterate through the list to find the key
     while(tmp != NULL)
     {
-        if(key == tmp->key)
-        {
+        int32_t r = d_compare(tmp->data, data);
+        if(r == 0) {
             break;
         }
 
@@ -345,40 +274,44 @@ void linkedlist_node_unhook(linkedlist* list, node* nd)
 /**
  * 
  */ 
-void* linkedlist_lookup(linkedlist *list, int32_t key, int32_t remove)
+void* linkedlist_lookup(linkedlist *list, void* data, int32_t remove, int32_t (*d_compare)(const void *a, const void* b))
 {
-    node* tmp = linkedlist_lookup_helper(list, key);
+    printf("linkedlist_lookup: data is %ld from %ld\n", *(void **)data, data);
+    node* tmp = linkedlist_lookup_helper(list, data, d_compare);
 
     // Unhook the node from the list
     if(remove == 1)
     {
         linkedlist_node_unhook(list, tmp);
     }
+    printf("linkedlist_lookup: tmp = %ld\n", tmp);
 
-    return tmp->value;
+    return tmp ? tmp->data : NULL;
 }
 
 /**
- * Remove nodes from the list given the key and the list
+ * \brief Remove the first occurance of data from list
+ * 
  */ 
-int32_t linkedlist_remove(linkedlist* list, int32_t key)
+int32_t linkedlist_remove(linkedlist* list, void* data, int32_t (*d_compare)(const void *a, const void* b))
 {
     // Find the node with the key
-    node* tmp = linkedlist_lookup_helper(list, key);
+    node* tmp = linkedlist_lookup_helper(list, data, d_compare);
 
     if(tmp == NULL)
     {
         return 0;
     }
 
-    //  use a loop because more than one node could share a key
     if(tmp != NULL)
     {
         // Unhook the node from the list
         linkedlist_node_unhook(list, tmp);
 
         // destroy the node
-        node_destroy(tmp, list->type);
+        node_destroy(tmp, list->step);
+    } else {
+        return 0;
     }
 
     return 1;
@@ -415,7 +348,7 @@ void linkedlist_clear(linkedlist* list)
         linkedlist_node_unhook(list, tmp);
         
         // destroy the node
-        node_destroy(tmp, list->type);
+        node_destroy(tmp, list->step);
     }
 
     // set the head and tail to NULL
@@ -423,3 +356,90 @@ void linkedlist_clear(linkedlist* list)
     list->tail = NULL;
 }
 
+/**
+ * @brief Find the data at the tail of the list
+ * 
+ * @param list 
+ * @param remove 
+ * @return void* 
+ */
+void* linkedlist_tail(linkedlist *list, int32_t remove)
+{
+    if(!linkedlist_empty(list))
+    {
+        return NULL;
+    }
+
+    if(list->tail == NULL)
+    {
+        return NULL;
+    }
+
+    return list->tail->data;
+}
+
+/**
+ * @brief Find the data at the head of the list
+ * 
+ * @param list 
+ * @param remove 
+ * @return void* 
+ */
+void* linkedlist_head(linkedlist *list, int32_t remove){
+
+    if(!linkedlist_empty(list) || list->head == NULL)
+    {
+        return NULL;
+    }
+
+    return list->head->data;
+}
+
+/**
+ * @brief Is the list empty
+ * 
+ * @param list 
+ * @return int32_t 1 if not empty and 0 if empty
+ */
+int32_t linkedlist_empty(linkedlist* list)
+{
+    if(list == NULL || list->size <= 0)
+    {
+        return 0;
+    }
+
+    return 1;
+}
+
+
+/**
+ * @brief 
+ * 
+ * @param list 
+ * @param pos 
+ * @param data 
+ * @return int32_t 
+ */
+int32_t linkedlist_value_at(linkedlist *list, int32_t pos, void* data)
+{
+    if(pos >= list->size)
+    {
+        return -1;
+    }
+
+    int32_t i = 0;
+    node* tmp = list->head;
+    while(tmp != NULL)
+    {
+        if(i == pos)
+        {
+            memcpy(data, tmp->data, list->step);
+            return i;    
+        }
+
+        tmp = tmp->next;
+        i++;
+    }
+
+    return -1;
+}

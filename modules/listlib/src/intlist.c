@@ -57,13 +57,13 @@ IntArrayList* int_array_list_init(){
 
 IntArrayList* int_array_list_init_size(int32_t size){
 
-	IntArrayList* list = (IntArrayList*)array_list_init( highestPowerof2(size), sizeof(int32_t));
+	IntArrayList* list = (IntArrayList*)array_list_init( highestPowerof2(size), sizeof(int32_t), int_compare);
 	return list;
 }
 
 IntArrayList* int_array_list_init_exact_size(int32_t size)
 {
-	return (IntArrayList*)array_list_init(size, sizeof(int32_t));
+	return (IntArrayList*)array_list_init(size, sizeof(int32_t), int_compare);
 }
 
 IntArrayList* int_array_list_init_full(int32_t size, int32_t value){
@@ -125,11 +125,11 @@ int32_t int_array_list_search_sorted(IntArrayList* list, int32_t data){
 	return idx;
 }
 
-int32_t int_array_list_remove_at(IntArrayList* list, int32_t idx){
+int32_t int_array_list_remove_at(IntArrayList* list, size_t idx, int32_t* data){
 	if(idx < 0 || idx > list->size){
 		return -1;
 	}
-
+	int_array_list_data(list, idx, data);
 	int32_t* ldata = (int32_t *)list->data;
 	for(int32_t i = idx + 1; i < list->size; i++){
 		ldata[i-1] = ldata[i];
@@ -144,7 +144,8 @@ int32_t int_array_list_remove_at(IntArrayList* list, int32_t idx){
 int32_t int_array_list_remove(IntArrayList* list, int32_t data){
 
 	int32_t idx = int_array_list_search(list, data);
-	return int_array_list_remove_at(list, idx);
+	int dt;
+	return int_array_list_remove_at(list, idx, &dt);
 }
 
 void int_array_list_extend(IntArrayList* list){
@@ -159,12 +160,11 @@ void int_array_list_delete(IntArrayList* list){
 	array_list_delete(list);
 }
 
-int32_t* int_array_list_data(IntArrayList* list, int32_t idx){
-	int32_t* it = (int32_t *) array_list_value_at(list, idx);
-	return it;
+int32_t int_array_list_data(IntArrayList* list, size_t idx, int32_t* it){
+	return array_list_value_at(list, idx, it);;
 }
 
-int32_t int_array_list_set_value_at(IntArrayList* list, int32_t data, int32_t index)
+int32_t int_array_list_set_value_at(IntArrayList* list, int32_t data, size_t index)
 {
 	if(index >= list->size)
 	{
@@ -178,11 +178,11 @@ int32_t int_array_list_set_value_at(IntArrayList* list, int32_t data, int32_t in
 }
 
 void int_array_list_sort(IntArrayList* list){
-	int32_t* ldata = (int32_t *)list->data;
-	qsort(ldata, list->size, sizeof(int32_t), int_compare);
+	//int32_t* ldata = (int32_t *)list->data;
+	qsort(list->data, list->size, list->step, list->compare);
 }
 
-int32_t int_array_list_size(IntArrayList* list)
+size_t int_array_list_size(IntArrayList* list)
 {
 	return array_list_size(list);
 }

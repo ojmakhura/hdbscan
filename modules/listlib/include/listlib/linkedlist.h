@@ -47,14 +47,12 @@ extern "C" {
  * @brief The node for each linked list. Since this linked list is
  * designed to keep two pieces of information, the node should hold
  * both pieces.
- * 
  */
 typedef struct NODE
 {
     struct NODE *next;
     struct NODE *prev;
-    void *value;
-    int32_t key;
+    void *data;
 } node; /**\typedef node */
 
 /*****************************************************************************************
@@ -70,7 +68,7 @@ typedef struct NODE
  * ***************************************************************************************/
 typedef struct LINKEDLIST
 {
-    enum HTYPES type; 
+    size_t step;
     int32_t size;
     node* head;
     node* tail;
@@ -82,7 +80,7 @@ typedef struct LINKEDLIST
  * @param type 
  * @return linkedlist* 
  */
-linkedlist *linkedlist_init(enum HTYPES type);
+linkedlist *linkedlist_init(size_t step);
 
 /**
  * @brief Add at the front of the list. 
@@ -95,7 +93,7 @@ linkedlist *linkedlist_init(enum HTYPES type);
  * @param value 
  * @return node* 
  */
-node* linkedlist_node_front_add(linkedlist* list, int32_t key, void* value);
+node* linkedlist_node_front_add(linkedlist* list, void* value);
 
 /**
  * @brief Add to the front of the list.
@@ -105,9 +103,9 @@ node* linkedlist_node_front_add(linkedlist* list, int32_t key, void* value);
  * @param list 
  * @param key 
  * @param value 
- * @return ArrayList* 
+ * @return void* 
  */
-ArrayList* linkedlist_front_add(linkedlist* list, int32_t key, void* value);
+int32_t linkedlist_front_add(linkedlist* list, void* value);
 
 /**
  * @brief Add at the back of the list. 
@@ -120,7 +118,7 @@ ArrayList* linkedlist_front_add(linkedlist* list, int32_t key, void* value);
  * @param value 
  * @return node* 
  */
-node* linkedlist_node_tail_add(linkedlist* list, int32_t key, void* value);
+node* linkedlist_node_tail_add(linkedlist* list, void* value);
 
 /**
  * @brief Add to the end of the list
@@ -132,7 +130,7 @@ node* linkedlist_node_tail_add(linkedlist* list, int32_t key, void* value);
  * @param value 
  * @return ArrayList* 
  */
-ArrayList* linkedlist_tail_add(linkedlist* list, int32_t key, void* value);
+int32_t linkedlist_tail_add(linkedlist* list, void* value);
 
 /**
  * @brief Find the node that contains the key. 
@@ -143,7 +141,7 @@ ArrayList* linkedlist_tail_add(linkedlist* list, int32_t key, void* value);
  * @param remove - option to remove the node after finding it. 0 means no removal and 1 means removal
  * @return node* 
  */
-node* linkedlist_lookup_helper(linkedlist *list, int32_t key);
+node* linkedlist_lookup_helper(linkedlist *list, void* data, int32_t (*d_compare)(const void *a, const void* b));
 
 /**
  * @brief Find the key in the data
@@ -151,9 +149,37 @@ node* linkedlist_lookup_helper(linkedlist *list, int32_t key);
  * @param list 
  * @param key 
  * @param remove 
+ * @return void* return the data if found and NULL if not 
+ */
+void* linkedlist_lookup(linkedlist *list, void* data, int32_t remove, int32_t (*d_compare)(const void *a, const void* b)); 
+
+/**
+ * @brief Find the data at the tail of the list
+ * 
+ * @param list 
+ * @param remove 
  * @return void* 
  */
-void* linkedlist_lookup(linkedlist *list, int32_t key, int32_t remove); 
+void* linkedlist_tail(linkedlist *list, int32_t remove); 
+
+/**
+ * @brief Find the data at the head of the list
+ * 
+ * @param list 
+ * @param remove 
+ * @return void* 
+ */
+void* linkedlist_head(linkedlist *list, int32_t remove); 
+
+/**
+ * @brief 
+ * 
+ * @param list 
+ * @param pos 
+ * @param data 
+ * @return int32_t 
+ */
+int32_t linkedlist_value_at(linkedlist *list, int32_t pos, void* data); 
 
 /**
  *  @brief Remove the node from the list given the key and destroy it.
@@ -162,7 +188,9 @@ void* linkedlist_lookup(linkedlist *list, int32_t key, int32_t remove);
  * @param key 
  * @return int32_t 
  */
-int32_t linkedlist_remove(linkedlist* list, int32_t key);
+int32_t linkedlist_remove(linkedlist* list, void* data, int32_t (*d_compare)(const void *a, const void* b));
+
+//int32_t linkedlist_remove(linkedlist* list, int32_t key);
 
 /**
  *  @brief Delete the linked list
@@ -177,6 +205,14 @@ void linkedlist_delete(linkedlist* list);
  * @param list - the linkedlist to clear
  */ 
 void linkedlist_clear(linkedlist* list);
+
+/**
+ * @brief Is the list empty
+ * 
+ * @param list 
+ * @return int32_t 1 if found and 0 if not found
+ */
+int32_t linkedlist_empty(linkedlist* list);
 
 #ifdef __cplusplus
 };

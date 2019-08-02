@@ -57,14 +57,14 @@ LongArrayList* long_array_list_init(){
 
 LongArrayList* long_array_list_init_size(int32_t size){
 
-	LongArrayList* list = (LongArrayList*)array_list_init( highestPowerof2(size*2), sizeof(long));
+	LongArrayList* list = (LongArrayList*)array_list_init( highestPowerof2(size*2), sizeof(long), long_compare);
 
 	return list;
 }
 
 LongArrayList* _array_list_init_exact_size(int32_t size)
 {
-	return (LongArrayList*)array_list_init(size, sizeof(long));
+	return (LongArrayList*)array_list_init(size, sizeof(long), long_compare);
 }
 
 LongArrayList* long_array_list_init_full(int32_t size, long value){
@@ -156,9 +156,8 @@ void long_array_list_delete(LongArrayList* list){
 	array_list_delete(list);
 }
 
-long* long_array_list_data(LongArrayList* list, int32_t idx){
-	long* it = (long *) array_list_value_at(list, idx);
-	return it;
+int32_t long_array_list_data(LongArrayList* list, int32_t idx, long* it){
+	return array_list_value_at(list, idx, it);
 }
 
 

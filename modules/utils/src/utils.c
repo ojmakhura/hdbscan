@@ -1,5 +1,5 @@
 /**
- * utils.h
+ * utils.c
  *
  *  Created on: 16 Sep 2017
  *      Author: junior
@@ -28,6 +28,7 @@
  */
 
 #include "hdbscan/utils.h"
+#include <stdlib.h>
 
 int32_t highestPowerof2(int32_t n)
 {
@@ -35,7 +36,7 @@ int32_t highestPowerof2(int32_t n)
    	return (int32_t)pow(2, p+1);
 }
 
-int32_t int_compare(const void * ptr_a, const void * ptr_b) {
+int32_t int_compare(const void *ptr_a, const void *ptr_b) {
 
 	int32_t a, b;
 	a = *(int32_t *) ptr_a;
@@ -51,7 +52,30 @@ int32_t int_compare(const void * ptr_a, const void * ptr_b) {
 	return (-1);
 }
 
-int32_t double_compare(const void * ptr_a, const void * ptr_b){
+int32_t int_ptr_compare(const void *ptr_a, const void *ptr_b)  {
+
+	int32_t *a, *b;
+	a = *(int32_t **) ptr_a;
+	b = *(int32_t **) ptr_b;
+
+	if (*a > *b) {
+		return (1);
+	}
+	if (*a == *b) {
+		return (0);
+	}
+	/* default: a < b */
+	return (-1);
+}
+
+/**
+ * @brief 
+ * 
+ * @param ptr_a 
+ * @param ptr_b 
+ * @return int32_t 
+ */
+int32_t double_compare(const void *ptr_a, const void *ptr_b){
 
 	double a, b;
 	a = *(double *) ptr_a;
@@ -68,7 +92,31 @@ int32_t double_compare(const void * ptr_a, const void * ptr_b){
 
 }
 
-int32_t short_compare(const void * ptr_a, const void * ptr_b){
+int32_t double_ptr_compare(const void *ptr_a, const void *ptr_b){
+
+	double *a, *b;
+	a = *(double **) ptr_a;
+	b = *(double **) ptr_b;
+
+	if (*a > *b) {
+		return (1);
+	}
+	if (*a == *b) {
+		return (0);
+	}
+    
+	return (-1);
+
+}
+
+/**
+ * @brief 
+ * 
+ * @param ptr_a 
+ * @param ptr_b 
+ * @return int32_t 
+ */
+int32_t short_compare(const void *ptr_a, const void *ptr_b){
 
 	short a, b;
 	a = *(short *) ptr_a;
@@ -82,9 +130,32 @@ int32_t short_compare(const void * ptr_a, const void * ptr_b){
 	}
     
 	return (-1);
+}
+
+int32_t short_ptr_compare(const void *ptr_a, const void *ptr_b){
+
+	short *a, *b;
+	a = *(short **) ptr_a;
+	b = *(short **) ptr_b;
+
+	if (*a > *b) {
+		return (1);
+	}
+	if (*a == *b) {
+		return (0);
+	}
+    
+	return (-1);
 
 }
 
+/**
+ * @brief 
+ * 
+ * @param ptr_a 
+ * @param ptr_b 
+ * @return int32_t 
+ */
 int32_t long_compare(const void * ptr_a, const void * ptr_b){
 	long a, b;
 	a = *(long *) ptr_a;
@@ -100,7 +171,29 @@ int32_t long_compare(const void * ptr_a, const void * ptr_b){
 	return (-1);
 }
 
-int32_t float_compare(const void * ptr_a, const void * ptr_b){
+int32_t long_ptr_compare(const void * ptr_a, const void * ptr_b){
+	long *a, *b;
+	a = *(long **) ptr_a;
+	b = *(long **) ptr_b;
+
+	if (*a > *b) {
+		return (1);
+	}
+	if (*a == *b) {
+		return (0);
+	}
+    
+	return (-1);
+}
+
+/**
+ * @brief 
+ * 
+ * @param ptr_a 
+ * @param ptr_b 
+ * @return int32_t 
+ */
+int32_t float_compare(const void *ptr_a, const void *ptr_b){
 	float a, b;
 	a = *(float *) ptr_a;
 	b = *(float *) ptr_b;
@@ -113,4 +206,152 @@ int32_t float_compare(const void * ptr_a, const void * ptr_b){
 	}
     
 	return (-1);
+}
+
+int32_t float_ptr_compare(const void *ptr_a, const void *ptr_b){
+	float *a, *b;
+	a = *(float **) ptr_a;
+	b = *(float **) ptr_b;
+
+	if (*a > *b) {
+		return (1);
+	}
+	if (*a == *b) {
+		return (0);
+	}
+    
+	return (-1);
+}
+
+/**
+ * @brief 
+ * 
+ * @param ptr_a 
+ * @param ptr_b 
+ * @return int32_t 
+ */
+int32_t char_compare(const void *ptr_a, const void *ptr_b){
+	char a, b;
+	a = *(char *) ptr_a;
+	b = *(char *) ptr_b;
+
+	if (a > b) {
+		return (1);
+	}
+	if (a == b) {
+		return (0);
+	}
+    
+	return (-1);
+}
+
+int32_t char_ptr_compare(const void *ptr_a, const void *ptr_b){
+	char *a, *b;
+	a = *(char **) ptr_a;
+	b = *(char **) ptr_b;
+
+	if (*a > *b) {
+		return (1);
+	}
+	if (*a == *b) {
+		return (0);
+	}
+    
+	return (-1);
+}
+
+/**
+ * @brief For pointers we just compare memory locations
+ * 
+ * @param ptr_a 
+ * @param ptr_b 
+ * @return int32_t 
+ */
+int32_t ptr_compare(const void *ptr_a, const void *ptr_b){
+	void *a = *(void **) ptr_a;
+	void *b = *(void **) ptr_b;
+
+	if (a > b) {
+		return (1);
+	}
+	if (a == b) {
+		return (0);
+	}
+    
+	return (-1);
+}
+
+
+size_t get_htype_size(enum HTYPES type)
+{
+	if(type == H_DOUBLE) {
+        return sizeof(double);
+    } else if(type == H_FLOAT) {
+		return sizeof(float);
+    } else if(type == H_LONG) {
+		return sizeof(long);
+    } else if(type == H_SHORT) {
+		return sizeof(short);
+    }else if(type == H_INT) {
+		return sizeof(int32_t);
+    } else if(type == H_CHAR) {
+		return sizeof(char);
+    } 
+	
+	return sizeof(void *); /// Other wise it is a pointer
+}
+
+int32_t int_hash(void* key, size_t buckets)
+{
+    return (*(int32_t *)key) % buckets;
+}
+
+int32_t long_hash(void* key, size_t buckets)
+{
+    return (*(long *)key) % buckets;
+}
+
+int32_t short_hash(void* key, size_t buckets)
+{
+    return (*(short *)key) % buckets;
+}
+
+int32_t char_hash(void* key, size_t buckets)
+{
+    char *db = (char *)key;
+    return (int32_t)(*db) % buckets;
+}
+
+int32_t double_hash(void* key, size_t buckets)
+{
+    double *db = (double *)key;
+    return (int32_t)(*db) % buckets;
+}
+
+int32_t float_hash(void* key, size_t buckets)
+{
+    float *db = (float *)key;
+    return (int32_t)(*db) % buckets;
+}
+
+int32_t str_hash(void *key, size_t buckets)
+{
+    const char *cptr = key;
+    int val = 0;
+
+    while(*cptr != '\0')
+    {
+        int tmp;
+        val = (val << 4) + (*cptr);
+        tmp = (val & 0xf0000000);
+        if(tmp)
+        {
+            val = val ^ (tmp >> 24);
+            val = val ^ tmp;
+        }
+
+         cptr++;
+    }
+
+    return val % buckets;
 }

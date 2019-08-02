@@ -12,4 +12,7 @@ target_link_libraries(listlib_linkedlist_tests ${LISTLIB_LIBRARY}_static cunit)
 add_executable(listlib_hashtable_tests hashtabletests.c)
 target_link_libraries(listlib_hashtable_tests ${LISTLIB_LIBRARY}_static cunit)
 
+add_executable(listlib_set_tests settests.c)
+target_link_libraries(listlib_set_tests ${LISTLIB_LIBRARY}_static cunit)
+
 include_directories(${GNULIB_INCLUDE_DIR} ${LISTLIB_INCLUDE_DIR} ${GLIB2_INCLUDE_DIRS})

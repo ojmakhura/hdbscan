@@ -142,7 +142,7 @@ void int_array_list_delete(IntArrayList* list);
  * @param idx 
  * @return int32_t* 
  */
-int32_t* int_array_list_data(IntArrayList* list, int32_t idx);
+int32_t int_array_list_data(IntArrayList* list, size_t idx, int32_t* it);
 
 /**
  * @brief Sort the list
@@ -168,7 +168,7 @@ void int_array_list_extend(IntArrayList* list);
  * @param index 
  * @return int32_t 
  */
-int32_t int_array_list_set_value_at(IntArrayList* list, int32_t data, int32_t index);
+int32_t int_array_list_set_value_at(IntArrayList* list, int32_t data, size_t index);
 
 /**
  * @brief remove the data at idx
@@ -177,7 +177,7 @@ int32_t int_array_list_set_value_at(IntArrayList* list, int32_t data, int32_t in
  * @param idx 
  * @return int32_t 
  */
-int32_t int_array_list_remove_at(IntArrayList* list, int32_t idx);
+int32_t int_array_list_remove_at(IntArrayList* list, size_t idx, int32_t* data);
 
 /**
  * @brief This is an overload of array_list_size from list.h
@@ -185,7 +185,7 @@ int32_t int_array_list_remove_at(IntArrayList* list, int32_t idx);
  * @param list 
  * @return int32_t 
  */
-int32_t int_array_list_size(IntArrayList* list);
+size_t int_array_list_size(IntArrayList* list);
 
 #ifdef __cplusplus
 }

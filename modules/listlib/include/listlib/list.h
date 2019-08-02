@@ -69,9 +69,10 @@ extern "C" {
  *********************************************************/ 
 struct ArrayList{
 	void* data;		    /// The pointer to the data
-	int32_t size;		/// Current number of items in the list
-	int32_t max_size;	/// Maximum number of items that can be stored
+	size_t size;		/// Current number of items in the list
+	size_t max_size;	/// Maximum number of items that can be stored
 	int32_t step;		/// The number of bytes each element takes
+	int32_t (*compare)(const void *a, const void *b);
 };
 
 /**
@@ -90,7 +91,7 @@ typedef struct ArrayList ArrayList;
  * @param step The memory size of each element in the list
  * @return ArrayList* the list or NULL in case of failed allocation.
  */
-ArrayList* array_list_init(size_t initial_size, size_t step);
+ArrayList* array_list_init(size_t initial_size, size_t step, int32_t (*compare)(const void *a, const void *b));
 
 /**
  * @brief Initialise an array list for pointers.
@@ -98,7 +99,7 @@ ArrayList* array_list_init(size_t initial_size, size_t step);
  * @param initial_size 
  * @return ArrayList* 
  */
-ArrayList* ptr_array_list_init(size_t initial_size);
+ArrayList* ptr_array_list_init(size_t initial_size, int32_t (*compare)(const void *a, const void *b));
 
 /**
  * @brief Get the pointer to the element at pos. 
@@ -108,9 +109,10 @@ ArrayList* ptr_array_list_init(size_t initial_size);
  * 
  * @param list The list
  * @param pos Position to to get the value from
- * @return void* 
+ * @param data the value into which to return the data
+ * @return 0 if not found and 1 if found 
  */
-void* array_list_value_at(ArrayList* list, int32_t pos);
+int32_t array_list_value_at(ArrayList* list, size_t pos, void* data);
 
 /**
  * @brief Grows the list data array by twice the current maximum size. We
@@ -134,6 +136,8 @@ int32_t array_list_grow(ArrayList* list);
  */
 ArrayList* array_list_delete(ArrayList* list);
 
+ArrayList* array_list_delete2(ArrayList* list, void (*key_deallocate)(void *key));
+
 /**
  * @brief Insert the data at the specified location. 
  * 
@@ -145,7 +149,7 @@ ArrayList* array_list_delete(ArrayList* list);
  * @return
  * 
  */
-int32_t array_list_insert_at(ArrayList* list, void* data, int32_t pos);
+int32_t array_list_insert_at(ArrayList* list, void* data, size_t pos);
 
 /**
  * @brief Add the data to the end of the list. 
@@ -172,7 +176,58 @@ int32_t array_list_append(ArrayList* list, void* data);
  * @param list 
  * @return int32_t 
  */
-int32_t array_list_size(ArrayList* list);
+size_t array_list_size(ArrayList* list);
+
+/**
+ * @brief Find the data in the list
+ * 
+ * @param list 
+ * @param data 
+ * @return int32_t returns index of the data otherwise -1 
+ */
+int32_t array_list_find(ArrayList* list, void* data);
+
+/**
+ * @brief Reset the list to 0
+ * 
+ * @param list 
+ * @param resize 
+ */
+void array_list_clear(ArrayList* list, int32_t resize);
+
+/**
+ * @brief Remove the data at pos
+ * 
+ * @param list 
+ * @param pos 
+ * @param data 
+ * @return int32_t 
+ */
+int32_t array_list_remove_at(ArrayList* list, size_t pos, void* data);
+
+/**
+ * @brief Use quicksort on the list.
+ * 
+ * @param list 
+ */
+void array_list_sort(ArrayList* list);
+
+/**
+ * @brief 
+ * 
+ * @param list 
+ * @param data 
+ * @return int32_t 
+ */
+int32_t array_list_pop(ArrayList* list, void* data);
+
+/**
+ * @brief Check it the list is empty
+ * 
+ * @param list 
+ * @return int32_t returns 0 is list is null, the data is null or size is 0 or less
+ */
+int32_t array_list_empty(ArrayList* list);
 
 #ifdef __cplusplus
 }

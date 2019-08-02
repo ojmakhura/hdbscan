@@ -33,6 +33,7 @@ extern "C" {
 
 #include "hdbscan/utils.h"
 #include "listlib/list.h"
+#include "listlib/set.h"
 #include "gnulib/gl_array_oset.h"
 
 #define CLUSTER_SUCCESS 1
@@ -63,9 +64,8 @@ struct Cluster {
 	double propagatedLowestChildDeathLevel;
 	int32_t numConstraintsSatisfied;
 	int32_t propagatedNumConstraintsSatisfied;
-	gl_oset_t virtualChildCluster;
+	set_t* virtualChildCluster;
 	struct Cluster* parent;
-	//ClusterList* propagatedDescendants;
 	ArrayList* propagatedDescendants;
 	boolean hasChildren;
 
@@ -114,7 +114,7 @@ public:
 	 * 
 	 * @param points 
 	 */
-	void addPointsToVirtualChildCluster(gl_oset_t points);
+	void addPointsToVirtualChildCluster(set_t* points);
 
 	/**
 	 * @brief 
@@ -242,7 +242,7 @@ public:
 	 * 
 	 * @return gl_oset_t 
 	 */
-	gl_oset_t getVirtualChildCluster();
+	set_t* getVirtualChildCluster();
 
 	/**
 	 * @brief 
@@ -324,7 +324,7 @@ void cluster_propagate(cluster* cl);
  * @param points 
  * @return int32_t 
  */
-int32_t cluster_add_points_to_virtual_child_cluster(cluster* cl, gl_oset_t points);
+int32_t cluster_add_points_to_virtual_child_cluster(cluster* cl, set_t* points);
 
 /**
  * @brief 
@@ -360,6 +360,15 @@ void cluster_add_constraints_satisfied(cluster* cl, int32_t numConstraints);
  * @param cl 
  */
 void cluster_release_virtual_child(cluster* cl);
+
+/**
+ * @brief Compare clusters
+ * 
+ * @param a 
+ * @param b 
+ * @return int32_t 
+ */
+int32_t cluster_compare(const void* a, const void* b);
 
 // ------------------------------ GETTERS & SETTERS ------------------------------
 

@@ -67,134 +67,315 @@ int clean_hashtable_suite(void)
  * @brief Run the hashtable tests
  * 
  */
-void hash_table_test()
+void hash_table_int_test()
 {
     //Testing creation of a hashtable
     printf("\n");
-    hashtable* htbl = hashtable_init(45, H_INT);
+    hashtable* htbl = hashtable_init(45, H_INT, H_INT, int_compare);
     CU_ASSERT_PTR_NOT_NULL(htbl);
     CU_ASSERT_PTR_NOT_NULL(htbl->buckets);
     CU_ASSERT_PTR_NOT_NULL(htbl->keys);
     CU_ASSERT_PTR_NOT_NULL(htbl->table);
     CU_ASSERT_EQUAL_FATAL(htbl->buckets, 43);
     CU_ASSERT_EQUAL_FATAL(htbl->size, 0);
-    CU_ASSERT_EQUAL_FATAL(htbl->table->max_size, 43);
-    CU_ASSERT_EQUAL_FATAL(gl_oset_size(htbl->keys), 0);
-    CU_ASSERT_EQUAL_FATAL(htbl->table->step, sizeof(void *));
+    CU_ASSERT_EQUAL_FATAL(htbl->keys->size, 0);
     
     // Test that each bucket has been properly created
     // since we need to access each bucket through the 
     // array_list_value_at() function, we hack the size
     // to be the same as the number of buckets
-    htbl->table->size = htbl->buckets;
     for(int32_t i = 0; i < htbl->buckets; i++)
     {
-        linkedlist** tmp = array_list_value_at(htbl->table, i);
-         CU_ASSERT_PTR_NOT_NULL(*tmp);
-         CU_ASSERT_PTR_NULL((*tmp)->head);
-         CU_ASSERT_PTR_NULL((*tmp)->tail);
-         CU_ASSERT_EQUAL_FATAL((*tmp)->size, 0);
+        hashtable_entry* tmp = htbl->table[i];
+        CU_ASSERT_PTR_NOT_NULL_FATAL(tmp);
     }
-    htbl->table->size = 0;
 
     // Test adding to the table
     int32_t x = 23;
-    hashtable_insert(htbl, 55, &x);
+    int32_t k = 55;
+    CU_ASSERT_EQUAL_FATAL(1, hashtable_insert(htbl, &k, &x));
     CU_ASSERT_EQUAL_FATAL(htbl->size, 1);
-    CU_ASSERT_EQUAL_FATAL(gl_oset_size(htbl->keys), 1);
-    ArrayList* lst = hashtable_lookup(htbl, 55);
-    CU_ASSERT_PTR_NOT_NULL(lst);
-    CU_ASSERT_EQUAL_FATAL(lst->size, 1);
+    printf("size is %d\n", set_size(htbl->keys));
+    CU_ASSERT_EQUAL_FATAL(set_size(htbl->keys), 1);
+    
+    x = 0;     
+    CU_ASSERT_EQUAL_FATAL(1, hashtable_lookup(htbl, &k, &x));
+    printf("\nk = %d and x = %d\n", k, x);
+    CU_ASSERT_EQUAL_FATAL(23, x);
     CU_ASSERT_EQUAL_FATAL(htbl->collisions, 0);
-    CU_ASSERT_EQUAL_FATAL(htbl->max_collisions, 0);
 
     // Add another value to the  same key
     x = 88;
-    hashtable_insert(htbl, 55, &x);
-    CU_ASSERT_EQUAL_FATAL(htbl->size, 1);
-    CU_ASSERT_EQUAL_FATAL(gl_oset_size(htbl->keys), 1);
-    lst = hashtable_lookup(htbl, 55);
-    CU_ASSERT_EQUAL_FATAL(lst->size, 2);
-
+    CU_ASSERT_EQUAL_FATAL(-1, hashtable_insert(htbl, &k, &x));
+    CU_ASSERT_EQUAL_FATAL(23, x);
+    CU_ASSERT_EQUAL_FATAL(1, htbl->size);
+    CU_ASSERT_EQUAL_FATAL(1, set_size(htbl->keys));
+    CU_ASSERT_EQUAL_FATAL(1, hashtable_lookup(htbl, &k, &x));
+    CU_ASSERT_EQUAL_FATAL(88, x);
 
     // Add another value to the  same key
     x = 9;
-    hashtable_insert(htbl, 55, &x);
+    CU_ASSERT_EQUAL_FATAL(-1, hashtable_insert(htbl, &k, &x));
+    CU_ASSERT_EQUAL_FATAL(88, x);
     CU_ASSERT_EQUAL_FATAL(htbl->size, 1);
-    CU_ASSERT_EQUAL_FATAL(gl_oset_size(htbl->keys), 1);
-    lst = hashtable_lookup(htbl, 55);
-    CU_ASSERT_EQUAL_FATAL(lst->size, 3);
+    CU_ASSERT_EQUAL_FATAL(set_size(htbl->keys), 1);
+    x = 0;
+    CU_ASSERT_EQUAL_FATAL(1, hashtable_lookup(htbl, &k, &x));
+    CU_ASSERT_EQUAL_FATAL(9, x);
+
+    // Looking for a key that does not exist
+    k = 34;
+    CU_ASSERT_EQUAL_FATAL(0, hashtable_lookup(htbl, &k, &x));
 
     // Testing new keys, one of which is 12 which will colide with 55
     x = 1;
-    hashtable_insert(htbl, 12, &x);
+    k = 12;
+    CU_ASSERT_EQUAL_FATAL(1, hashtable_insert(htbl, &k, &x));
     CU_ASSERT_EQUAL_FATAL(htbl->size, 2);
-    CU_ASSERT_EQUAL_FATAL(gl_oset_size(htbl->keys), 2);
+    CU_ASSERT_EQUAL_FATAL(set_size(htbl->keys), 2);
     CU_ASSERT_EQUAL_FATAL(htbl->collisions, 1); // 12 collides with 55
-    CU_ASSERT_EQUAL_FATAL(htbl->max_collisions, 2); // two keys have collided
 
+    k = 12;
     x = 33;
-    hashtable_insert(htbl, 12, &x);
+    CU_ASSERT_EQUAL_FATAL(-1, hashtable_insert(htbl, &k, &x));
+    CU_ASSERT_EQUAL_FATAL(1, x);
     CU_ASSERT_EQUAL_FATAL(htbl->size, 2);
-    CU_ASSERT_EQUAL_FATAL(gl_oset_size(htbl->keys), 2);
+    CU_ASSERT_EQUAL_FATAL(set_size(htbl->keys), 2);
     CU_ASSERT_EQUAL_FATAL(htbl->collisions, 1);
-    CU_ASSERT_EQUAL_FATAL(htbl->max_collisions, 2);
+
+    x = 0;
+    k = 55;
+    CU_ASSERT_EQUAL_FATAL(1, hashtable_lookup(htbl, &k, &x));
+    CU_ASSERT_EQUAL_FATAL(9, x);
 
     x = 100;
-    hashtable_insert(htbl, 2, &x);
+    k = 2;
+    CU_ASSERT_EQUAL_FATAL(1, hashtable_insert(htbl, &k, &x));
     CU_ASSERT_EQUAL_FATAL(htbl->size, 3);
-    CU_ASSERT_EQUAL_FATAL(gl_oset_size(htbl->keys), 3);
+    CU_ASSERT_EQUAL_FATAL(set_size(htbl->keys), 3);
     CU_ASSERT_EQUAL_FATAL(htbl->collisions, 1);
-    CU_ASSERT_EQUAL_FATAL(htbl->max_collisions, 2);
+
+    x = 0;
+    k = 55;
+    CU_ASSERT_EQUAL_FATAL(1, hashtable_lookup(htbl, &k, &x));
+    CU_ASSERT_EQUAL_FATAL(9, x);
 
     // Add another key
     x = 8;
-    hashtable_insert(htbl, 5, &x);
+    k = 5;
+    CU_ASSERT_EQUAL_FATAL(1, hashtable_insert(htbl, &k, &x));
     CU_ASSERT_EQUAL_FATAL(htbl->size, 4);
-    CU_ASSERT_EQUAL_FATAL(gl_oset_size(htbl->keys), 4);
+    CU_ASSERT_EQUAL_FATAL(set_size(htbl->keys), 4);
     CU_ASSERT_EQUAL_FATAL(htbl->collisions, 1);
-    CU_ASSERT_EQUAL_FATAL(htbl->max_collisions, 2);
+
+    x = 0;
+    k = 55;
+    CU_ASSERT_EQUAL_FATAL(1, hashtable_lookup(htbl, &k, &x));
+    CU_ASSERT_EQUAL_FATAL(9, x);
 
     x = 43;
-    hashtable_insert(htbl, 5, &x);
+    k = 5;
+    CU_ASSERT_EQUAL_FATAL(-1, hashtable_insert(htbl, &k, &x));
+    CU_ASSERT_EQUAL_FATAL(8, x);
     CU_ASSERT_EQUAL_FATAL(htbl->size, 4);
-    CU_ASSERT_EQUAL_FATAL(gl_oset_size(htbl->keys), 4);
+    CU_ASSERT_EQUAL_FATAL(set_size(htbl->keys), 4);
     CU_ASSERT_EQUAL_FATAL(htbl->collisions, 1);
-    CU_ASSERT_EQUAL_FATAL(htbl->max_collisions, 2);
+
+    x = 0;
+    k = 55;
+    CU_ASSERT_EQUAL_FATAL(1, hashtable_lookup(htbl, &k, &x));
+    CU_ASSERT_EQUAL_FATAL(9, x);
+
+    // Looking for a key that does exist
+    k = 2;
+    CU_ASSERT_EQUAL_FATAL(1, hashtable_lookup(htbl, &k, &x));
+    CU_ASSERT_EQUAL_FATAL(100, x);
 
     // test another collision
     x = -2;
-    hashtable_insert(htbl, 48, &x);
+    k = 48;
+    CU_ASSERT_EQUAL_FATAL(1, hashtable_insert(htbl, &k, &x));
     CU_ASSERT_EQUAL_FATAL(htbl->size, 5);
-    CU_ASSERT_EQUAL_FATAL(gl_oset_size(htbl->keys), 5);
+    CU_ASSERT_EQUAL_FATAL(set_size(htbl->keys), 5);
     CU_ASSERT_EQUAL_FATAL(htbl->collisions, 2);
-    CU_ASSERT_EQUAL_FATAL(htbl->max_collisions, 2);
 
-    printf("Hash table has %d elements.\n", htbl->size);
-
+    printf("\nHash table has %d elements.\n", htbl->size);
+    
     /**
      * @brief Iteration over the hash table
      * 
      */
-    for(size_t i = 0; i < gl_oset_size(htbl->keys); i++)
+    for(size_t i = 0; i < set_size(htbl->keys); i++)
     {
-        int key;
-        gl_oset_value_at(htbl->keys, i, &key);
-        lst = hashtable_lookup(htbl, key);
+        int32_t key;
+        set_value_at(htbl->keys, i, &key);
+        int32_t value;
+        hashtable_lookup(htbl, &key, &value);
+        printf("%d -> %d\n", key, value);
+    }
+
+    // Test removing a key
+    k = 5;
+    /////CU_ASSERT_EQUAL_FATAL(1, hashtable_remove(htbl, &k, &x));
+    //CU_ASSERT_EQUAL_FATAL(htbl->size, 4);
+    //CU_ASSERT_EQUAL_FATAL(set_size(htbl->keys), 4);
+    //CU_ASSERT_EQUAL_FATAL(htbl->collisions, 2);
+    
+    hashtable_destroy(htbl, NULL, NULL);
+    printf("\n********************************************************************************************\n");
+}
+
+/**
+ * @brief Run the hashtable tests
+ * 
+ */
+void hash_table_str_test()
+{
+    //Testing creation of a hashtable
+    printf("\n");
+    hashtable* htbl = hashtable_init(45, H_STRING, H_INT, strcmp);
+    CU_ASSERT_PTR_NOT_NULL(htbl);
+    CU_ASSERT_PTR_NOT_NULL(htbl->buckets);
+    CU_ASSERT_PTR_NOT_NULL(htbl->keys);
+    CU_ASSERT_PTR_NOT_NULL(htbl->table);
+    CU_ASSERT_EQUAL_FATAL(htbl->buckets, 43);
+    CU_ASSERT_EQUAL_FATAL(htbl->size, 0);
+    CU_ASSERT_EQUAL_FATAL(htbl->keys->size, 0);
+
+    char* key = "junior";
+    int32_t value = 34;
+    CU_ASSERT_EQUAL_FATAL(1, hashtable_insert(htbl, &key, &value));
+    CU_ASSERT_EQUAL_FATAL(htbl->size, 1);
+    CU_ASSERT_EQUAL_FATAL(set_size(htbl->keys), 1);
+
+    key = "michael";
+    value = 7;
+    CU_ASSERT_EQUAL_FATAL(1, hashtable_insert(htbl, &key, &value));
+    CU_ASSERT_EQUAL_FATAL(htbl->size, 2);
+    CU_ASSERT_EQUAL_FATAL(set_size(htbl->keys), 2);
+
+    printf("\nHash table has %d elements.\n", htbl->size);
+    
+    /**
+     * @brief Iteration over the hash table
+     * 
+     */
+    for(size_t i = 0; i <set_size(htbl->keys); i++)
+    {
+        char* k = NULL;
+        //array_list_value_at(htbl->keys, i, &k);
+        set_value_at(htbl->keys, i, &k);
+        int32_t v;
+        hashtable_lookup(htbl, &k, &v);
+        printf("%s -> %d\n", (char*)k, v);
+    }
+
+    hashtable_destroy(htbl, NULL, NULL);
+    printf("\n********************************************************************************************\n");
+}
+
+/**
+ * @brief Testing hashtable with int array list
+ * 
+ */
+void hash_table_int_list_test()
+{
+    //Testing creation of a hashtable
+    printf("\n");
+    hashtable* htbl = hashtable_init(45, H_INT, H_PTR, int_compare);
+    CU_ASSERT_PTR_NOT_NULL(htbl);
+    CU_ASSERT_PTR_NOT_NULL(htbl->buckets);
+    CU_ASSERT_PTR_NOT_NULL(htbl->keys);
+    CU_ASSERT_PTR_NOT_NULL(htbl->table);
+    CU_ASSERT_EQUAL_FATAL(htbl->buckets, 43);
+    CU_ASSERT_EQUAL_FATAL(htbl->size, 0);
+    CU_ASSERT_EQUAL_FATAL(htbl->keys->size, 0);
+
+    IntArrayList* list = int_array_list_init_exact_size(5);
+    int_array_list_append(list, 23);
+    int_array_list_append(list, 23);
+    int_array_list_append(list, 2);
+    int_array_list_append(list, -1);
+    int_array_list_append(list, 45);
+    int_array_list_append(list, 13);
+
+    int32_t key = 12;
+    CU_ASSERT_EQUAL_FATAL(1, hashtable_insert(htbl, &key, &list));
+    CU_ASSERT_EQUAL_FATAL(htbl->size, 1);
+    CU_ASSERT_EQUAL_FATAL(set_size(htbl->keys), 1);
+
+    list = NULL;
+    list = int_array_list_init_exact_size(5);
+    int_array_list_append(list, 65);
+    int_array_list_append(list, 88);
+    int_array_list_append(list, -9);
+    int_array_list_append(list, 12);
+    int_array_list_append(list, -12);
+    int_array_list_append(list, -36);
+    int_array_list_append(list, -9);
+
+    key = 45;
+    CU_ASSERT_EQUAL_FATAL(1, hashtable_insert(htbl, &key, &list));
+    CU_ASSERT_EQUAL_FATAL(htbl->size, 2);
+    CU_ASSERT_EQUAL_FATAL(set_size(htbl->keys), 2);
+
+    /// Replacing the list at key 12
+    key = 12;
+    list = int_array_list_init_exact_size(3);
+    int_array_list_append(list, 2);
+    int_array_list_append(list, 4);
+    int_array_list_append(list, 6);
+    int_array_list_append(list, 8);
+    int_array_list_append(list, 10);
+    int_array_list_append(list, 12);
+    int_array_list_append(list, 14);
+    int_array_list_append(list, 16);
+    int_array_list_append(list, 18);
+    int_array_list_append(list, 20);
+
+    CU_ASSERT_EQUAL_FATAL(-1, hashtable_insert(htbl, &key, &list));
+    int32_t v;
+    int_array_list_data(list, 0, &v);
+    CU_ASSERT_EQUAL_FATAL(23, v);
+    int_array_list_data(list, 1, &v);
+    CU_ASSERT_EQUAL_FATAL(23, v);
+    int_array_list_data(list, 2, &v);
+    CU_ASSERT_EQUAL_FATAL(2, v);
+    int_array_list_data(list, 3, &v);
+    CU_ASSERT_EQUAL_FATAL(-1, v);
+    int_array_list_data(list, 4, &v);
+    CU_ASSERT_EQUAL_FATAL(45, v);
+    int_array_list_data(list, 5, &v);
+    CU_ASSERT_EQUAL_FATAL(13, v);
+    CU_ASSERT_EQUAL_FATAL(6, list->size);
+    int_array_list_delete(list);
+
+    CU_ASSERT_EQUAL_FATAL(htbl->size, 2);
+    CU_ASSERT_EQUAL_FATAL(set_size(htbl->keys), 2);
+
+
+    printf("\nHash table has %d elements.\n", htbl->size);
+    
+    /**
+     * @brief Iteration over the hash table
+     * 
+     */
+    for(size_t i = 0; i <set_size(htbl->keys); i++)
+    {
+        set_value_at(htbl->keys, i, &key);
+        hashtable_lookup(htbl, &key, &list);
         printf("%d -> [", key);
-        for(int j = 0; j < lst->size; j++){
-			int32_t *dpointer = int_array_list_data(lst, j);
-			printf("%d ", *dpointer);
+		int32_t dpointer;
+
+		for(int j = 0; j < list->size; j++){
+			int_array_list_data(list, j, &dpointer);
+			printf("%d ", dpointer);
 		}
 		printf("]\n");
     }
 
-    // Test removing a key
-    hashtable_remove(htbl, 5);
-    CU_ASSERT_EQUAL_FATAL(htbl->size, 4);
-    CU_ASSERT_EQUAL_FATAL(gl_oset_size(htbl->keys), 4);
-    //CU_ASSERT_EQUAL_FATAL(htbl->collisions, 2);
-    //CU_ASSERT_EQUAL_FATAL(htbl->max_collisions, 2);
+    hashtable_destroy(htbl, NULL, int_array_list_delete);
+    printf("\n********************************************************************************************\n");
 }
 
 /**
@@ -217,10 +398,24 @@ int main()
         CU_cleanup_registry();
         return CU_get_error();
     }
-
+    
     /* add the tests to the suite */
     /* NOTE - ORDER IS IMPORTANT - MUST TEST fread() AFTER fprintf() */
-    if ((NULL == CU_add_test(suite, "Test for hashtable", hash_table_test)))
+    if ((NULL == CU_add_test(suite, "Test for int:int hashtable", hash_table_int_test)))
+    {
+        printf("Could not add the test to the suite\n");
+        CU_cleanup_registry();
+        return CU_get_error();
+    }
+
+    if ((NULL == CU_add_test(suite, "Test for str:int hashtable", hash_table_str_test)))
+    {
+        printf("Could not add the test to the suite\n");
+        CU_cleanup_registry();
+        return CU_get_error();
+    }
+
+    if ((NULL == CU_add_test(suite, "Test for int:IntArrayList hashtable", hash_table_int_list_test)))
     {
         printf("Could not add the test to the suite\n");
         CU_cleanup_registry();

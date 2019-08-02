@@ -42,7 +42,7 @@ using namespace std;
 
 typedef map<int, vector<int>> map_t;
 typedef map<int, vector<double>> map_d;
-typedef set<int> set_t;
+typedef set<int> set_i;
 
 
 namespace clustering {

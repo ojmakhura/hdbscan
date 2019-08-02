@@ -136,7 +136,7 @@ void double_array_list_delete(DoubleArrayList* list);
  * @param idx 
  * @return double* 
  */
-double* double_array_list_data(DoubleArrayList* list, int32_t idx);
+int32_t double_array_list_data(DoubleArrayList* list, int32_t idx, double* it);
 
 /**
  * @brief 

@@ -67,8 +67,9 @@ UndirectedGraph* graph_init(UndirectedGraph* g, int32_t numVertices, IntArrayLis
 
 	for (unsigned int i = 0; i < g->verticesA->size; i++) {
 
-		int vertexOne = *(int_array_list_data(g->verticesA, i));
-		int vertexTwo = *(int_array_list_data(g->verticesB, i));
+		int vertexOne, vertexTwo;
+		int_array_list_data(g->verticesA, i, &vertexOne);
+		int_array_list_data(g->verticesB, i, &vertexTwo);
 
 		int_array_list_append(g->edges[vertexOne], vertexTwo);
 		if (vertexOne != vertexTwo) {
@@ -154,9 +155,10 @@ int32_t graph_select_pivot_index(UndirectedGraph* g, int32_t startIndex, int32_t
 	if (startIndex - endIndex <= 1)
 		return startIndex;
 
-	double first = *(double_array_list_data(g->edgeWeights, startIndex));
-	double middle = *(double_array_list_data(g->edgeWeights, startIndex + (endIndex - startIndex) / 2));
-	double last = *(double_array_list_data(g->edgeWeights, endIndex));
+	double first, middle, last;
+	double_array_list_data(g->edgeWeights, startIndex, &first);
+	double_array_list_data(g->edgeWeights, startIndex + (endIndex - startIndex) / 2, &middle);
+	double_array_list_data(g->edgeWeights, endIndex, &last);
 
 	if (first <= middle) {
 		if (middle <= last)
@@ -177,13 +179,23 @@ int32_t graph_select_pivot_index(UndirectedGraph* g, int32_t startIndex, int32_t
 
 void graph_swap_edges(UndirectedGraph* g, int32_t indexOne, int32_t indexTwo){
 	if (indexOne != indexTwo){
-		int32_t tempVertexA = *(int_array_list_data(g->verticesA, indexOne));
-		int32_t tempVertexB = *(int_array_list_data(g->verticesB, indexOne));
-		double tempEdgeDistance = *(double_array_list_data(g->edgeWeights, indexOne));
+		int32_t tempVertexA, tempVertexB;
+		int_array_list_data(g->verticesA, indexOne, &tempVertexA);
+		int_array_list_data(g->verticesB, indexOne, &tempVertexB);
+		
+		double tempEdgeDistance;
+		double_array_list_data(g->edgeWeights, indexOne, &tempEdgeDistance);
 
-		int_array_list_set_value_at(g->verticesA, *(int_array_list_data(g->verticesA, indexTwo)), indexOne);
-		int_array_list_set_value_at(g->verticesB, *(int_array_list_data(g->verticesB, indexTwo)), indexOne);
-		double_array_list_set_value_at(g->edgeWeights, *(double_array_list_data(g->edgeWeights, indexTwo)), indexOne);
+		int32_t tmp;
+		int_array_list_data(g->verticesA, indexTwo, &tmp);
+		int_array_list_set_value_at(g->verticesA, tmp, indexOne);
+
+		int_array_list_data(g->verticesB, indexTwo, &tmp);
+		int_array_list_set_value_at(g->verticesB, tmp, indexOne);
+
+		double tmp2;
+		double_array_list_data(g->edgeWeights, indexTwo, &tmp2);
+		double_array_list_set_value_at(g->edgeWeights, tmp2, indexOne);
 
 		int_array_list_set_value_at(g->verticesA, tempVertexA, indexTwo);
 		int_array_list_set_value_at(g->verticesB, tempVertexB, indexTwo);
@@ -192,12 +204,14 @@ void graph_swap_edges(UndirectedGraph* g, int32_t indexOne, int32_t indexTwo){
 }
 
 int32_t graph_partition(UndirectedGraph* g, int32_t startIndex, int32_t endIndex, int32_t pivotIndex) {
-	double pivotValue = *(double_array_list_data(g->edgeWeights, pivotIndex));//g->edgeWeights[pivotIndex];
+	double pivotValue;
+	double_array_list_data(g->edgeWeights, pivotIndex, &pivotValue);//g->edgeWeights[pivotIndex];
 	graph_swap_edges(g, pivotIndex, endIndex);
 	int32_t lowIndex = startIndex;
 
 	for (int32_t i = startIndex; i < endIndex; i++) {
-		double c = *(double_array_list_data(g->edgeWeights, i));
+		double c;
+		double_array_list_data(g->edgeWeights, i, &c);
 		if (c < pivotValue) {
 			graph_swap_edges(g, i, lowIndex);
 			lowIndex++;
@@ -234,24 +248,28 @@ void graph_remove_edge(UndirectedGraph* g, int32_t va, int32_t vb){
 void graph_print(UndirectedGraph* g) {
 
 	printf(
-			"numVertices: %d, verticesA.length: %d,  verticesB.length: %d, edgeWeights.length: %d, edges.length: %d\n",
+			"numVertices: %d, verticesA.length: %ld,  verticesB.length: %ld, edgeWeights.length: %ld, edges.length: %d\n",
 			g->numVertices, g->verticesA->size, g->verticesB->size, g->edgeWeights->size, g->numVertices);
 	printf("\nVertices A\n");
 
-	for (int i = 0; i < g->verticesA->size; i++) {
-		int vertex = *(int_array_list_data(g->verticesA, i));
+	for (size_t i = 0; i < g->verticesA->size; i++) {
+		int vertex;
+		int_array_list_data(g->verticesA, i, &vertex);
 		printf("%d, ", vertex);
 	}
 
 	printf("\n\nVertices B\n");
-	for (int i = 0; i < g->verticesB->size; i++) {
-		int vertex = *(int_array_list_data(g->verticesB, i));
+	for (size_t i = 0; i < g->verticesB->size; i++) {
+		int vertex;
+		int_array_list_data(g->verticesB, i, &vertex);
 		printf("%d, ", vertex);
 	}
 
 	printf("\n\nedgeWeights\n");
-    for (int i = 0; i < g->edgeWeights->size; i++) {
-		printf("%f, ", *(double_array_list_data(g->edgeWeights, i)));
+    for (size_t i = 0; i < g->edgeWeights->size; i++) {
+		double weight;
+		double_array_list_data(g->edgeWeights, i, &weight);
+		printf("%f, ", weight);
 	}
 
 	printf("\n\nEdges\n");

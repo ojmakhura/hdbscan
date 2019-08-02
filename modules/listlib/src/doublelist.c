@@ -59,14 +59,14 @@ DoubleArrayList* double_array_list_init(){
 
 DoubleArrayList* double_array_list_init_size(int32_t size){
 	assert(size > 0);
-	DoubleArrayList* list = (DoubleArrayList*)array_list_init( highestPowerof2(size), sizeof(double));
+	DoubleArrayList* list = (DoubleArrayList*)array_list_init( highestPowerof2(size), sizeof(double), double_compare);
 
 	return list;
 }
 
 DoubleArrayList* double_array_list_init_exact_size(int32_t size){
 	assert(size > 0);
-	DoubleArrayList* list = (DoubleArrayList*)array_list_init(size, sizeof(double));
+	DoubleArrayList* list = (DoubleArrayList*)array_list_init(size, sizeof(double), double_compare);
 
 	return list;
 }
@@ -167,11 +167,10 @@ void double_array_list_delete(DoubleArrayList* list)
 	array_list_delete(list);
 }
 
-double* double_array_list_data(DoubleArrayList* list, int32_t idx)
+int32_t double_array_list_data(DoubleArrayList* list, int32_t idx, double* it)
 {
 	assert(list != NULL && idx >= 0);
-	double* it = (double *) array_list_value_at(list, idx);
-	return it;
+	return array_list_value_at(list, idx, it);
 }
 
 

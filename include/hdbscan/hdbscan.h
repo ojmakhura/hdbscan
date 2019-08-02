@@ -35,18 +35,18 @@ extern "C" {
 #endif
 //#define __STDC_WANT_LIB_EXT1__ 1
 #include <string.h>
-#include <glib.h>
+//#include <glib.h>
 #include <float.h>
 #include <stdio.h>
-//#include <gsl/gsl_statistics.h>
 #include "cluster.h"
 #include "constraint.h"
 #include "distance.h"
 #include "outlier_score.h"
 #include "undirected_graph.h"
-#include "gnulib/gl_array_oset.h"
+//#include "gnulib/gl_array_oset.h"
 #include "listlib/intlist.h"
 #include "listlib/doublelist.h"
+#include "listlib/hashtable.h"
 
 #define FILE_BUFFER_SIZE = 32678
 #define HDBSCAN_SUCCESS 1
@@ -55,12 +55,21 @@ extern "C" {
 #define CORE_DISTANCE_TYPE	0
 #define INTRA_DISTANCE_TYPE	1
 
-typedef GHashTable StringDoubleMap;
-typedef GHashTable IntDistancesMap;
+typedef hashtable StringDoubleMap;
+typedef hashtable IntDistancesMap;
+typedef hashtable IntIntListMap;			// Hash table with keys as int and values as a list of integers
+typedef hashtable LongIntListMap;
+typedef hashtable LongIntPointerMap;
+typedef hashtable IntDoubleMap;
+typedef hashtable IntDoubleListMap;
+typedef hashtable IntClusterListMap;
+
+/**\typedef LongHierarchyEntryMap*/
+//typedef GHashTable LongHierarchyEntryMap;
 
 /**
  * Implementation of the HDBSCAN* algorithm, which is broken into several methods.
- * @author zjullion
+ * @author ojmakhura
  */
 
 //string getWarningMessage();
@@ -119,9 +128,6 @@ typedef struct _hierarchy_entry{
 	int32_t* labels;
 } hierarchy_entry; /** \typedef hierarchy_entry */
 
-/**\typedef LongHierarchyEntryMap*/
-typedef GHashTable LongHierarchyEntryMap;
-
 /**
  * \struct hdbscan
  * @brief Main HDBSCAN object
@@ -136,7 +142,7 @@ struct hdbscan {
 	ArrayList* clusters;
 	outlier_score* outlierScores;
 	int32_t* clusterLabels;
-	LongHierarchyEntryMap* hierarchy;
+	hashtable* hierarchy;
 	IntDoubleMap* clusterStabilities;
 	boolean selfEdges;
 	uint minPoints, minClusterSize, numPoints;
@@ -313,7 +319,7 @@ int hdbscan_rerun(hdbscan* sc, int32_t minPts);
  * @param numClusters 
  * @return int32_t 
  */
-int32_t hdbscan_select_min_pts(int32_t min, int32_t max, void* dataset, int32_t datatype, IntIntListMap* selection, int32_t *val, int32_t *numClusters);
+int32_t hdbscan_select_min_pts(int32_t min, int32_t max, void* dataset, int32_t datatype, hashtable* selection, int32_t *val, int32_t *numClusters);
 
 /**
  * @brief Create the minimum spanning tree
@@ -376,7 +382,7 @@ int hdbscsan_calculate_outlier_scores(hdbscan* sc, double* pointNoiseLevels, int
  * @param end 
  * @return IntIntListMap* 
  */
-IntIntListMap* hdbscan_create_cluster_map(int32_t* labels, int32_t begin, int32_t end);
+hashtable* hdbscan_create_cluster_map(int32_t* labels, int32_t begin, int32_t end);
 
 /**
  * @brief Create a hash table that maps the different statistical values to their values.
@@ -387,7 +393,7 @@ IntIntListMap* hdbscan_create_cluster_map(int32_t* labels, int32_t begin, int32_
  * @param distanceMap 
  * @param stats 
  */
-void hdbscan_calculate_stats(IntDistancesMap* distanceMap, clustering_stats* stats);
+void hdbscan_calculate_stats(hashtable* distanceMap, clustering_stats* stats);
 
 /**
  * @brief A helper function for calculating statical values
@@ -413,7 +419,7 @@ int32_t hdbscan_analyse_stats(clustering_stats* stats);
  * @param clusterTable 
  * @return IntDistancesMap* 
  */
-IntDistancesMap* hdbscan_get_min_max_distances(hdbscan* sc, IntIntListMap* clusterTable);
+hashtable* hdbscan_get_min_max_distances(hdbscan* sc, hashtable* clusterTable);
 
 /**
  * @brief Sorts the clusters using the distances in the distanceMap.
@@ -423,7 +429,7 @@ IntDistancesMap* hdbscan_get_min_max_distances(hdbscan* sc, IntIntListMap* clust
  * @param distanceType 
  * @return IntArrayList* 
  */
-IntArrayList* hdbscan_sort_by_similarity(IntDistancesMap* distanceMap, IntArrayList *clusters, int32_t distanceType);
+IntArrayList* hdbscan_sort_by_similarity(hashtable* distanceMap, IntArrayList *clusters, int32_t distanceType);
 
 /**
  * @brief Sorts clusters according to how the size of the clusters
@@ -432,7 +438,7 @@ IntArrayList* hdbscan_sort_by_similarity(IntDistancesMap* distanceMap, IntArrayL
  * @param clusters 
  * @return IntArrayList* 
  */
-IntArrayList* hdbscan_sort_by_length(IntIntListMap* clusterTable, IntArrayList *clusters);
+IntArrayList* hdbscan_sort_by_length(hashtable* clusterTable, IntArrayList *clusters);
 
 /**
  * @brief Uses quick sort algorithm to sort clusters based on the data
@@ -449,14 +455,14 @@ void hdbscan_quicksort(IntArrayList *clusters, DoubleArrayList *sortData, int32_
  * 
  * @param table 
  */
-void hdbscan_destroy_cluster_map(IntIntListMap* table);
+void hdbscan_destroy_cluster_map(hashtable* table);
 
 /**
  * @brief Deallocate the memory used for the distance map.
  * 
  * @param table 
  */
-void hdbscan_destroy_distance_map(IntDistancesMap* table);
+void hdbscan_destroy_distance_map(hashtable* table);
 
 /**
  * @brief 
@@ -469,21 +475,21 @@ hierarchy_entry* hdbscan_create_hierarchy_entry();
 //! @brief Print the cluster map
 //! 
 //! @param table 
-void hdbscan_print_cluster_map(IntIntListMap* table);
+void hdbscan_print_cluster_map(hashtable* table);
 
 /**
  * @brief Print the cluster sizes
  * 
  * @param table 
  */
-void hdbscan_print_cluster_sizes(IntIntListMap* table);
+void hdbscan_print_cluster_sizes(hashtable* table);
 
 /**
  * @brief Printing the distance map to the console
  * 
  * @param table 
  */
-void hdbscan_print_distance_map(IntDistancesMap* table);
+void hdbscan_print_distance_map(hashtable* table);
 
 /**
  * @brief Print the stastical values
@@ -499,7 +505,9 @@ void hdbscan_print_stats(clustering_stats* stats);
  * @param numPoints 
  * @param filename 
  */
-void hdbscan_print_hierarchies(LongHierarchyEntryMap* hierarchy, uint numPoints, char *filename);
+void hdbscan_print_hierarchies(hashtable* hierarchy, uint numPoints, char *filename);
+
+void hdbscan_destroy_hierarchical_entry(hierarchy_entry* entry);
 #ifdef __cplusplus
 };
 }

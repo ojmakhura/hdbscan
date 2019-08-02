@@ -59,67 +59,69 @@ int clean_linkedlist_suite(void)
 void int_linked_list_test()
 {
     // Testing the creation of the arraylist
-    linkedlist* list = linkedlist_init(H_INT);
+    linkedlist* list = linkedlist_init(sizeof(int32_t));
     CU_ASSERT_PTR_NOT_NULL(list);
     CU_ASSERT_PTR_NULL(list->head);
     CU_ASSERT_PTR_NULL(list->tail);
-    CU_ASSERT_EQUAL_FATAL(list->size, 0);
+    CU_ASSERT_EQUAL_FATAL(0, list->size);
 
-    // Testing adding the first key-value pair
-    int a = 12;
-    IntArrayList* al = linkedlist_front_add(list, 5, &a);
-    CU_ASSERT_PTR_NOT_NULL(al);
-    CU_ASSERT_PTR_NOT_NULL(list->head);
-    CU_ASSERT_PTR_NOT_NULL(list->tail);
-    CU_ASSERT_EQUAL_FATAL(list->size, 1);
-    CU_ASSERT_EQUAL_FATAL(al->size, 1);
-    CU_ASSERT_PTR_EQUAL(list->head, list->tail);
-    CU_ASSERT_PTR_EQUAL(list->head->value, al);
+    int32_t d = 23;
+    CU_ASSERT_EQUAL_FATAL(1, linkedlist_front_add(list, &d));
+    CU_ASSERT_EQUAL_FATAL(1, list->size);
+
+    d = -25;
+    CU_ASSERT_EQUAL_FATAL(1, linkedlist_tail_add(list, &d));
+    CU_ASSERT_EQUAL_FATAL(2, list->size);
+
+    d = 23;
+    CU_ASSERT_EQUAL_FATAL(1, linkedlist_front_add(list, &d));
+    CU_ASSERT_EQUAL_FATAL(3, list->size);
+
+    d = -123;
+    CU_ASSERT_EQUAL_FATAL(1, linkedlist_tail_add(list, &d));
+    CU_ASSERT_EQUAL_FATAL(4, list->size);
+
+    d = 0;
+    CU_ASSERT_EQUAL_FATAL(1, linkedlist_front_add(list, &d));
+    CU_ASSERT_EQUAL_FATAL(5, list->size);
+
+    d = 100;
+    CU_ASSERT_EQUAL_FATAL(1, linkedlist_front_add(list, &d));
+    CU_ASSERT_EQUAL_FATAL(6, list->size);
+
+    CU_ASSERT_EQUAL_FATAL(1, linkedlist_value_at(list, 1, &d));
+    CU_ASSERT_EQUAL_FATAL(0, d);
+
+    CU_ASSERT_EQUAL_FATAL(0, linkedlist_value_at(list, 0, &d));
+    CU_ASSERT_EQUAL_FATAL(100, d);
+
+    node* nd = list->head;
+    printf("\n");
+    int32_t i = 0;
+    while(nd)
+    {
+
+        printf("%d : %d\n", i, *(int32_t *)nd->data);
+        nd = nd->next;
+        i++;
+    }
     
-    // Testing the list we just added
-    int* d = int_array_list_data(al, 0);
-    CU_ASSERT_EQUAL_FATAL(*d, 12);
-    int32_t c = list->head->key;
-    CU_ASSERT_EQUAL_FATAL(c, 5);
+    d = *(int32_t *)linkedlist_head(list, 0);
+    CU_ASSERT_EQUAL_FATAL(100, d);
 
-    // Add a second value at the same key
-    a = 777;
-    al = linkedlist_front_add(list, 5, &a);
-    CU_ASSERT_EQUAL_FATAL(list->size, 1);
-    CU_ASSERT_EQUAL_FATAL(al->size, 2);
+    d = *(int32_t *)linkedlist_tail(list, 0);
+    CU_ASSERT_EQUAL_FATAL(-123, d);
 
-    // Testing adding another key to the front
-    a = 7;
-    al = linkedlist_front_add(list, 2, &a);
-    CU_ASSERT_EQUAL_FATAL(list->size, 2);
-    CU_ASSERT_EQUAL_FATAL(al->size, 1);
-    CU_ASSERT_PTR_EQUAL(list->head->value, al);
-
-    // Testing adding a list and to the back
-    IntArrayList* l2 = int_array_list_init_exact_size(5);
-    int_array_list_append(l2, 12);
-    al = linkedlist_tail_add(list, 23, &a);
-    CU_ASSERT_PTR_EQUAL(list->tail->value, al);
-    CU_ASSERT_EQUAL_FATAL(list->size, 3);
-    CU_ASSERT_EQUAL_FATAL(al->size, 1);
-    CU_ASSERT_EQUAL_FATAL(al->size, ((IntArrayList*)list->tail->value)->size);
-
-    // Testing removing a node
-    CU_ASSERT_EQUAL_FATAL(linkedlist_remove(list, 23), 1);
-    CU_ASSERT_EQUAL_FATAL(list->size, 2);
-
-    /// Test the lookup
-    IntArrayList* a2 = linkedlist_lookup(list, 5, 0);
-    CU_ASSERT_EQUAL_FATAL(a2->size, 2);
-    d = int_array_list_data(a2, 0);
-    CU_ASSERT_EQUAL_FATAL(*d, 12);
-    d = int_array_list_data(a2, 1);
-    CU_ASSERT_EQUAL_FATAL(*d, 777);
+    // Test removing
+    d = 23;
+    CU_ASSERT_EQUAL_FATAL(1, linkedlist_remove(list, &d, int_compare));
+    CU_ASSERT_EQUAL_FATAL(5, list->size);
 
     linkedlist_clear(list);
     CU_ASSERT_EQUAL_FATAL(list->size, 0);
 
     linkedlist_delete(list);
+    
 }
 
 int main()

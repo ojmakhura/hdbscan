@@ -47,7 +47,7 @@
 #include <assert.h>
 #include "hdbscan/utils.h"
 
-ArrayList* array_list_init(size_t initial_size, size_t step)
+ArrayList* array_list_init(size_t initial_size, size_t step, int32_t (*compare)(const void *a, const void *b))
 {
 	assert(initial_size > 0);
 	ArrayList* list = (ArrayList *)malloc(sizeof(ArrayList));
@@ -65,13 +65,14 @@ ArrayList* array_list_init(size_t initial_size, size_t step)
 	list->max_size = initial_size;
 	list->size = 0;
 	list->step = step;
+	list->compare = compare;
 
 	return list;
 }
 
-ArrayList* ptr_array_list_init(size_t initial_size)
+ArrayList* ptr_array_list_init(size_t initial_size, int32_t (*compare)(const void *a, const void *b))
 {
-	return array_list_init(initial_size, sizeof(void *));
+	return array_list_init(initial_size, sizeof(void *), compare);
 }
 
 /**
@@ -80,18 +81,22 @@ ArrayList* ptr_array_list_init(size_t initial_size)
  * Care should be taken with this since we give back exactly what you gave us.
  * 
  * @param list 
- * @param pos 
- * @return void* 
+ * @param pos
+ * @param data
+ * @return int32_t
  */
-void* array_list_value_at(ArrayList* list, int32_t pos)
+int32_t array_list_value_at(ArrayList* list, size_t pos, void* data)
 {
 	if(pos < 0 || pos >= list->size){
-		return NULL;
+		return 0;
 	}
 
 	size_t p = pos * list->step; /// Calculate the location of the proper byte
+	void* d = ((char *)list->data) + p;
 
-	return ((char *)list->data) + p; 
+	memcpy(data, d, list->step);
+
+	return 1; 
 }
 
 /**
@@ -127,12 +132,10 @@ ArrayList* array_list_delete(ArrayList* list){
 		}
 
 		free(list);				/// Free the ArrayList structure
-		list->max_size = 0;
-		list->size = 0;
 		list = NULL;
 	}
 
-	return list;
+	return NULL;
 }
 
 /**
@@ -148,7 +151,7 @@ ArrayList* array_list_delete(ArrayList* list){
  * @param index The location where to insert
  * @return int32_t 
  */
-int32_t array_list_insertion_helper(ArrayList* list, void* data, int32_t index)
+int32_t array_list_insertion_helper(ArrayList* list, void* data, size_t index)
 {
 	// Calculate the location of the byte where to start the
 	// insertion
@@ -163,9 +166,9 @@ int32_t array_list_insertion_helper(ArrayList* list, void* data, int32_t index)
 	return 1;
 }
 
-int32_t array_list_insert_at(ArrayList* list, void* data, int32_t index){
+int32_t array_list_insert_at(ArrayList* list, void* data, size_t index){
 
-	if(index < 0 || index >= list->size)
+	if(index == 0 || index >= list->size)
 	{
 		return 0;
 	}
@@ -192,7 +195,99 @@ int32_t array_list_append(ArrayList* list, void* data)
 	return 1;
 }
 
-int32_t array_list_size(ArrayList* list)
+size_t array_list_size(ArrayList* list)
 {
 	return list == NULL ? 0 : list->size;
+}
+
+int32_t array_list_find(ArrayList* list, void* data)
+{
+	int32_t tmp = -1;
+	void* t = malloc(list->step);
+	for(size_t i = 0; i < list->size; i++)
+	{
+		if(!array_list_value_at(list, i, t))
+		{
+			return -1;
+		}
+
+		if(list->compare(t, data) == 0)
+		{
+			tmp = i;
+			break;
+		}
+	}
+
+	free(t);
+
+	return tmp;
+}
+
+void array_list_clear(ArrayList* list, int32_t resize)
+{
+	list->size = 0;
+	if(resize) {
+		list->data = realloc(list->data, list->step);
+	}
+}
+
+int32_t array_list_remove_at(ArrayList* list, size_t pos, void* data)
+{
+	if(pos < 0 || pos >= list->size)
+	{
+		data = NULL;
+		return 0;
+	}
+
+
+	// Create byte array versions list->data and data
+	char* dt = (char *)list->data;
+	char* d1 = (char *)data;
+	// Copy the some data from list->data to data
+	for(size_t i = 0; i < list->step; i++)
+	{
+		d1[i] = dt[pos + 1];
+	}
+	
+	size_t last = list->size * list->step;
+	for(size_t pos_b = pos * list->step; pos_b < last; pos_b++)
+	{
+		dt[pos_b] = dt[pos_b + list->step];
+	}
+
+	list->size--;
+
+	return 1;
+}
+
+int32_t array_list_pop(ArrayList* list, void* data)
+{
+	if(array_list_empty(list))
+	{
+		return 0;
+	}
+
+	list->size--;
+	
+	return 1;
+}
+
+int32_t array_list_empty(ArrayList* list)
+{
+	if(list == NULL || list->data == NULL || list->size == 0)
+	{
+		return 1;
+	}
+
+	return 0;
+}
+
+/**
+ * @brief 
+ * 
+ * @param list 
+ */
+void array_list_sort(ArrayList* list){
+
+	qsort(list->data, list->size, list->step, list->compare);
 }
