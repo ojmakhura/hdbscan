@@ -47,13 +47,29 @@
 #include <assert.h>
 #include "hdbscan/utils.h"
 
+#include "config.h"
+#ifdef USE_OMP
+#include <omp.h>
+#endif
+
 ArrayList* array_list_init(size_t initial_size, size_t step, int32_t (*compare)(const void *a, const void *b))
 {
 	assert(initial_size > 0);
 	ArrayList* list = (ArrayList *)malloc(sizeof(ArrayList));
 
+	
+
 	if(list != NULL){
-		list->data = calloc(initial_size, step); /// Make sure all values are NULL/0
+		size_t s = initial_size * step;
+		list->data = malloc(s); /// Make sure all values are NULL/0
+
+		#ifdef USE_OMP
+		#pragma omp parallel for
+		#endif
+		for(size_t i = 0; i < s; i++)
+		{
+			((char *)list->data)[i] = (char)0;
+		}
 
 		if(list->data == NULL){
 			free(list);	// Since the data memory was no allocated, we should

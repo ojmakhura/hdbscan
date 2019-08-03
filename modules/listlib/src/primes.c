@@ -94,7 +94,7 @@ int32_t binary_search_primes(int32_t l, int32_t r, int32_t x)
   
     // We reach here when element is not 
     // present in array 
-    return -1; 
+    return 0; 
 } 
 
 /**

@@ -292,7 +292,6 @@ void double_ptr_array_list_test()
     CU_ASSERT_EQUAL_FATAL(*d, 0.7885);
 
     d = malloc(sizeof(double));
-    printf("memory is %ld\n", d);
     *d = 1.234;
     array_list_append(list, &d);
     array_list_value_at(list, 1, &d);

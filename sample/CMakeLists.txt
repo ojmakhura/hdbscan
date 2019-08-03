@@ -6,7 +6,7 @@ target_link_libraries(hdbscan_csample ${HDBSCAN_LIBRARY}-${HDBSCAN_VERSION} ${GN
 add_executable(hdbscan_cppsample tester.cpp)
 target_link_libraries(hdbscan_cppsample ${HDBSCAN_LIBRARY}-${HDBSCAN_VERSION} ${GNULIB_LIBRARY} ${LISTLIB_LIBRARY})
 
-include_directories(${HDBSCAN_INCLUDE_DIR} ${GLIB2_INCLUDE_DIRS} ${LISTLIB_INCLUDE_DIR} ${GNULIB_INCLUDE_DIR})
+include_directories(${HDBSCAN_INCLUDE_DIR} ${LISTLIB_INCLUDE_DIR} ${GNULIB_INCLUDE_DIR})
 
 install(TARGETS hdbscan_csample
   # IMPORTANT: Add the bar executable to the "export-set"

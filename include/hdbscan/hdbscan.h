@@ -35,7 +35,6 @@ extern "C" {
 #endif
 //#define __STDC_WANT_LIB_EXT1__ 1
 #include <string.h>
-//#include <glib.h>
 #include <float.h>
 #include <stdio.h>
 #include "cluster.h"
@@ -43,7 +42,6 @@ extern "C" {
 #include "distance.h"
 #include "outlier_score.h"
 #include "undirected_graph.h"
-//#include "gnulib/gl_array_oset.h"
 #include "listlib/intlist.h"
 #include "listlib/doublelist.h"
 #include "listlib/hashtable.h"

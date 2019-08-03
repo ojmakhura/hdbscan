@@ -64,7 +64,8 @@ struct Cluster {
 	double propagatedLowestChildDeathLevel;
 	int32_t numConstraintsSatisfied;
 	int32_t propagatedNumConstraintsSatisfied;
-	set_t* virtualChildCluster;
+	//set_t* virtualChildCluster;
+	gl_oset_t virtualChildCluster;
 	struct Cluster* parent;
 	ArrayList* propagatedDescendants;
 	boolean hasChildren;
@@ -114,7 +115,7 @@ public:
 	 * 
 	 * @param points 
 	 */
-	void addPointsToVirtualChildCluster(set_t* points);
+	void addPointsToVirtualChildCluster(gl_oset_t points);
 
 	/**
 	 * @brief 
@@ -242,7 +243,7 @@ public:
 	 * 
 	 * @return gl_oset_t 
 	 */
-	set_t* getVirtualChildCluster();
+	gl_oset_t getVirtualChildCluster();
 
 	/**
 	 * @brief 
@@ -324,7 +325,7 @@ void cluster_propagate(cluster* cl);
  * @param points 
  * @return int32_t 
  */
-int32_t cluster_add_points_to_virtual_child_cluster(cluster* cl, set_t* points);
+int32_t cluster_add_points_to_virtual_child_cluster(cluster* cl, gl_oset_t points);
 
 /**
  * @brief 

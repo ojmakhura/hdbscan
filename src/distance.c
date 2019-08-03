@@ -37,11 +37,14 @@
  * 
  */
 #include <stdlib.h>
-#include <omp.h>
 #include <stdio.h>
 #include <math.h>
-
 #include "hdbscan/distance.h"
+
+#include "config.h"
+#ifdef USE_OMP
+#include <omp.h>
+#endif
 
 /**
  * @brief Function pointer for the difference calculator function that will
@@ -287,7 +290,9 @@ void distance_compute(distance* dis, void* dataset, int rows, int cols, int numN
 	dis->numNeighbors = numNeighbors;
 	setDimenstions(dis, rows, cols);
 
-//#pragma omp parallel for   /// Use omp to speed up calculations
+#ifdef USE_OMP
+#pragma omp parallel for   /// Use omp to speed up calculations
+#endif
 	for (uint i = 0; i < dis->rows; i++) {
 		for (uint j = i + 1; j < dis->rows; j++) {
 			double sum, diff = 0.0;
@@ -313,7 +318,9 @@ void distance_compute(distance* dis, void* dataset, int rows, int cols, int numN
 void distance_get_core_distances(distance *dis){
 
 	double sortedDistance[dis->rows];
+#ifdef USE_OMP	
 #pragma omp parallel for private(sortedDistance)
+#endif
 	for (uint i = 0; i < dis->rows; i++) {
 		for (uint j = 0; j < dis->rows; j++) {
 			sortedDistance[j] = distance_get(dis, i, j);

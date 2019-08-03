@@ -38,7 +38,10 @@
  * 
  */
 #include "hdbscan/undirected_graph.h"
-//#include <omp.h>
+#include "config.h"
+#ifdef USE_OMP
+#include <omp.h>
+#endif
 
 UndirectedGraph* graph_init(UndirectedGraph* g, int32_t numVertices, IntArrayList* verticesA, IntArrayList* verticesB, DoubleArrayList* edgeWeights) {
 	if(g == NULL)
@@ -60,7 +63,9 @@ UndirectedGraph* graph_init(UndirectedGraph* g, int32_t numVertices, IntArrayLis
 		return NULL;
 	}
 
-//#pragma omp parallel for
+#ifdef USE_OMP
+#pragma omp parallel for
+#endif
 	for(int32_t i = 0; i < numVertices; i++){
 		g->edges[i] = int_array_list_init();
 	}

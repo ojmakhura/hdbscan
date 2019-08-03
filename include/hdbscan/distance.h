@@ -36,7 +36,6 @@
 extern "C" {
 #endif
 
-#include <omp.h>
 #include <math.h>
 #include <stdint.h>
 #include "hdbscan/utils.h"

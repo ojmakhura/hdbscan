@@ -44,6 +44,10 @@
 #include "listlib/list.h"
 #include <string.h>
 
+#include "config.h"
+#ifdef USE_OMP
+#include <omp.h>
+#endif
 /**
  * @brief Create or set a hashtable entry data and key
  * 
@@ -101,11 +105,16 @@ hashtable* hashtable_init(size_t buckets, enum HTYPES ktype, enum HTYPES dtype, 
 
     if(htbl == NULL)
     {
-        printf("ERROR: Hash table memoty allocation failed\n");
+        printf("ERROR: Hash table memory allocation failed\n");
         return NULL;
     }
 
     htbl->buckets = find_prime_less_than(buckets);
+    if(htbl->buckets <= 0)
+    {
+        htbl->buckets = buckets;
+    }
+
     htbl->ktype = ktype;
     htbl->dtype = dtype;
     htbl->table = (linkedlist **)malloc(htbl->buckets * sizeof(linkedlist *));
@@ -359,7 +368,9 @@ int32_t hashtable_destroy(hashtable* htbl, void (*key_destroy)(void *key), void 
 {
     if(hashtable_clear(htbl, key_destroy, value_destroy))
     {
-        
+        #ifdef USE_OMP
+        #pragma omp parallel for
+        #endif
         for(size_t i = 0; i < htbl->buckets; i++)
         {
             linkedlist* list = htbl->table[i];

@@ -78,26 +78,18 @@ endforeach()
 #ensure we have pkg-config in the system
 find_package(PkgConfig)
 
-# lookup gli-2.0 in pkg-config
-pkg_check_modules(GLIB2 REQUIRED glib-2.0>=2.36.0)
-
-# A little hack for the python bindings
-list(GET GLIB2_INCLUDE_DIRS 0 GLIB2_FIRST_INDCLUDE_DIR)
-list(GET GLIB2_INCLUDE_DIRS 1 GLIB2_SECOND_INDCLUDE_DIR)
-message("GLIB2_FIRST_INDCLUDE_DIR is ${GLIB2_FIRST_INDCLUDE_DIR}")
-message("GLIB2_SECOND_INDCLUDE_DIR is ${GLIB2_SECOND_INDCLUDE_DIR}")
-
 OPTION (USE_OpenMP "Use OpenMP" ON)
 IF(USE_OpenMP)
   FIND_PACKAGE(OpenMP)
   IF(OPENMP_FOUND)
     SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    SET(OMP_CONFIG "#define USE_OMP")
   ENDIF()
 ENDIF()
 
-SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g3 -Wall -fmessage-length=0 -fPIC -O3 -fno-omit-frame-pointer")
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Wall -fmessage-length=0 -fPIC -O3 -fno-omit-frame-pointer")
+SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g3 -Wall -fmessage-length=0 -fPIC -O3 -fno-omit-frame-pointer -Wincompatible-pointer-types")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Wall -fmessage-length=0 -fPIC -O3 -fno-omit-frame-pointer -Wincompatible-pointer-types")
 
 # ... config files
 configure_file(config.h.in "${PROJECT_BINARY_DIR}/config.h" @ONLY)# set up include-directories

@@ -86,7 +86,7 @@ void hash_table_int_test()
     // to be the same as the number of buckets
     for(int32_t i = 0; i < htbl->buckets; i++)
     {
-        hashtable_entry* tmp = htbl->table[i];
+        linkedlist* tmp = htbl->table[i];
         CU_ASSERT_PTR_NOT_NULL_FATAL(tmp);
     }
 
@@ -254,7 +254,7 @@ void hash_table_str_test()
     CU_ASSERT_EQUAL_FATAL(htbl->size, 2);
     CU_ASSERT_EQUAL_FATAL(set_size(htbl->keys), 2);
 
-    printf("\nHash table has %d elements.\n", htbl->size);
+    printf("\nHash table has %ld elements.\n", htbl->size);
     
     /**
      * @brief Iteration over the hash table
@@ -354,7 +354,7 @@ void hash_table_int_list_test()
     CU_ASSERT_EQUAL_FATAL(set_size(htbl->keys), 2);
 
 
-    printf("\nHash table has %d elements.\n", htbl->size);
+    printf("\nHash table has %ld elements.\n", htbl->size);
     
     /**
      * @brief Iteration over the hash table

@@ -45,6 +45,10 @@
 #include "listlib/longlist.h"
 #include "hdbscan/utils.h"
 
+#include "config.h"
+#ifdef USE_OMP
+#include <omp.h>
+#endif
 
 /****************************************************************************************
  * Implementation of array lists

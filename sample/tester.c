@@ -81,16 +81,6 @@ int main(int argc, char** argv){
 
 	if(argc == 3){ // will read the dataset from the provided csv file
 		dset = getDset(argv[2], &rs, &cs);
-		/*for(int i = 0; i < rs; i++){
-			printf("rows = %d : [", i);
-			for(int j = 0; j < cs; j++){
-				int idx = i * cs + j;
-				printf("%f, ", dset[idx]);
-			}
-			printf("]\n");
-		}*/
-
-
 	} else { // will use the default dataset in dataset.h
 		dset = dataset;
 		rs = rows;
@@ -132,20 +122,16 @@ int main(int argc, char** argv){
 			hdbscan_print_cluster_map(clusterTable);
 			//hdbscan_print_hierarchies(scan->hierarchy, scan->numPoints, NULL);
 
-			//IntDistancesMap* dMap = hdbscan_get_min_max_distances(scan, clusterTable);
-			//clustering_stats stats;
-			//hdbscan_calculate_stats(dMap, &stats);
+			IntDistancesMap* dMap = hdbscan_get_min_max_distances(scan, clusterTable);
+			clustering_stats stats;
+			hdbscan_calculate_stats(dMap, &stats);
 			//hdbscan_print_distance_map(dMap);
-			/*
-			IntArrayList* sorted  = int_array_list_init(g_hash_table_size(clusterTable));
-			GHashTableIter iter;
-			gpointer key;
-			gpointer value;
-			g_hash_table_iter_init (&iter, clusterTable);
-
-			while (g_hash_table_iter_next (&iter, &key, &value)){
-				int32_t* k = (int32_t *)key;
-				int_array_list_append(sorted, *k);
+			
+			IntArrayList* sorted  = int_array_list_init(hashtable_size(clusterTable));
+			for(size_t i = 0; i < set_size(clusterTable->keys); i++){
+				int32_t k;
+				set_value_at(clusterTable->keys, i, &k);
+				int_array_list_append(sorted, k);
 			}
 
 			sorted = hdbscan_sort_by_length(clusterTable, sorted);
@@ -153,33 +139,35 @@ int main(int argc, char** argv){
 
 			int32_t *data = (int32_t *)sorted->data;
 			for(size_t i = 0; i < sorted->size; i++){
-				IntArrayList* l1 = (IntArrayList*)g_hash_table_lookup(clusterTable, data+i);
-				printf("%d : %d\n", data[i], l1->size);
+				IntArrayList* l1;
+				hashtable_lookup(clusterTable, data+i, &l1);
+				printf("%d : %ld\n", data[i], l1->size);
 			}
 			printf("]\n\n");
-
-			//sorted = hdbscan_sort_by_similarity(dMap, sorted, INTRA_DISTANCE_TYPE); // There is choice to use CORE_DISTANCE_TYPE
+			
+			sorted = hdbscan_sort_by_similarity(dMap, sorted, INTRA_DISTANCE_TYPE); // There is choice to use CORE_DISTANCE_TYPE
 			printf("Sorted by similarity = [");
 
 			data = (int32_t *)sorted->data;
 			for(size_t i = 0; i < sorted->size; i++){
-				distance_values* dis = (distance_values*)g_hash_table_lookup(dMap, data+i);
+				distance_values* dis;
+				hashtable_lookup(dMap, data+i, &dis);
 				printf("%d : (%f, %f)\n", data[i], dis->dr_confidence, dis->cr_confidence);
 			}
 			printf("]\n\n");
-			int_array_list_delete(sorted);*/
+			int_array_list_delete(sorted);
 
-			//hdbscan_print_distance_map(dMap);
-			//hdbscan_print_stats(&stats);
-			//printf("Clustering validity : %d\n", hdbscan_analyse_stats(&stats));
-
+			hdbscan_print_distance_map(dMap);
+			hdbscan_print_stats(&stats);
+			printf("Clustering validity : %d\n", hdbscan_analyse_stats(&stats));
+			
 			printf("\n\nCluster labels = [");
 			for(uint i = 0; i < scan->numPoints; i++){
 				printf("%d ", scan->clusterLabels[i]);
 			}
 			printf("]\n\n");
-
-			//hdbscan_destroy_distance_map(dMap);
+			
+			hdbscan_destroy_distance_map(dMap);
 			hdbscan_destroy_cluster_map(clusterTable);
 		}
 

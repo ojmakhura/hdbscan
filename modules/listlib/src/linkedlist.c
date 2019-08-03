@@ -43,6 +43,11 @@
 #include "listlib/linkedlist.h"
 #include <string.h>
 
+#include "config.h"
+#ifdef USE_OMP
+#include <omp.h>
+#endif
+
 void linkedlist_node_unhook(linkedlist* list, node* nd);
 void arraylist_add_by_type(ArrayList* al, enum HTYPES type, void* value);
 
@@ -276,7 +281,6 @@ void linkedlist_node_unhook(linkedlist* list, node* nd)
  */ 
 void* linkedlist_lookup(linkedlist *list, void* data, int32_t remove, int32_t (*d_compare)(const void *a, const void* b))
 {
-    printf("linkedlist_lookup: data is %ld from %ld\n", *(void **)data, data);
     node* tmp = linkedlist_lookup_helper(list, data, d_compare);
 
     // Unhook the node from the list
@@ -284,7 +288,6 @@ void* linkedlist_lookup(linkedlist *list, void* data, int32_t remove, int32_t (*
     {
         linkedlist_node_unhook(list, tmp);
     }
-    printf("linkedlist_lookup: tmp = %ld\n", tmp);
 
     return tmp ? tmp->data : NULL;
 }
