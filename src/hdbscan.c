@@ -98,6 +98,13 @@ cluster* hdbscan_create_new_cluster(hdbscan* sc, gl_oset_t points, int* clusterL
 
 }
 
+/**
+ * @brief 
+ * 
+ * @param sc 
+ * @param minPoints 
+ * @return hdbscan* 
+ */
 hdbscan* hdbscan_init(hdbscan* sc, uint minPoints){
 	if(sc == NULL)
 		sc = (hdbscan*) malloc(sizeof(hdbscan));
@@ -121,6 +128,11 @@ hdbscan* hdbscan_init(hdbscan* sc, uint minPoints){
 	return sc;
 }
 
+/**
+ * @brief 
+ * 
+ * @param sc 
+ */
 void hdbscan_minimal_clean(hdbscan* sc){
 
 	if(sc->clusterLabels != NULL){
@@ -185,12 +197,22 @@ void hdbscan_minimal_clean(hdbscan* sc){
 	sc->clusters = NULL;
 }
 
+/**
+ * @brief 
+ * 
+ * @param sc 
+ */
 void hdbscan_clean(hdbscan* sc){
 
 	distance_clean(&sc->distanceFunction);
 	hdbscan_minimal_clean(sc);
 }
 
+/**
+ * @brief 
+ * 
+ * @param sc 
+ */
 void hdbscan_destroy(hdbscan* sc){
 	hdbscan_clean(sc);
 
@@ -205,7 +227,10 @@ void hdbscan_destroy(hdbscan* sc){
 }
 
 /**
- *
+ * @brief 
+ * 
+ * @param sc 
+ * @return int 
  */
 int hdbscan_do_run(hdbscan* sc){
 
@@ -233,6 +258,13 @@ int hdbscan_do_run(hdbscan* sc){
 	return HDBSCAN_SUCCESS;
 }
 
+/**
+ * @brief 
+ * 
+ * @param sc 
+ * @param minPts 
+ * @return int 
+ */
 int hdbscan_rerun(hdbscan* sc, int32_t minPts){
 	// clean the hdbscan
 	hdbscan_minimal_clean(sc);
@@ -253,6 +285,17 @@ int hdbscan_rerun(hdbscan* sc, int32_t minPts){
 	return hdbscan_do_run(sc);
 }
 
+/**
+ * @brief 
+ * 
+ * @param sc 
+ * @param dataset 
+ * @param rows 
+ * @param cols 
+ * @param rowwise 
+ * @param datatype 
+ * @return int 
+ */
 int hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean rowwise, uint datatype){
 
 	if(sc == NULL){
@@ -265,8 +308,12 @@ int hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean rowwis
 	//printf("hdbscan_get_dataset_size\n");
 	sc->numPoints = hdbscan_get_dataset_size(rows, cols, rowwise);
 	distance_compute(&(sc->distanceFunction), dataset, rows, cols, sc->minPoints-1);
-
+	
 	int32_t csize = sc->numPoints/5;
+	if(csize < 4)
+	{
+		csize = csize * 4;
+	}
 	sc->clusters = ptr_array_list_init(csize, cluster_compare);
 	sc->hierarchy = hashtable_init(csize, H_DOUBLE, H_PTR, long_compare);
 	sc->clusterStabilities = hashtable_init(csize, H_INT, H_PTR, int_compare);
@@ -275,14 +322,13 @@ int hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean rowwis
 }
 
 /**
- * Calculates the number of constraints satisfied by the new clusters and virtual children of the
- * parents of the new clusters.
- * @param newClusterLabels Labels of new clusters
- * @param clusters An vector of clusters
- * @param constraints An vector of constraints
- * @param clusterLabels an array of current cluster labels for points
+ * @brief Calculates the number of constraints satisfied by the new clusters and virtual children of the
+ * 
+ * @param sc 
+ * @param newClusterLabels 
+ * @param currentClusterLabels 
  */
-void hdbscan_calculate_num_constraints_satisfied(hdbscan* sc, gl_oset_t* newClusterLabels,	int* currentClusterLabels){
+void hdbscan_calculate_num_constraints_satisfied(hdbscan* sc, gl_oset_t newClusterLabels,	int* currentClusterLabels){
 
 	if(array_list_size(sc->constraints) == 0)
 	{
@@ -299,7 +345,6 @@ void hdbscan_calculate_num_constraints_satisfied(hdbscan* sc, gl_oset_t* newClus
  * @param pointLastClusters 
  * @return int 
  */
-
 int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy, double* pointNoiseLevels, int* pointLastClusters){
 
 	int64_t lineCount = 0; // Indicates the number of lines written into hierarchyFile.
@@ -609,6 +654,11 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 	return HDBSCAN_SUCCESS;
 }
 
+/**
+ * @brief 
+ * 
+ * @return hierarchy_entry* 
+ */
 hierarchy_entry* hdbscan_create_hierarchy_entry(){
 	hierarchy_entry* entry = (hierarchy_entry *) malloc(sizeof(hierarchy_entry));
 	entry->labels = NULL;
@@ -616,6 +666,11 @@ hierarchy_entry* hdbscan_create_hierarchy_entry(){
 	return entry;
 }
 
+/**
+ * @brief 
+ * 
+ * @param sc 
+ */
 void print_distances(hdbscan* sc){
 	for (int i = 0; i < sc->numPoints; i++) {
 		printf("[");
@@ -628,6 +683,13 @@ void print_distances(hdbscan* sc){
 	printf("\n");
 }
 
+/**
+ * @brief 
+ * 
+ * @param nearestMRDNeighbors 
+ * @param otherVertexIndices 
+ * @param nearestMRDDistances 
+ */
 void print_graph_components(IntArrayList *nearestMRDNeighbors, IntArrayList *otherVertexIndices, DoubleArrayList *nearestMRDDistances){
 	printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>nearestMRDNeighbors>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
 	for(int i = 0; i < nearestMRDNeighbors->size; i++){
@@ -651,6 +713,12 @@ void print_graph_components(IntArrayList *nearestMRDNeighbors, IntArrayList *oth
 	printf("\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n\n\n");
 }
 
+/**
+ * @brief 
+ * 
+ * @param sc 
+ * @return int 
+ */
 int hdbscan_construct_mst(hdbscan* sc){
 	double*  coreDistances = sc->distanceFunction.coreDistances;
 
@@ -768,6 +836,12 @@ int hdbscan_construct_mst(hdbscan* sc){
 	return HDBSCAN_SUCCESS;
 }
 
+/**
+ * @brief 
+ * 
+ * @param sc 
+ * @return boolean 
+ */
 boolean hdbscan_propagate_tree(hdbscan* sc){
 
 	gl_oset_t clustersToExamine = gl_oset_nx_create_empty (GL_ARRAY_OSET, (gl_setelement_compar_fn) int_compare, NULL);
@@ -781,6 +855,9 @@ boolean hdbscan_propagate_tree(hdbscan* sc){
 		addedToExaminationList[i] = FALSE;
 	}
 
+//#ifdef USE_OMP
+//#pragma omp parallel for
+//#endif
 	for(size_t i = 0; i < sc->clusters->size; i++){
 
 		cluster* cl;
@@ -830,6 +907,12 @@ boolean hdbscan_propagate_tree(hdbscan* sc){
 	return infiniteStability;
 }
 
+/**
+ * @brief 
+ * 
+ * @param sc 
+ * @param infiniteStability 
+ */
 void hdbscan_find_prominent_clusters(hdbscan* sc, int infiniteStability){
 	
 	cluster* cl;
@@ -838,8 +921,13 @@ void hdbscan_find_prominent_clusters(hdbscan* sc, int infiniteStability){
 	
 	hashtable *significant = hashtable_init(array_list_size(solution), H_LONG, H_PTR, long_compare);
 	int32_t ret;
+	cluster* c = NULL;
+	/// TODO: see if this could be parallelised
+	//#ifdef USE_OMP
+	//#pragma omp parallel for private(ret)
+	//#endif
 	for(int32_t i = 0; i < solution->size; i++){
-		cluster* c = NULL;
+		
 		ret = array_list_value_at(solution, i, &c);
 
 		if(ret != 0){
@@ -856,14 +944,7 @@ void hdbscan_find_prominent_clusters(hdbscan* sc, int infiniteStability){
 		}
 	}
 	
-	sc->clusterLabels = (int32_t *)malloc(sc->numPoints * sizeof(int));
-	#ifdef USE_OMP
-	#pragma omp parallel for
-	#endif
-	for(size_t i = 0; i < sc->minClusterSize; i++)
-	{
-		sc->clusterLabels[i] = 0;
-	}
+	sc->clusterLabels = (int32_t *)calloc(sc->numPoints, sizeof(int));
 
 	#ifdef USE_OMP
 	#pragma omp parallel for
@@ -891,7 +972,15 @@ void hdbscan_find_prominent_clusters(hdbscan* sc, int infiniteStability){
 	hashtable_destroy(significant, NULL, array_list_delete);
 }
 
-
+/**
+ * @brief 
+ * 
+ * @param sc 
+ * @param pointNoiseLevels 
+ * @param pointLastClusters 
+ * @param infiniteStability 
+ * @return int 
+ */
 int hdbscsan_calculate_outlier_scores(hdbscan* sc, double* pointNoiseLevels, int* pointLastClusters, boolean infiniteStability){
 
 	double* coreDistances = sc->distanceFunction.coreDistances;
@@ -930,11 +1019,17 @@ int hdbscsan_calculate_outlier_scores(hdbscan* sc, double* pointNoiseLevels, int
 	return 1;
 }
 
+/**
+ * @brief 
+ * 
+ * @param labels 
+ * @param begin 
+ * @param end 
+ * @return hashtable* 
+ */
 hashtable* hdbscan_create_cluster_map(int32_t* labels, int32_t begin, int32_t end){
 	int32_t bsize = (end - begin)/4;
 	hashtable* clusterTable = hashtable_init(bsize, H_INT, H_PTR, int_compare);
-
-	//printf("Table initialised from %d with %ld buckets\n", bsize, clusterTable->buckets);
 	int32_t size = end - begin;
 
 	for(int i = begin; i < end; i++){
@@ -952,6 +1047,13 @@ hashtable* hdbscan_create_cluster_map(int32_t* labels, int32_t begin, int32_t en
 	return clusterTable;
 }
 
+/**
+ * @brief 
+ * 
+ * @param sc 
+ * @param clusterTable 
+ * @return hashtable* 
+ */
 hashtable* hdbscan_get_min_max_distances(hdbscan* sc, hashtable* clusterTable){
 	hashtable* distanceMap = hashtable_init(clusterTable->size, H_INT, H_PTR, int_compare);
 	double* core = sc->distanceFunction.coreDistances;
@@ -1013,6 +1115,11 @@ hashtable* hdbscan_get_min_max_distances(hdbscan* sc, hashtable* clusterTable){
 	return distanceMap;
 }
 
+/**
+ * @brief 
+ * 
+ * @param table 
+ */
 void hdbscan_destroy_distance_map(hashtable* table){
 
     hashtable_destroy(table, NULL, free);
@@ -1020,9 +1127,15 @@ void hdbscan_destroy_distance_map(hashtable* table){
 }
 
 /**
- * Calculate skewness and kurtosis using the equations from 
+ * @brief Calculate skewness and kurtosis using the equations from 
  * https://www.gnu.org/software/gsl/doc/html/statistics.html
- */ 
+ * 
+ * @param stats 
+ * @param sum_sc 
+ * @param sum_sd 
+ * @param sum_dc 
+ * @param sum_dd 
+ */
 void hdbscan_skew_kurt_1(clustering_stats* stats, double sum_sc, double sum_sd, double sum_dc, double sum_dd)
 {
 	#ifdef USE_OMP
@@ -1041,10 +1154,16 @@ void hdbscan_skew_kurt_1(clustering_stats* stats, double sum_sc, double sum_sd, 
 }
 
 /**
- * Calculate skewness and kurtosis in the same way as in MS excel
+ * @brief Calculate skewness and kurtosis in the same way as in MS excel
  * https://support.office.com/en-us/article/skew-function-bdf49d86-b1ef-4804-a046-28eaea69c9fa
  * https://support.office.com/en-ie/article/kurt-function-bc3a265c-5da4-4dcb-b7fd-c237789095ab
- */ 
+ * 
+ * @param stats 
+ * @param sum_sc 
+ * @param sum_sd 
+ * @param sum_dc 
+ * @param sum_dd 
+ */
 void hdbscan_skew_kurt_2(clustering_stats* stats, double sum_sc, double sum_sd, double sum_dc, double sum_dd)
 {
 
@@ -1111,9 +1230,9 @@ void hdbscan_skew_kurt_gsl(clustering_stats* stats, double* cr, double* dr)
 }
 
 /**
+ * @brief 
  * 
- * 
- */ 
+ */
 void hdbscan_calculate_stats_helper(double* cr, double* dr, clustering_stats* stats){
 	
 	stats->coreDistanceValues.mean = cr[0];
@@ -1176,6 +1295,12 @@ void hdbscan_calculate_stats_helper(double* cr, double* dr, clustering_stats* st
 	
 }
 
+/**
+ * @brief 
+ * 
+ * @param distanceMap 
+ * @param stats 
+ */
 void hdbscan_calculate_stats(hashtable* distanceMap, clustering_stats* stats){
 
 	double cr[hashtable_size(distanceMap)];
@@ -1214,6 +1339,12 @@ void hdbscan_calculate_stats(hashtable* distanceMap, clustering_stats* stats){
 	}
 }
 
+/**
+ * @brief 
+ * 
+ * @param stats 
+ * @return int32_t 
+ */
 int32_t hdbscan_analyse_stats(clustering_stats* stats){
 	int32_t validity = 0;
 
@@ -1245,6 +1376,15 @@ int32_t hdbscan_analyse_stats(clustering_stats* stats){
 	return validity;
 }
 
+/**
+ * @brief 
+ * 
+ * @param c_data 
+ * @param d_data 
+ * @param lower 
+ * @param upper 
+ * @param pivot 
+ */
 void partition(int32_t *c_data, double *d_data, int lower, int upper, int* pivot){
 	double x = d_data[lower];
 	int32_t x2 = c_data[lower];
@@ -1287,6 +1427,14 @@ void partition(int32_t *c_data, double *d_data, int lower, int upper, int* pivot
 	*pivot = up;
 }
 
+/**
+ * @brief 
+ * 
+ * @param clusters 
+ * @param sortData 
+ * @param left 
+ * @param right 
+ */
 void hdbscan_quicksort(IntArrayList *clusters, DoubleArrayList *sortData, int32_t left, int32_t right){
 
 	double *d_data = (double *)sortData->data;
@@ -1300,9 +1448,14 @@ void hdbscan_quicksort(IntArrayList *clusters, DoubleArrayList *sortData, int32_
 }
 
 /**
- * Sorts the clusters using the distances in the distanceMap. This
+ * @brief Sorts the clusters using the distances in the distanceMap. This
  * function requires that the confidences be already calculates. This
  * can be achieved by calling the hdbscan_calculate_stats function
+ * 
+ * @param distanceMap 
+ * @param clusters 
+ * @param distanceType 
+ * @return IntArrayList* 
  */
 IntArrayList* hdbscan_sort_by_similarity(hashtable* distanceMap, IntArrayList *clusters, int32_t distanceType){
 	
@@ -1369,7 +1522,11 @@ IntArrayList* hdbscan_sort_by_similarity(hashtable* distanceMap, IntArrayList *c
 }
 
 /**
- * Sorts clusters according to how long the cluster is
+ * @brief Sorts clusters according to how long the cluster is
+ * 
+ * @param clusterTable 
+ * @param clusters 
+ * @return IntArrayList* 
  */
 IntArrayList* hdbscan_sort_by_length(hashtable* clusterTable, IntArrayList *clusters){
 
@@ -1416,7 +1573,9 @@ IntArrayList* hdbscan_sort_by_length(hashtable* clusterTable, IntArrayList *clus
 }
 
 /**
- * Destroys the cluster table
+ * @brief Destroys the cluster table
+ * 
+ * @param table 
  */
 void hdbscan_destroy_cluster_map(hashtable* table){
 
@@ -1425,6 +1584,11 @@ void hdbscan_destroy_cluster_map(hashtable* table){
 	table = NULL;
 }
 
+/**
+ * @brief 
+ * 
+ * @param table 
+ */
 void hdbscan_print_cluster_map(hashtable* table){
 
 	assert(table != NULL);
@@ -1446,6 +1610,11 @@ void hdbscan_print_cluster_map(hashtable* table){
 	}
 }
 
+/**
+ * @brief 
+ * 
+ * @param table 
+ */
 void hdbscan_print_cluster_sizes(hashtable* table){
 
 	assert(table != NULL);
@@ -1459,6 +1628,13 @@ void hdbscan_print_cluster_sizes(hashtable* table){
 	}
 }
 
+/**
+ * @brief 
+ * 
+ * @param hierarchy 
+ * @param numPoints 
+ * @param filename 
+ */
 void hdbscan_print_hierarchies(hashtable* hierarchy, uint numPoints, char *filename){
 
 	assert(hierarchy != NULL && filename != NULL);
@@ -1518,6 +1694,11 @@ void hdbscan_print_hierarchies(hashtable* hierarchy, uint numPoints, char *filen
 	printf("//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////\n\n");
 }
 
+/**
+ * @brief 
+ * 
+ * @param distancesMap 
+ */
 void hdbscan_print_distance_map(hashtable* distancesMap){
 
 	printf("\n/////////////////////////////////////////////////////// Printing Distances ///////////////////////////////////////////////////////\n");
@@ -1536,6 +1717,11 @@ void hdbscan_print_distance_map(hashtable* distancesMap){
 	printf("///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////\n\n");
 }
 
+/**
+ * \brief Print statistics
+ * 
+ * \param stats 
+ */
 void hdbscan_print_stats(clustering_stats* stats){
 
 	printf("////////////////////////////////////////////////////// Statistical Values ////////////////////////////////////////////////////////\n");
@@ -1558,6 +1744,11 @@ void hdbscan_print_stats(clustering_stats* stats){
 	printf("//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////\n\n");
 }
 
+/**
+ * \brief Destroy a hierarchy entry
+ * 
+ * \param entry 
+ */
 void hdbscan_destroy_hierarchical_entry(hierarchy_entry* entry)
 {
 	if(entry)

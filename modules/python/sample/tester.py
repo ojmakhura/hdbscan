@@ -32,7 +32,7 @@ def main(fname):
 	print("Opening file : ", fname)	
 	dataset = readFile(fname)
 	
-	scan = PyHdbscan.PyHdbscan(3)
+	scan = PyHdbscan.PyHdbscan(6)
 		
 	print("\n***********************************************************************************\n")
 	for i in range(3, 11):

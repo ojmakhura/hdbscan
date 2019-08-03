@@ -505,6 +505,11 @@ void hdbscan_print_stats(clustering_stats* stats);
  */
 void hdbscan_print_hierarchies(hashtable* hierarchy, uint numPoints, char *filename);
 
+/**
+ * @brief 
+ * 
+ * @param entry 
+ */
 void hdbscan_destroy_hierarchical_entry(hierarchy_entry* entry);
 #ifdef __cplusplus
 };
