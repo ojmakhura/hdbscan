@@ -37,7 +37,6 @@
  * @copyright Copyright (c) 2019
  * 
  */
-#include "config.h"
 #include "hdbscan/cluster.h"
 
 #include <float.h>
@@ -64,7 +63,6 @@ cluster* cluster_init(cluster* cl, int32_t label, cluster* parent, double birthL
 		if (cl->parent != NULL)
 			cl->parent->hasChildren = TRUE;
 		cl->hasChildren = FALSE;
-		//cl->virtualChildCluster = set_init(sizeof(int32_t), int_compare);
 		cl->virtualChildCluster = gl_oset_nx_create_empty (GL_ARRAY_OSET, (gl_setelement_compar_fn) int_compare, NULL);
 		cl->propagatedDescendants = ptr_array_list_init(1, cluster_compare);
 	}
@@ -75,14 +73,12 @@ cluster* cluster_init(cluster* cl, int32_t label, cluster* parent, double birthL
 void cluster_destroy(cluster* cl){
 	if(cl != NULL){
 		if(cl->virtualChildCluster != NULL){
-			//set_delete(cl->virtualChildCluster);
 			gl_oset_free(cl->virtualChildCluster);
 			cl->virtualChildCluster = NULL;
 		}
 
 		if(cl->propagatedDescendants != NULL){
 			array_list_delete(cl->propagatedDescendants);
-			//g_list_free(cl->propagatedDescendants);
 			cl->propagatedDescendants = NULL;
 		}
 		free(cl);
@@ -161,22 +157,17 @@ void cluster_propagate(cluster* cl){
 
 
 int cluster_add_points_to_virtual_child_cluster(cluster* cl, gl_oset_t points){
-//int cluster_add_points_to_virtual_child_cluster(cluster* cl, set_t* points){
 	
-	//for(size_t i = 0; i < points->count; i++){
 	for(size_t i = 0; i < points->count; i++){
 		int32_t d;
 		gl_oset_value_at(points, i, &d);
-		//set_value_at(points, i, &d);
 		gl_oset_nx_add(cl->virtualChildCluster, d);
-		//set_insert(cl->virtualChildCluster, &d);
 	}
 
 	return 1;
 }
 
 boolean cluster_virtual_child_contains_point(cluster* cl, int32_t point){
-	//return set_find(cl->virtualChildCluster, &point); //
 	return gl_oset_search(cl->virtualChildCluster, point);
 }
 
@@ -203,12 +194,11 @@ int32_t cluster_compare(const void* a, const void* b)
 	const cluster* c2 = (cluster *)b;
 	
 	if (c1 > c2) {
-		return (1);
+		return 1;
 	}
 	if (c1 == c2) {
-		return (0);
+		return 0;
 	}
 	
-	/* default: a < b */
-	return (-1);
+	return -1;
 }

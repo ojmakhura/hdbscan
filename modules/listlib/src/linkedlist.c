@@ -43,8 +43,7 @@
 #include "listlib/linkedlist.h"
 #include <string.h>
 
-#include "config.h"
-#ifdef USE_OMP
+#ifdef _OPENMP
 #include <omp.h>
 #endif
 
@@ -149,9 +148,8 @@ node* linkedlist_node_front_add(linkedlist* list, void* data)
     } else {
         list->tail = nd; // When list is empty, the tail should point to the node too.
     }
-    //printf("%ld : %ld\n", list->head, nd);
+    
     list->head = nd;
-    //printf("%ld : %ld\n", list->head, nd);
     list->size += 1;
 
     return nd;

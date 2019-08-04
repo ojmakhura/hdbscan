@@ -38,8 +38,7 @@
  * 
  */
 #include "hdbscan/undirected_graph.h"
-#include "config.h"
-#ifdef USE_OMP
+#ifdef _OPENMP
 #include <omp.h>
 #endif
 
@@ -63,7 +62,7 @@ UndirectedGraph* graph_init(UndirectedGraph* g, int32_t numVertices, IntArrayLis
 		return NULL;
 	}
 
-#ifdef USE_OMP
+#ifdef _OPENMP
 #pragma omp parallel for
 #endif
 	for(int32_t i = 0; i < numVertices; i++){

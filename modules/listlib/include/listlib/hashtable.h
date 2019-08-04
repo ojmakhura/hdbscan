@@ -96,6 +96,17 @@ typedef struct HASHTABLE_
 hashtable* hashtable_init(size_t buckets, enum HTYPES ktype, enum HTYPES dtype, int32_t (*compare)(const void *a, const void *b));
 
 /**
+ * \brief Initialise a chained hash table with an actual number of buckets.
+ * 
+ * \param buckets 
+ * \param ktype 
+ * \param dtype 
+ * \param compare 
+ * \return hashtable* 
+ */
+hashtable* hashtable_init_size(size_t buckets, enum HTYPES ktype, enum HTYPES dtype, int32_t (*compare)(const void *a, const void *b));
+
+/**
  * \brief Insert the value into the table. 
  * 
  * The void pointer does not have to

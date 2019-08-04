@@ -43,8 +43,7 @@
 #include <math.h>
 #include "listlib/set.h"
 
-#include "config.h"
-#ifdef USE_OMP
+#ifdef _OPENMP
 #include <omp.h>
 #endif
 
@@ -78,7 +77,7 @@ uint hdbscan_get_dataset_size(uint rows, uint cols, boolean rowwise){
  * @return cluster*
  */
 cluster* hdbscan_create_new_cluster(hdbscan* sc, gl_oset_t points, int* clusterLabels, cluster* parentCluster, int clusterLabel, double edgeWeight){
-#ifdef USE_OMP
+#ifdef _OPENMP
 #pragma omp parallel for
 #endif
 	for(int i = 0; i < points->count; i++){
@@ -359,7 +358,7 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 	int32_t previousClusterLabels[numVertices];
 	int32_t currentClusterLabels[numVertices];
 
-#ifdef USE_OMP
+#ifdef _OPENMP
 #pragma omp parallel for
 #endif
 	for(int32_t i = 0; i < numVertices; i++){
@@ -531,7 +530,7 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 					array_list_value_at(sc->clusters, examinedClusterLabel, &examinedCluster);
 					cluster* newCluster = hdbscan_create_new_cluster(sc, constructingSubCluster, currentClusterLabels, examinedCluster, 0, currentEdgeWeight);
 					
-					#ifdef USE_OMP
+					#ifdef _OPENMP
 					#pragma omp parallel for
 					#endif
 					for (int i = 0; i < constructingSubCluster->count; i++) {
@@ -588,7 +587,7 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 			entry->edgeWeight = currentEdgeWeight;
 			entry->labels = (int32_t*)malloc(numVertices * sizeof(int32_t));
 
-			#ifdef USE_OMP
+			#ifdef _OPENMP
 			#pragma omp parallel for
 			#endif
 			for(size_t i = 0; i < numVertices; i++)
@@ -602,7 +601,7 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 		// Assign offsets and calculate the number of constraints satisfied:
 		gl_oset_t newClusterLabels = gl_oset_nx_create_empty (GL_ARRAY_OSET, (gl_setelement_compar_fn) int_compare, NULL);
 
-		#ifdef USE_OMP
+		#ifdef _OPENMP
 		#pragma omp parallel for
 		#endif
 		for(size_t i = 0; i < array_list_size(newClusters); i++)
@@ -613,7 +612,7 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 			gl_oset_nx_add(newClusterLabels, lineCount);
 		}
 		
-		#ifdef USE_OMP
+		#ifdef _OPENMP
 		#pragma omp parallel for
 		#endif
 		for (uint i = 0; i < numVertices; i++) {
@@ -634,7 +633,7 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 	entry->edgeWeight = 0.0;
 	entry->labels = (int32_t*) malloc(numVertices * sizeof(int32_t));
 	//memset(entry->labels, 0, numVertices * sizeof(int32_t));
-	#ifdef USE_OMP
+	#ifdef _OPENMP
 	#pragma omp parallel for
 	#endif
 	for(size_t i = 0; i < numVertices; i++)
@@ -730,7 +729,7 @@ int hdbscan_construct_mst(hdbscan* sc){
 
 	//One bit is set (true) for each attached point, or unset (false) for unattached points:
 	boolean attachedPoints[size];
-#ifdef USE_OMP
+#ifdef _OPENMP
 #pragma omp parallel for
 #endif
 	for(int i = 0; i < size-1; i++){
@@ -770,7 +769,7 @@ int hdbscan_construct_mst(hdbscan* sc){
 		double nearestMRDDistance = DBL_MAX;
 
 		//Iterate through all unattached points, updating distances using the current point:
-#ifdef USE_OMP
+#ifdef _OPENMP
 #pragma omp parallel for
 #endif
 		for (unsigned int neighbor = 0; neighbor < size; neighbor++) {
@@ -816,7 +815,7 @@ int hdbscan_construct_mst(hdbscan* sc){
 
 	//If necessary, attach self edges:
 	if (sc->selfEdges == TRUE) {
-		#ifdef USE_OMP
+		#ifdef _OPENMP
 		#pragma omp parallel for
 		#endif
 		for (uint i = size - 1; i < size * 2 - 1; i++) {
@@ -848,14 +847,14 @@ boolean hdbscan_propagate_tree(hdbscan* sc){
 	boolean addedToExaminationList[sc->clusters->size];
 	boolean infiniteStability = FALSE;
 
-#ifdef USE_OMP
+#ifdef _OPENMP
 #pragma omp parallel for
 #endif
 	for(size_t i = 0; i < sc->clusters->size; i++){
 		addedToExaminationList[i] = FALSE;
 	}
 
-//#ifdef USE_OMP
+//#ifdef _OPENMP
 //#pragma omp parallel for
 //#endif
 	for(size_t i = 0; i < sc->clusters->size; i++){
@@ -923,7 +922,7 @@ void hdbscan_find_prominent_clusters(hdbscan* sc, int infiniteStability){
 	int32_t ret;
 	cluster* c = NULL;
 	/// TODO: see if this could be parallelised
-	//#ifdef USE_OMP
+	//#ifdef _OPENMP
 	//#pragma omp parallel for private(ret)
 	//#endif
 	for(int32_t i = 0; i < solution->size; i++){
@@ -946,7 +945,7 @@ void hdbscan_find_prominent_clusters(hdbscan* sc, int infiniteStability){
 	
 	sc->clusterLabels = (int32_t *)calloc(sc->numPoints, sizeof(int));
 
-	#ifdef USE_OMP
+	#ifdef _OPENMP
 	#pragma omp parallel for
 	#endif
 	for(size_t i = 0; i < set_size(significant->keys); i++)
@@ -993,7 +992,7 @@ int hdbscsan_calculate_outlier_scores(hdbscan* sc, double* pointNoiseLevels, int
 	}
 
 	//int i = 0;
-#ifdef USE_OMP
+#ifdef _OPENMP
 #pragma omp parallel for
 #endif
 	for(uint i = 0; i < sc->numPoints; i++){
@@ -1055,7 +1054,7 @@ hashtable* hdbscan_create_cluster_map(int32_t* labels, int32_t begin, int32_t en
  * @return hashtable* 
  */
 hashtable* hdbscan_get_min_max_distances(hdbscan* sc, hashtable* clusterTable){
-	hashtable* distanceMap = hashtable_init(clusterTable->size, H_INT, H_PTR, int_compare);
+	hashtable* distanceMap = hashtable_init_size(clusterTable->size, H_INT, H_PTR, int_compare);
 	double* core = sc->distanceFunction.coreDistances;
 	double zero = 0.0000000000000000000;
 	int32_t key;
@@ -1138,7 +1137,7 @@ void hdbscan_destroy_distance_map(hashtable* table){
  */
 void hdbscan_skew_kurt_1(clustering_stats* stats, double sum_sc, double sum_sd, double sum_dc, double sum_dd)
 {
-	#ifdef USE_OMP
+	#ifdef _OPENMP
 	#pragma omp parallel
 	{
 	#endif
@@ -1148,7 +1147,7 @@ void hdbscan_skew_kurt_1(clustering_stats* stats, double sum_sc, double sum_sd, 
 
 	stats->coreDistanceValues.kurtosis = (sum_dc / (N * pow(stats->coreDistanceValues.standardDev, 4))) - 3;
 	stats->intraDistanceValues.kurtosis = (sum_dd / (N *pow(stats->intraDistanceValues.standardDev, 4))) - 3;
-	#ifdef USE_OMP
+	#ifdef _OPENMP
 	}
 	#endif
 }
@@ -1167,7 +1166,7 @@ void hdbscan_skew_kurt_1(clustering_stats* stats, double sum_sc, double sum_sd, 
 void hdbscan_skew_kurt_2(clustering_stats* stats, double sum_sc, double sum_sd, double sum_dc, double sum_dd)
 {
 
-	#ifdef USE_OMP
+	#ifdef _OPENMP
 	#pragma omp parallel
 	{
 	#endif
@@ -1199,7 +1198,7 @@ void hdbscan_skew_kurt_2(clustering_stats* stats, double sum_sc, double sum_sd, 
 		stats->coreDistanceValues.kurtosis = 0.0/0.0;
 		stats->intraDistanceValues.kurtosis = 0.0/0.0;
 	}
-	#ifdef USE_OMP
+	#ifdef _OPENMP
 	}
 	#endif
 }
@@ -1306,7 +1305,7 @@ void hdbscan_calculate_stats(hashtable* distanceMap, clustering_stats* stats){
 	double cr[hashtable_size(distanceMap)];
 	double dr[hashtable_size(distanceMap)];
 
-	#ifdef USE_OMP
+	#ifdef _OPENMP
 	#pragma omp parallel for
 	#endif
 	for(size_t i = 0; i < hashtable_size(distanceMap); i++)
@@ -1322,7 +1321,7 @@ void hdbscan_calculate_stats(hashtable* distanceMap, clustering_stats* stats){
 	stats->count = hashtable_size(distanceMap);
 	hdbscan_calculate_stats_helper(cr, dr, stats);
 
-	#ifdef USE_OMP
+	#ifdef _OPENMP
 	#pragma omp parallel for
 	#endif
 	for(size_t i = 0; i < hashtable_size(distanceMap); i++)
@@ -1496,7 +1495,7 @@ IntArrayList* hdbscan_sort_by_similarity(hashtable* distanceMap, IntArrayList *c
 		int32_t *data = (int32_t *)clusters->data;
 		distances->size = clusters->size;
 		double *ddata = (double *)distances->data;
-#ifdef USE_OMP
+#ifdef _OPENMP
 #pragma omp parallel for
 #endif
 		for(int32_t i = 0; i < clusters->size; i++){
@@ -1556,7 +1555,7 @@ IntArrayList* hdbscan_sort_by_length(hashtable* clusterTable, IntArrayList *clus
 	} else { /// else we just need to get the lengths from the hash table
 		int32_t *data = (int32_t *)clusters->data;
 		lengths->size = clusters->size;
-#ifdef USE_OMP
+#ifdef _OPENMP
 #pragma omp parallel for
 #endif
 		for(int32_t i = 0; i < clusters->size; i++){

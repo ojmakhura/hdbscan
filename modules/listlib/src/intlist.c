@@ -45,6 +45,9 @@
 #include "listlib/intlist.h"
 #include "hdbscan/utils.h"
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 /****************************************************************************************
  * Implementation of array lists for integers
@@ -71,6 +74,9 @@ IntArrayList* int_array_list_init_full(int32_t size, int32_t value){
 	IntArrayList* list = int_array_list_init_size(size);
 	int32_t* ldata = (int32_t *)list->data;
 
+	#ifdef _OPENMP
+	#pragma omp parallel for
+	#endif
 	for(int32_t i = 0; i < size; i++){
 		ldata[i] = value;
 	}
@@ -178,7 +184,6 @@ int32_t int_array_list_set_value_at(IntArrayList* list, int32_t data, size_t ind
 }
 
 void int_array_list_sort(IntArrayList* list){
-	//int32_t* ldata = (int32_t *)list->data;
 	qsort(list->data, list->size, list->step, list->compare);
 }
 

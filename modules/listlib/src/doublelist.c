@@ -44,9 +44,11 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
-#ifdef USE_OMP
+
+#ifdef _OPENMP
 #include <omp.h>
 #endif
+
 #include "listlib/doublelist.h"
 #include "hdbscan/utils.h"
 
@@ -78,7 +80,7 @@ DoubleArrayList* double_array_list_init_full(int32_t size, double value){
 	assert(size > 0);
 	DoubleArrayList* list = double_array_list_init_size(size);
 	double* ldata = (double *)list->data;
-#ifdef USE_OMP
+#ifdef _OPENMP
 #pragma omp parallel for
 #endif
 	for(int32_t i = 0; i < size; i++){

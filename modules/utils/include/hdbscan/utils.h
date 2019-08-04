@@ -40,19 +40,6 @@ extern "C" {
 #include <string.h>
 #include <math.h>
 
-//typedef GList ListNode;
-///typedef GList ClusterList;
-//typedef GList ConstraintList;
-//typedef GPtrArray ClusterPtrList;
-//typedef GPtrArray ConstraintPtrList;
-
-//typedef hashtable IntIntListMap;			// Hash table with keys as int and values as a list of integers
-//typedef hashtable LongIntListMap;
-//typedef hashtable LongIntPointerMap;
-//typedef hashtable IntDoubleMap;
-//typedef hashtable IntDoubleListMap;
-//typedef hashtable IntClusterListMap;
-
 #ifndef boolean
 typedef int boolean;
 #endif

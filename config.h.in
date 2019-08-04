@@ -4,8 +4,6 @@
 #define HDBSCAN_PATCH_VERSION (@HDBSCAN_PATCH_VERSION@)
 #define HDBSCAN_VERSION_STRING "@HDBSCAN_VERSION@"
 
-@OMP_CONFIG@
-
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* always defined to indicate that i18n is enabled */

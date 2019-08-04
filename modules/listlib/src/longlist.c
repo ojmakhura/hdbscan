@@ -45,8 +45,7 @@
 #include "listlib/longlist.h"
 #include "hdbscan/utils.h"
 
-#include "config.h"
-#ifdef USE_OMP
+#ifdef _OPENMP
 #include <omp.h>
 #endif
 
@@ -75,7 +74,9 @@ LongArrayList* long_array_list_init_full(int32_t size, long value){
 
 	LongArrayList* list = long_array_list_init_size(size);
 	long* ldata = (long *)list->data;
-
+	#ifdef _OPENMP
+	#pragma omp parallel for
+	#endif
 	for(int32_t i = 0; i < size; i++){
 		ldata[i] = value;
 	}

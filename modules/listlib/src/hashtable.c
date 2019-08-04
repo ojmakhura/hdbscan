@@ -44,8 +44,7 @@
 #include "listlib/list.h"
 #include <string.h>
 
-#include "config.h"
-#ifdef USE_OMP
+#ifdef _OPENMP
 #include <omp.h>
 #endif
 /**
@@ -101,6 +100,20 @@ int32_t hashtable_entry_compare(const void* a, const void* b)
  */
 hashtable* hashtable_init(size_t buckets, enum HTYPES ktype, enum HTYPES dtype, int32_t (*compare)(const void *a, const void *b))
 {
+    return hashtable_init_size(find_prime_less_than(buckets), ktype, dtype, compare);
+}
+
+/**
+ * @brief 
+ * 
+ * @param buckets 
+ * @param ktype 
+ * @param dtype 
+ * @param compare 
+ * @return hashtable* 
+ */
+hashtable* hashtable_init_size(size_t buckets, enum HTYPES ktype, enum HTYPES dtype, int32_t (*compare)(const void *a, const void *b))
+{
     hashtable* htbl = (hashtable *)malloc(sizeof(hashtable));
 
     if(htbl == NULL)
@@ -109,7 +122,7 @@ hashtable* hashtable_init(size_t buckets, enum HTYPES ktype, enum HTYPES dtype, 
         return NULL;
     }
 
-    htbl->buckets = find_prime_less_than(buckets);
+    htbl->buckets = buckets;
     if(htbl->buckets <= 0)
     {
         htbl->buckets = buckets;
@@ -126,6 +139,10 @@ hashtable* hashtable_init(size_t buckets, enum HTYPES ktype, enum HTYPES dtype, 
     }
 
     // We need to initialise each bucket to an empty linked list
+
+    #ifdef _OPENMP
+    #pragma omp parallel for
+    #endif
     for(int32_t i = 0; i < htbl->buckets; i++)
     {
         htbl->table[i] = linkedlist_init(H_PTR);
@@ -134,7 +151,7 @@ hashtable* hashtable_init(size_t buckets, enum HTYPES ktype, enum HTYPES dtype, 
     htbl->size = 0;
     htbl->collisions = 0;
     htbl->key_compare = compare;
-    htbl->keys = set_init(get_htype_size(htbl->ktype), htbl->key_compare);
+    htbl->keys = set_init(get_htype_size(htbl->ktype), compare);
 
     /**
      * @brief Determine the function to use for key hashing
@@ -142,33 +159,25 @@ hashtable* hashtable_init(size_t buckets, enum HTYPES ktype, enum HTYPES dtype, 
      */
     if(htbl->ktype == H_INT) 
     {
-        //printf("hashtable_init: int_hash\n");
         htbl->key_hash = int_hash;
     } else if(htbl->ktype == H_CHAR) 
     {
-        //printf("hashtable_init: char_hash\n");
         htbl->key_hash = char_hash;
     } else if(htbl->ktype == H_SHORT) 
     {
-        //printf("hashtable_init: short_hash\n");
         htbl->key_hash = short_hash;
     } else if(htbl->ktype == H_LONG) 
     {
-        //printf("hashtable_init: long_hash\n");
         htbl->key_hash = long_hash;
     } else if(htbl->ktype == H_DOUBLE) 
     {
-        ///printf("hashtable_init: double_hash\n");
         htbl->key_hash = double_hash;
     } else if(htbl->ktype == H_FLOAT) 
     {
-        //printf("hashtable_init: float_hash\n");
         htbl->key_hash = float_hash;
     } else if(htbl->ktype == H_STRING) {
-        //printf("hashtable_init: str_hash\n");
         htbl->key_hash = str_hash;
     } else {
-        //printf("hashtable_init: NULL\n");
         htbl->key_hash = NULL;
     }
 
@@ -228,7 +237,7 @@ hashtable_entry* hashtable_lookup_entry(hashtable* htbl, void* key)
     while(nd)
     {
         entry = *(hashtable_entry **)nd->data;
-        if(htbl->key_compare(entry->key, key) == 0)
+        if(entry->key_compare(entry->key, key) == 0)
         {
             break;
         }
@@ -279,6 +288,7 @@ int32_t hashtable_remove(hashtable* htbl, void* key, void* data)
 {
     int32_t bucket = htbl->key_hash(key, htbl->buckets);
     linkedlist* list = htbl->table[bucket];
+
     hashtable_entry* entry = malloc(sizeof(hashtable_entry));
     size_t ksize = get_htype_size(htbl->ktype);
     size_t dsize = get_htype_size(htbl->dtype);
@@ -286,6 +296,7 @@ int32_t hashtable_remove(hashtable* htbl, void* key, void* data)
     entry->data = malloc(dsize);
     memcpy(entry->key, key, ksize);
     memcpy(entry->data, data, dsize);
+    entry->key_compare = htbl->key_compare;
 
     int32_t ret = linkedlist_remove(list, &entry, hashtable_entry_compare);
     
@@ -368,9 +379,9 @@ int32_t hashtable_destroy(hashtable* htbl, void (*key_destroy)(void *key), void 
 {
     if(hashtable_clear(htbl, key_destroy, value_destroy))
     {
-        #ifdef USE_OMP
-        #pragma omp parallel for
-        #endif
+        //#ifdef _OPENMP
+        //#pragma omp parallel for
+        //#endif
         for(size_t i = 0; i < htbl->buckets; i++)
         {
             linkedlist* list = htbl->table[i];
@@ -407,6 +418,7 @@ hashtable_entry* hashtable_set_entry(hashtable* htbl, hashtable_entry *entry, vo
         entry->prev = NULL;
     }
 
+    entry->key_compare = htbl->key_compare;
     memcpy(entry->key, key, ksize);
     memcpy(entry->data, data, dsize);
     

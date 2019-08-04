@@ -41,8 +41,7 @@
 #include <math.h>
 #include "hdbscan/distance.h"
 
-#include "config.h"
-#ifdef USE_OMP
+#ifdef _OPENMP
 #include <omp.h>
 #endif
 
@@ -290,7 +289,7 @@ void distance_compute(distance* dis, void* dataset, int rows, int cols, int numN
 	dis->numNeighbors = numNeighbors;
 	setDimenstions(dis, rows, cols);
 
-#ifdef USE_OMP
+#ifdef _OPENMP
 #pragma omp parallel for   /// Use omp to speed up calculations
 #endif
 	for (uint i = 0; i < dis->rows; i++) {
@@ -318,7 +317,7 @@ void distance_compute(distance* dis, void* dataset, int rows, int cols, int numN
 void distance_get_core_distances(distance *dis){
 
 	double sortedDistance[dis->rows];
-#ifdef USE_OMP	
+#ifdef _OPENMP	
 #pragma omp parallel for private(sortedDistance)
 #endif
 	for (uint i = 0; i < dis->rows; i++) {

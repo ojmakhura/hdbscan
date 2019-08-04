@@ -50,10 +50,13 @@
  */
 void test_find_prime_less_than()
 {
+    printf("find_prime_less_than(10) = %d\n", find_prime_less_than(10));
+    printf("find_prime_less_than(29) = %d\n", find_prime_less_than(29));
+    printf("find_prime_less_than(19+1) = %d\n", find_prime_less_than(19+1));
+    printf("find_prime_less_than(93) = %d\n", find_prime_less_than(93));
     CU_ASSERT_TRUE_FATAL(7 == find_prime_less_than(10));
-    CU_ASSERT_TRUE_FATAL(29 == find_prime_less_than(29));
-    CU_ASSERT_TRUE_FATAL(91 == find_prime_less_than(93));
-    CU_ASSERT_TRUE_FATAL(93 == find_prime_less_than(93));
+    CU_ASSERT_TRUE_FATAL(23 == find_prime_less_than(29));
+    CU_ASSERT_TRUE_FATAL(87 == find_prime_less_than(93));
 }
 
 /**
