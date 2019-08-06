@@ -172,7 +172,7 @@ int main(int argc, char** argv){
 		}
 
 		printf("***********************************************************************************\n\n");
-		break;
+		//break;
 	}
 
 	hdbscan_destroy(scan);

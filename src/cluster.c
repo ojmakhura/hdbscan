@@ -192,7 +192,6 @@ int32_t cluster_compare(const void* a, const void* b)
 {
 	const cluster* c1 = (cluster *)a;
 	const cluster* c2 = (cluster *)b;
-	printf("cluster_compare: (%ld, %ld)\n", c1, c2);
 
 	if(c1 == NULL)
 	{
@@ -203,7 +202,7 @@ int32_t cluster_compare(const void* a, const void* b)
 	{
 		return 1;
 	}
-	printf("Comparing clusters %d and %d\n", c1->label, c2->label);
+	
 	if (c1->label > c2->label) {
 		return 1;
 	}

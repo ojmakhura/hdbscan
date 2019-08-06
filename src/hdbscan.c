@@ -234,8 +234,7 @@ int hdbscan_do_run(hdbscan* sc){
 	{
 		csize = csize * 4;
 	}
-	//sc->clusters = ptr_array_list_init(csize, cluster_compare);
-	//sc->clusterStabilities = hashtable_init(csize, H_INT, H_PTR, int_compare);
+	
 	sc->hierarchy = hashtable_init(csize, H_DOUBLE, H_PTR, long_compare);
 	int err = hdbscan_construct_mst(sc);
 
@@ -382,7 +381,6 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 	while (currentEdgeIndex >= 0) {
 		double currentEdgeWeight;
 		double_array_list_data(sc->mst->edgeWeights, currentEdgeIndex, &currentEdgeWeight);
-		//ArrayList* newClusters = array_list_init(2, sizeof(cluster *), cluster_compare);
 		if(!array_list_empty(newClusters))
 		{
 			array_list_clear(newClusters, 0);
