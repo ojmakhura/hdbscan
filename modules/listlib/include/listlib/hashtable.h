@@ -26,7 +26,10 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/** @file hashtable.h */
+/** @file hashtable.h 
+ * 
+ * 
+ */
 #ifndef HASHTABLE_H_
 #define HASHTABLE_H_
 
@@ -34,7 +37,7 @@
 extern "C" {
 #endif
 
-#include "linkedlist.h"
+//#include "linkedlist.h"
 #include "list.h"
 #include "set.h"
 #include "primes.h"
@@ -69,7 +72,7 @@ typedef struct HASHTABLE_
     size_t size;               //! The size of table
     enum HTYPES ktype;               //! The type of the data of the keys
     enum HTYPES dtype;               //! The type of the data of the values
-    linkedlist** table;           //! An array list for storing linked list pointers.
+    hashtable_entry** table;           //! An array list for storing linked list pointers.
     set_t* keys;                //! A set of all the keys in the table.
     int32_t collisions;         //! For diagnostic information on the collision
     int32_t (*key_compare)(const void *a, const void *b);

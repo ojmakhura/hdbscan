@@ -42,6 +42,7 @@
 #include <CUnit/Basic.h>
 #include <stdio.h>
 #include "listlib/hashtable.h"
+#include "listlib/intlist.h"
 
 /**
  * @brief Initialise the hashtable test suite.
@@ -86,8 +87,8 @@ void hash_table_int_test()
     // to be the same as the number of buckets
     for(int32_t i = 0; i < htbl->buckets; i++)
     {
-        linkedlist* tmp = htbl->table[i];
-        CU_ASSERT_PTR_NOT_NULL_FATAL(tmp);
+        hashtable_entry* tmp = htbl->table[i];
+        CU_ASSERT_PTR_NULL_FATAL(tmp);
     }
 
     // Test adding to the table
@@ -199,7 +200,7 @@ void hash_table_int_test()
     CU_ASSERT_EQUAL_FATAL(set_size(htbl->keys), 5);
     CU_ASSERT_EQUAL_FATAL(htbl->collisions, 2);
 
-    printf("\nHash table has %d elements.\n", htbl->size);
+    printf("\nHash table has %ld elements.\n", htbl->size);
     
     /**
      * @brief Iteration over the hash table

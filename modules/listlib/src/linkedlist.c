@@ -226,7 +226,6 @@ int32_t linkedlist_tail_add(linkedlist* list, void* data)
 node* linkedlist_lookup_helper(linkedlist *list, void* data, int32_t (*d_compare)(const void *a, const void* b))
 {
     node* tmp = list->head;
-
     /// Iterate through the list to find the key
     while(tmp != NULL)
     {
@@ -261,6 +260,11 @@ void linkedlist_node_unhook(linkedlist* list, node* nd)
         nd->prev = NULL;
     } else { // this is the first node
         list->head = nd->next;
+
+        if(list->head != NULL)
+        {
+            list->head->prev = NULL;
+        }
     }
 
     // Get the next node to point to the preious node
@@ -270,6 +274,10 @@ void linkedlist_node_unhook(linkedlist* list, node* nd)
         nd->next = NULL;
     } else { // This is the las node
         list->tail = nd->prev;
+        if(list->tail != NULL)
+        {
+            list->tail->next = NULL;
+        }
     }
     list->size--;
 }
@@ -287,7 +295,7 @@ void* linkedlist_lookup(linkedlist *list, void* data, int32_t remove, int32_t (*
         linkedlist_node_unhook(list, tmp);
     }
 
-    return tmp ? tmp->data : NULL;
+    return tmp ? tmp->data : tmp;
 }
 
 /**

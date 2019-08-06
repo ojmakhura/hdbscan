@@ -95,6 +95,12 @@ void int_linked_list_test()
     CU_ASSERT_EQUAL_FATAL(0, linkedlist_value_at(list, 0, &d));
     CU_ASSERT_EQUAL_FATAL(100, d);
 
+    d = -25;
+    int *x;
+    
+    x = linkedlist_lookup(list, &d, 0, int_compare);
+    printf(">>>>>>>>>> %d\n", x ? *x : NULL);
+
     node* nd = list->head;
     printf("\n");
     int32_t i = 0;

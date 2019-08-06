@@ -43,6 +43,7 @@
 #include "listlib/hashtable.h"
 #include "listlib/list.h"
 #include <string.h>
+#include <assert.h>
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -64,7 +65,7 @@ hashtable_entry* hashtable_set_entry(hashtable* htbl, hashtable_entry *entry, vo
  * @param htbl 
  * @param entry 
  */
-void hashtable_entry_destroy(hashtable* htbl, hashtable_entry *entry, void* key, void* data);
+void hashtable_entry_destroy(hashtable_entry *entry, void* data, size_t dsize);
 
 /**
  * @brief Look for the key in htbl
@@ -130,22 +131,14 @@ hashtable* hashtable_init_size(size_t buckets, enum HTYPES ktype, enum HTYPES dt
 
     htbl->ktype = ktype;
     htbl->dtype = dtype;
-    htbl->table = (linkedlist **)malloc(htbl->buckets * sizeof(linkedlist *));
+
+    // Make sure all buckets are NULL
+    htbl->table = calloc(htbl->buckets, sizeof(hashtable_entry *));
     if(htbl->table == NULL)
     {
         printf("ERROR: Hash table bucket memory allocation failed\n");
         free(htbl);
         return NULL;
-    }
-
-    // We need to initialise each bucket to an empty linked list
-
-    #ifdef _OPENMP
-    #pragma omp parallel for
-    #endif
-    for(int32_t i = 0; i < htbl->buckets; i++)
-    {
-        htbl->table[i] = linkedlist_init(H_PTR);
     }
 
     htbl->size = 0;
@@ -190,17 +183,24 @@ hashtable* hashtable_init_size(size_t buckets, enum HTYPES ktype, enum HTYPES dt
 int32_t hashtable_insert(hashtable* htbl, void *key, void* value)
 {
     int32_t bucket = htbl->key_hash(key, htbl->buckets); // hash the key
-    linkedlist* list = htbl->table[bucket];
+    hashtable_entry* list = htbl->table[bucket];
     hashtable_entry* entry = hashtable_lookup_entry(htbl, key);
 
     if(entry == NULL) /// The key is not in the table
     {
         entry = hashtable_set_entry(htbl, entry, key, value);
-        if(list->size > 0)
+
+        // The bucket has at least one entry
+        if(htbl->table[bucket] != NULL)
         {
             htbl->collisions++;
-        }
-        linkedlist_tail_add(list, &entry);
+
+            // Always and to the front of the entry chain
+            entry->next = htbl->table[bucket];
+            htbl->table[bucket]->prev = entry;
+        } 
+
+        htbl->table[bucket] = entry;
         htbl->size++;        
         set_insert(htbl->keys, key);
     } else { /// The key is in the table 
@@ -228,35 +228,30 @@ int32_t hashtable_insert(hashtable* htbl, void *key, void* value)
  */
 hashtable_entry* hashtable_lookup_entry(hashtable* htbl, void* key)
 {
-    int32_t bucket = htbl->key_hash(key, htbl->buckets);
-    linkedlist* list = htbl->table[bucket];    
-    hashtable_entry* entry = NULL;
+    int32_t bucket = htbl->key_hash(key, htbl->buckets);    
+    hashtable_entry* entry = htbl->table[bucket];
     
-    node* nd = list->head;
-    int32_t i = 0;
-    while(nd)
+    while(entry)
     {
-        entry = *(hashtable_entry **)nd->data;
-        if(entry->key_compare(entry->key, key) == 0)
+        if(htbl->key_compare(entry->key, key) == 0)
         {
             break;
         }
 
-        nd = nd->next;
-        i++;
+        entry = entry->next;
     }
 
     // Check that we actually found the data
-    return nd ? *(hashtable_entry **)nd->data : NULL;
+    return entry;
 }
 
 /**
  * @brief Look for the ArrayList at the key location.
  * 
  * First we find the bucket then if it is not empty, we iterate
- * through the nodes to find one that matches the key. If we find
- * the key in one of the nodes, we then return the ArrayList in the
- * node, otherwise we return NULL
+ * through the entries to find one that matches the key. If we find
+ * the key in one of the entries, we then return the data in the
+ * entry, otherwise we return NULL
  * 
  * @param htbl 
  * @param key 
@@ -286,31 +281,49 @@ int32_t hashtable_lookup(hashtable* htbl, void* key, void* data)
  */
 int32_t hashtable_remove(hashtable* htbl, void* key, void* data)
 {
-    int32_t bucket = htbl->key_hash(key, htbl->buckets);
-    linkedlist* list = htbl->table[bucket];
-
-    hashtable_entry* entry = malloc(sizeof(hashtable_entry));
-    size_t ksize = get_htype_size(htbl->ktype);
-    size_t dsize = get_htype_size(htbl->dtype);
-    entry->key = malloc(ksize);
-    entry->data = malloc(dsize);
-    memcpy(entry->key, key, ksize);
-    memcpy(entry->data, data, dsize);
-    entry->key_compare = htbl->key_compare;
-
-    int32_t ret = linkedlist_remove(list, &entry, hashtable_entry_compare);
-    
-    if(ret == 1)
+    if(hashtable_empty(htbl) || key == NULL)
     {
-        set_remove(htbl->keys, entry->key);
-        htbl->size--;
+        return 0;
     }
 
-    free(entry->key);
-    free(entry->data);
-    free(entry);
+    int32_t bucket = htbl->key_hash(key, htbl->buckets);
+    hashtable_entry* entry = hashtable_lookup_entry(htbl, key);
 
-    return ret;
+    if(entry == NULL)
+    {
+        return 0;
+    }
+
+    // Get the previous entry to point to the next entry
+    if(entry->prev != NULL)
+    {
+        entry->prev->next = entry->next;
+        entry->prev = NULL;
+    } else { // this is the first entry
+        htbl->table[bucket] = entry->next;
+        if(htbl->table[bucket] != NULL)
+        {
+            htbl->table[bucket]->prev = NULL;
+        }
+    }
+
+    if(entry->next != NULL)
+    {
+        entry->next->prev = entry->prev;
+        entry->next = NULL;
+    } else {
+        if(entry->prev != NULL)
+        {
+            entry->prev->next = NULL;
+        }
+    }
+
+    // destroy the node and get the data
+    hashtable_entry_destroy(entry, data, get_htype_size(htbl->ktype));
+    htbl->size--;    
+    set_remove(htbl->keys, key);
+
+    return 1;
 }
 
 /**
@@ -328,44 +341,44 @@ int32_t hashtable_clear(hashtable* htbl, void (*key_destroy)(void *key), void (*
     size_t dsize = get_htype_size(htbl->dtype);
     void* data = malloc(dsize);
     hashtable_entry* entry = NULL;
+    hashtable_entry* tmp = NULL;
 
     for(int32_t i = 0; i < set_size(htbl->keys); i++)
     {
         set_value_at(htbl->keys, i, key);
         int32_t bucket = htbl->key_hash(key, htbl->buckets);
-        linkedlist* list = htbl->table[bucket];
+        entry = htbl->table[bucket];
+        htbl->table[bucket] = NULL; /// unhook the entries from the bucket
 
-        if(list == NULL || list->size == 0) // We might have already removed the bucket entries if there was a collision
+        /// The colliding entries will be removed as well 
+        /// so check to make sure we do not attempt to remove again.
+        if(entry == NULL)
         {
             continue;
         }
 
-        node* nd = list->head;
-        
-        int32_t i = 0;
-        while(nd)
+        while(entry)
         {
-            entry = *(hashtable_entry **)nd->data;
-            hashtable_entry_destroy(htbl, entry, key, data);
-            nd = nd->next;
-            i++;
-        }
-        linkedlist_clear(list);
-           
-        if(value_destroy != NULL)
-        {
-            value_destroy(*(void **)data);
-        }
+            tmp = entry;
+            entry = entry->next;
+            hashtable_entry_destroy(tmp, data, dsize);
 
-        if(key_destroy != NULL)
-        {
-            key_destroy(*(void **)key);
-        } 
+            if(key_destroy != NULL && *(void **)key != NULL)
+            {
+                key_destroy(*(void **)key);
+            }
+
+            if(value_destroy != NULL && *(void **)data != NULL)
+            {
+                value_destroy(*(void **)data);
+            }
+        }
     }
 
     free(key);
     free(data);
     set_clear(htbl->keys);
+    htbl->size = 0;
    
     return 1;
 }
@@ -379,15 +392,6 @@ int32_t hashtable_destroy(hashtable* htbl, void (*key_destroy)(void *key), void 
 {
     if(hashtable_clear(htbl, key_destroy, value_destroy))
     {
-        //#ifdef _OPENMP
-        //#pragma omp parallel for
-        //#endif
-        for(size_t i = 0; i < htbl->buckets; i++)
-        {
-            linkedlist* list = htbl->table[i];
-            linkedlist_delete(list);
-        }
-
         set_delete(htbl->keys);
         free(htbl->table);
         free(htbl);
@@ -412,8 +416,14 @@ hashtable_entry* hashtable_set_entry(hashtable* htbl, hashtable_entry *entry, vo
     if(entry == NULL)
     {
         entry = (hashtable_entry *)malloc(sizeof(hashtable_entry));
+
+        // Assign proper memory sizes.
+        // TODO: see if data and key memories can be allocated in a
+        // single contigous memory with the malloc above.
         entry->data = malloc(dsize);
         entry->key = malloc(ksize);
+
+        // Make sure next and prev are NULL
         entry->next = NULL;
         entry->prev = NULL;
     }
@@ -433,16 +443,13 @@ hashtable_entry* hashtable_set_entry(hashtable* htbl, hashtable_entry *entry, vo
  * @param key 
  * @param data 
  */
-void hashtable_entry_destroy(hashtable* htbl, hashtable_entry *entry, void* key, void* data)
+void hashtable_entry_destroy(hashtable_entry *entry, void* data, size_t dsize)
 {
-    entry->next = NULL;
-    entry->prev = NULL;
-
     // In case the data are managed somewhere else
     // We should copy them for proper deallocation
-    size_t dsize = get_htype_size(htbl->dtype);
     memcpy(data, entry->data, dsize);
 
+    // Release all malloc'd memory
     free(entry->key);
     free(entry->data);
     free(entry);
@@ -450,6 +457,7 @@ void hashtable_entry_destroy(hashtable* htbl, hashtable_entry *entry, void* key,
 
 size_t hashtable_size(hashtable* htbl)
 {
+    assert(htbl != NULL);
     return htbl->size;
 }
 
