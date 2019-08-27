@@ -234,7 +234,7 @@ void hash_table_str_test()
 {
     //Testing creation of a hashtable
     printf("\n");
-    hashtable* htbl = hashtable_init(45, H_STRING, H_INT, strcmp);
+    hashtable* htbl = hashtable_init(45, H_STRING, H_INT, (int32_t (*)(const void *, const void *))strcmp);
     CU_ASSERT_PTR_NOT_NULL(htbl);
     CU_ASSERT_PTR_NOT_NULL(htbl->buckets);
     CU_ASSERT_PTR_NOT_NULL(htbl->keys);
@@ -375,7 +375,7 @@ void hash_table_int_list_test()
 		printf("]\n");
     }
 
-    hashtable_destroy(htbl, NULL, int_array_list_delete);
+    hashtable_destroy(htbl, NULL, (void (*)(void *))int_array_list_delete);
     printf("\n********************************************************************************************\n");
 }
 

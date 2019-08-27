@@ -34,6 +34,7 @@
 #include "hdbscan/hdbscan.h"
 #include "dataset.h"
 #include "listlib/intlist.h"
+#include "listlib/doublelist.h"
 #include <time.h>
 #include <stdio.h>
 #include <string.h>
@@ -88,7 +89,7 @@ int main(int argc, char** argv){
 	}
 	printf("(rows, cols) = (%d, %d)\n", rs, cs);
 	hdbscan* scan = hdbscan_init(NULL, atoi(argv[1]));
-	bool rerun_ = false;
+	boolean rerun_ = FALSE;
 	if(scan == NULL){
 		printf("ERROR: Could not initialise hdbscan\n");
 		exit(0);
@@ -103,7 +104,7 @@ int main(int argc, char** argv){
 			end = clock();
 			time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 			printf("hdbscan run Process took %f\n", time_spent);
-			rerun_ = true;
+			rerun_ = TRUE;
 		} else{
 			begin = clock();
 			hdbscan_rerun(scan, atoi(argv[1]) + i);
@@ -127,35 +128,44 @@ int main(int argc, char** argv){
 			hdbscan_calculate_stats(dMap, &stats);
 			//hdbscan_print_distance_map(dMap);
 			
-			IntArrayList* sorted  = int_array_list_init(hashtable_size(clusterTable));
+			ArrayList* sorted  = array_list_init(hashtable_size(clusterTable), sizeof(label_t), NULL);
+
+			if(sizeof(label_t) == sizeof(int)) {
+				sorted->compare = int_compare;
+			} else if(sizeof(label_t) == sizeof(long)) {
+				sorted->compare = long_compare;
+			} else {
+				sorted->compare = short_compare;
+			}
+
 			for(size_t i = 0; i < set_size(clusterTable->keys); i++){
-				int32_t k;
+				label_t k;
 				set_value_at(clusterTable->keys, i, &k);
-				int_array_list_append(sorted, k);
+				array_list_append(sorted, &k);
 			}
 
 			sorted = hdbscan_sort_by_length(clusterTable, sorted);
 			printf("\n\nSorted by length = [\n");
 
-			int32_t *data = (int32_t *)sorted->data;
+			label_t *data = (label_t *)sorted->data;
 			for(size_t i = 0; i < sorted->size; i++){
-				IntArrayList* l1;
+				ArrayList* l1;
 				hashtable_lookup(clusterTable, data+i, &l1);
 				printf("%d : %ld\n", data[i], l1->size);
 			}
 			printf("]\n\n");
 			
-			sorted = hdbscan_sort_by_similarity(dMap, sorted, INTRA_DISTANCE_TYPE); // There is choice to use CORE_DISTANCE_TYPE
+			sorted = hdbscan_sort_by_similarity(dMap, sorted, INTRA_DISTANCE_TYPE); // There is choice to use CORE_doubleYPE
 			printf("Sorted by similarity = [");
 
-			data = (int32_t *)sorted->data;
+			data = (label_t *)sorted->data;
 			for(size_t i = 0; i < sorted->size; i++){
 				distance_values* dis;
 				hashtable_lookup(dMap, data+i, &dis);
 				printf("%d : (%f, %f)\n", data[i], dis->dr_confidence, dis->cr_confidence);
 			}
 			printf("]\n\n");
-			int_array_list_delete(sorted);
+			array_list_delete(sorted);
 
 			hdbscan_print_distance_map(dMap);
 			hdbscan_print_stats(&stats);

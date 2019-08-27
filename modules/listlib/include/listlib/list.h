@@ -149,7 +149,7 @@ ArrayList* array_list_delete2(ArrayList* list, void (*key_deallocate)(void *key)
  * @return
  * 
  */
-int32_t array_list_insert_at(ArrayList* list, void* data, size_t pos);
+int32_t array_list_replace_at(ArrayList* list, void* data, size_t pos);
 
 /**
  * @brief Add the data to the end of the list. 
@@ -171,6 +171,20 @@ int32_t array_list_insert_at(ArrayList* list, void* data, size_t pos);
 int32_t array_list_append(ArrayList* list, void* data);
 
 /**
+ * @brief Insert at the specified location
+ * 
+ * We must fist shift the elements in the array to the right before
+ * copying inserting. Note that this function increases the size of
+ * the list.
+ * 
+ * @param list 
+ * @param data 
+ * @param pos 
+ * @return int32_t 
+ */
+int32_t array_list_insert_at(ArrayList* list, void* data, size_t pos);
+
+/**
  * @brief Get the size of the list.
  * 
  * @param list 
@@ -185,7 +199,7 @@ size_t array_list_size(ArrayList* list);
  * @param data 
  * @return int32_t returns index of the data otherwise -1 
  */
-int32_t array_list_find(ArrayList* list, void* data);
+int32_t array_list_find(ArrayList* list, void* data, int32_t sorted);
 
 /**
  * @brief Reset the list to 0
@@ -204,6 +218,15 @@ void array_list_clear(ArrayList* list, int32_t resize);
  * @return int32_t 
  */
 int32_t array_list_remove_at(ArrayList* list, size_t pos, void* data);
+
+/**
+ * @brief Remove the data from the list
+ * 
+ * @param list 
+ * @param data 
+ * @return int32_t
+ */
+int32_t array_list_remove(ArrayList* list, void* data);
 
 /**
  * @brief Use quicksort on the list.

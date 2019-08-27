@@ -40,9 +40,9 @@
 
 using namespace std;
 
-typedef map<int, vector<int>> map_t;
-typedef map<int, vector<double>> map_d;
-typedef set<int> set_i;
+typedef map<label_t, vector<index_t>> map_t;
+typedef map<label_t, vector<distance_t>> map_d;
+typedef set<index_t> set_i;
 
 
 namespace clustering {
@@ -55,7 +55,7 @@ namespace clustering {
 	 * @param end 
 	 * @return map_t 
 	 */
-	map_t createClusterMap(int32_t* labels, int32_t begin, int32_t end);
+	map_t createClusterMap(label_t* labels, index_t begin, index_t end);
 
 	/**
 	 * @brief Get the Min Max Distances object
@@ -64,7 +64,7 @@ namespace clustering {
 	 * @param clusterTable 
 	 * @return map<int32_t, distance_values> 
 	 */
-	map<int32_t, distance_values> getMinMaxDistances(hdbscan& scan, map_t& clusterTable);
+	map<label_t, distance_values> getMinMaxDistances(hdbscan& scan, map_t& clusterTable);
 
 	/**
 	 * @brief 
@@ -72,7 +72,7 @@ namespace clustering {
 	 * @param distanceMap 
 	 * @param stats 
 	 */
-	void calculateStats(map<int32_t, distance_values>& distanceMap, clustering_stats& stats);
+	void calculateStats(map<label_t, distance_values>& distanceMap, clustering_stats& stats);
 
 	/**
 	 * @brief 
@@ -101,7 +101,7 @@ namespace clustering {
 	 * 
 	 * @param distancesMap 
 	 */
-	void printDistanceMap(map<int32_t, distance_values>& distancesMap);
+	void printDistanceMap(map<label_t, distance_values>& distancesMap);
 
 	/**
 	 * @brief 
@@ -117,7 +117,7 @@ namespace clustering {
 	 * @param clusters 
 	 * @param distanceType 
 	 */
-	void sortBySimilarity(map<int32_t, distance_values>& distanceMap, vector<int32_t>& clusters, int32_t distanceType);
+	void sortBySimilarity(map<label_t, distance_values>& distanceMap, vector<label_t>& clusters, int32_t distanceType);
 	
 	/**
 	 * @brief Sorts clusters according to how long the cluster is
@@ -125,7 +125,7 @@ namespace clustering {
 	 * @param clusterTable 
 	 * @param clusters 
 	 */
-	void sortByLength(map_t& clusterTable, vector<int32_t>& clusters);
+	void sortByLength(map_t& clusterTable, vector<label_t>& clusters);
 
 	/**
 	 * @brief 
@@ -135,7 +135,7 @@ namespace clustering {
 	 * @param left 
 	 * @param right 
 	 */
-	void quickSort(vector<int32_t>& clusters, vector<double>& sortData, int32_t left, int32_t right);
+	void quickSort(vector<label_t>& clusters, vector<distance_t>& sortData, index_t left, index_t right);
 };
 #endif
 #endif /* HDBSCAN_HPP_ */

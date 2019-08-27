@@ -30,11 +30,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include "config.h"
 #include "hdbscan/utils.h"
 #include "listlib/list.h"
 #include "listlib/set.h"
-#include "gnulib/gl_array_oset.h"
 
 #define CLUSTER_SUCCESS 1
 #define CLUSTER_ERROR	0
@@ -54,18 +53,17 @@ namespace clustering {
  */
 struct Cluster {
 
-	int32_t label;
-	double birthLevel;
-	double deathLevel;
-	int32_t numPoints;
+	label_t label;
+	distance_t birthLevel;
+	distance_t deathLevel;
+	index_t numPoints;
 	int64_t offset; //First level where points with this cluster's label appear
-	double stability;
-	double propagatedStability;
-	double propagatedLowestChildDeathLevel;
-	int32_t numConstraintsSatisfied;
-	int32_t propagatedNumConstraintsSatisfied;
-	//set_t* virtualChildCluster;
-	gl_oset_t virtualChildCluster;
+	distance_t stability;
+	distance_t propagatedStability;
+	distance_t propagatedLowestChildDeathLevel;
+	index_t numConstraintsSatisfied;
+	index_t propagatedNumConstraintsSatisfied;
+	set_t* virtualChildCluster;
 	struct Cluster* parent;
 	ArrayList* propagatedDescendants;
 	boolean hasChildren;
@@ -87,7 +85,7 @@ public:
 	 * @param birthLevel 
 	 * @param numPoints 
 	 */
-	Cluster(int32_t label, Cluster* parent, double birthLevel, int32_t numPoints);
+	Cluster(label_t label, Cluster* parent, distance_t birthLevel, index_t numPoints);
 
 	virtual ~Cluster();
 
@@ -99,7 +97,7 @@ public:
 	 * @param numPoints 
 	 * @param level 
 	 */
-	void detachPoints(int32_t numPoints, double level);
+	void detachPoints(index_t numPoints, distance_t level);
 
 	/**
 	 * @brief This cluster will propagate itself to its parent if its number of satisfied constraints is
@@ -115,7 +113,7 @@ public:
 	 * 
 	 * @param points 
 	 */
-	void addPointsToVirtualChildCluster(gl_oset_t points);
+	void addPointsToVirtualChildCluster(index_t points);
 
 	/**
 	 * @brief 
@@ -123,21 +121,21 @@ public:
 	 * @param point 
 	 * @return boolean 
 	 */
-	boolean virtualChildClusterContaintsPoint(int32_t point);
+	boolean virtualChildClusterContaintsPoint(index_t point);
 
 	/**
 	 * @brief 
 	 * 
 	 * @param numConstraints 
 	 */
-	void addVirtualChildConstraintsSatisfied(int32_t numConstraints);
+	void addVirtualChildConstraintsSatisfied(index_t numConstraints);
 
 	/**
 	 * @brief 
 	 * 
 	 * @param numConstraints 
 	 */
-	void addConstraintsSatisfied(int32_t numConstraints);
+	void addConstraintsSatisfied(index_t numConstraints);
 
 
 	/**
@@ -152,14 +150,14 @@ public:
 	 * 
 	 * @return int32_t 
 	 */
-	int32_t getLabel() ;
+	label_t getLabel() ;
 
 	/**
 	 * @brief Get the Num Points object
 	 * 
 	 * @return int32_t 
 	 */
-	int32_t getNumPoints() ;
+	index_t getNumPoints() ;
 
 	/**
 	 * @brief Get the Parent cluster object
@@ -171,16 +169,16 @@ public:
 	/**
 	 * @brief Get the Birth Level object
 	 * 
-	 * @return double 
+	 * @return distance_t 
 	 */
-	double getBirthLevel();
+	distance_t getBirthLevel();
 
 	/**
 	 * @brief Get the Death Level object
 	 * 
-	 * @return double 
+	 * @return distance_t 
 	 */
-	double getDeathLevel();
+	distance_t getDeathLevel();
 
 	/**
 	 * @brief Get the Offset object
@@ -199,23 +197,23 @@ public:
 	/**
 	 * @brief Get the Stability object
 	 * 
-	 * @return double 
+	 * @return distance_t 
 	 */
-	double getStability();
+	distance_t getStability();
 
 	/**
 	 * @brief Get the Propagated Stability object
 	 * 
-	 * @return double 
+	 * @return distance_t 
 	 */
-	double getPropagatedStability();
+	distance_t getPropagatedStability();
 
 	/**
 	 * @brief Get the Propagated Lowest Child Death Level object
 	 * 
-	 * @return double 
+	 * @return distance_t 
 	 */
-	double getPropagatedLowestChildDeathLevel();
+	distance_t getPropagatedLowestChildDeathLevel();
 
 	/**
 	 * @brief Get the Num Constraints Satisfied object
@@ -243,7 +241,7 @@ public:
 	 * 
 	 * @return gl_oset_t 
 	 */
-	gl_oset_t getVirtualChildCluster();
+	set_t* getVirtualChildCluster();
 
 	/**
 	 * @brief 
@@ -290,7 +288,7 @@ void cluster_destroy(cluster* cl);
  * @param numPoints The initial number of points in this cluster
  * @return cluster* Initialised cluster
  */
-cluster* cluster_init(cluster* cl, int32_t label, cluster* parent, double birthLevel, int32_t numPoints);
+cluster* cluster_init(cluster* cl, label_t label, cluster* parent, distance_t birthLevel, index_t numPoints);
 
 /**
  * @brief Removes the specified number of points from this cluster at the given edge level
@@ -303,7 +301,7 @@ cluster* cluster_init(cluster* cl, int32_t label, cluster* parent, double birthL
  * @param level The MST edge level at which to remove these points
  * @return int 
  */
-int cluster_detach_points(cluster* cl, int32_t numPoints, double level);
+int cluster_detach_points(cluster* cl, index_t numPoints, distance_t level);
 
 /**
  * @brief Propagation of the cluster ot its parent
@@ -325,7 +323,7 @@ void cluster_propagate(cluster* cl);
  * @param points 
  * @return int32_t 
  */
-int32_t cluster_add_points_to_virtual_child_cluster(cluster* cl, gl_oset_t points);
+int32_t cluster_add_points_to_virtual_child_cluster(cluster* cl, set_t* points);
 
 /**
  * @brief 
@@ -334,7 +332,7 @@ int32_t cluster_add_points_to_virtual_child_cluster(cluster* cl, gl_oset_t point
  * @param point 
  * @return boolean 
  */
-boolean cluster_virtual_child_contains_point(cluster* cl, int32_t point);
+boolean cluster_virtual_child_contains_point(cluster* cl, index_t point);
 
 /**
  * @brief 
@@ -342,7 +340,7 @@ boolean cluster_virtual_child_contains_point(cluster* cl, int32_t point);
  * @param cl 
  * @param numConstraints 
  */
-void cluster_add_virtual_child_constraints_satisfied(cluster* cl, int32_t numConstraints);
+void cluster_add_virtual_child_constraints_satisfied(cluster* cl, index_t numConstraints);
 
 /**
  * @brief 
@@ -350,7 +348,7 @@ void cluster_add_virtual_child_constraints_satisfied(cluster* cl, int32_t numCon
  * @param cl 
  * @param numConstraints 
  */
-void cluster_add_constraints_satisfied(cluster* cl, int32_t numConstraints);
+void cluster_add_constraints_satisfied(cluster* cl, index_t numConstraints);
 
 /**
  * @brief Sets the virtual child cluster to null, thereby saving memory.  

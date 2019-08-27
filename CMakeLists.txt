@@ -14,6 +14,24 @@ OPTION (BUILD_PYTHON2 "Build python 2 bindings" ON)
 OPTION (BUILD_PYTHON3 "Build python 3 bindings" ON)
 OPTION (BUILD_JAVA "Build java bindings" ON)
 
+# Setting data types
+set(LABEL_TYPE "unsigned int" CACHE STRING "Data types for the labels")
+set_property(CACHE LABEL_TYPE PROPERTY STRINGS "unsigned int" "unsigned short" "unsigned long")
+
+set(DISTANCE_TYPE "double" CACHE STRING "Data types for the distance")
+set_property(CACHE DISTANCE_TYPE PROPERTY STRINGS double float)
+
+if(DISTANCE_TYPE STREQUAL "double")
+  set(D_MAX "DBL_MAX")
+  set(D_MIN "DBL_MIN")
+else()
+  set(D_MAX "FLT_MAX")
+  set(D_MIN "FLT_MIN")
+endif()
+
+set(INDEX_TYPE "unsigned int" CACHE STRING "Data types for indexing.")
+set_property(CACHE INDEX_TYPE PROPERTY STRINGS "unsigned int" "unsigned short" "unsigned long")
+
 OPTION (USE_CUDA "Use CUDA" OFF)
 IF(USE_CUDA)
   #complete
@@ -37,27 +55,23 @@ set(INSTALL_SHARE_DIR share/hdbscan CACHE PATH "Installation directory for exten
 set(MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/modules)
 set(LISTLIB_DIR ${MODULE_PATH}/listlib)
 set(UTILS_DIR ${MODULE_PATH}/utils)
-set(GNULIB_DIR ${MODULE_PATH}/gnulib)
 set(HDBSCAN_JAVA_DIR ${MODULE_PATH}/java)
 set(HDBSCAN_PYTHON_DIR ${MODULE_PATH}/python)
 
 set(HDBSCAN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(UTILS_INCLUDE_DIR ${UTILS_DIR}/include)
-set(GNULIB_INCLUDE_DIR ${GNULIB_DIR}/include)
 set(LISTLIB_INCLUDE_DIR ${LISTLIB_DIR}/include)
 
-set(GNULIB_LIBRARY gnulib)
 set(UTILS_LIBRARY utils)
 set(LISTLIB_LIBRARY listlib)
 set(HDBSCAN_LIBRARY hdbscan)
 
 set(HDBSCAN_LIB_DIR ${PROJECT_BINARY_DIR}/src)
 set(UTILS_LIB_DIR ${PROJECT_BINARY_DIR}/modules/utils/src)
-set(GNULIB_LIB_DIR ${PROJECT_BINARY_DIR}/modules/gnulib/src)
 set(LISTLIB_LIB_DIR ${PROJECT_BINARY_DIR}/modules/listlib/src)
 set(JAVA_LIB_DIR ${PROJECT_BINARY_DIR}/modules/java)
 
-set(PRIVATE_LIBS "-l${HDBSCAN_LIBRARY} -l${UTILS_LIBRARY} -l${LISTLIB_LIBRARY} -l${GNULIB_LIBRARY}")
+set(PRIVATE_LIBS "-l${HDBSCAN_LIBRARY} -l${UTILS_LIBRARY} -l${LISTLIB_LIBRARY}") 
 
 if(WIN32 AND NOT CYGWIN)
   set(DEF_INSTALL_CMAKE_DIR CMake)
@@ -104,7 +118,7 @@ IF(BUILD_SAMPLES)
 	add_subdirectory(sample)
 ENDIF()
 # Add all targets to the build-tree export set
-export(TARGETS ${HDBSCAN_LIBRARY}-${HDBSCAN_VERSION} gnulib listlib FILE "${PROJECT_BINARY_DIR}/HdbscanTargets.cmake")
+export(TARGETS ${HDBSCAN_LIBRARY}-${HDBSCAN_VERSION} listlib FILE "${PROJECT_BINARY_DIR}/HdbscanTargets.cmake")
  
 # Export the package for use from the build-tree
 # (this registers the build-tree with a global CMake-registry)
@@ -139,9 +153,8 @@ install(FILES
 # Install the export set for use with the install-tree
 INSTALL (DIRECTORY ${HDBSCAN_INCLUDE_DIR}/hdbscan DESTINATION ${INSTALL_INCLUDE_DIR})
 INSTALL (DIRECTORY ${UTILS_INCLUDE_DIR}/hdbscan DESTINATION ${INSTALL_INCLUDE_DIR})
-INSTALL (DIRECTORY ${GNULIB_INCLUDE_DIR}/gnulib DESTINATION ${INSTALL_INCLUDE_DIR})
 INSTALL (DIRECTORY ${LISTLIB_INCLUDE_DIR}/listlib DESTINATION ${INSTALL_INCLUDE_DIR})
-INSTALL (FILES ${PROJECT_BINARY_DIR}/config.h DESTINATION ${INSTALL_INCLUDE_DIR}/gnulib)
+INSTALL (FILES ${PROJECT_BINARY_DIR}/config.h DESTINATION ${INSTALL_INCLUDE_DIR}/listlib)
 INSTALL (FILES ${PROJECT_BINARY_DIR}/hdbscan.pc DESTINATION ${INSTALL_LIB_DIR}/pkgconfig)
 
 INSTALL (EXPORT HdbscanTargets DESTINATION "${INSTALL_LIB_DIR}/cmake" COMPONENT dev)

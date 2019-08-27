@@ -43,7 +43,7 @@
 
 set_t* set_init(size_t step, int32_t (*compare)(const void *a, const void *b))
 {
-    return array_list_init(1, step, compare);
+    return array_list_init(2, step, compare);
 }
 
 set_t* set_delete(set_t* _set)
@@ -58,17 +58,28 @@ void set_clear(set_t* _set)
 
 int32_t set_insert(set_t* _set, void* data)
 {
-    if(set_find(_set, data) > -1)
-    {
-        return 0;
+    size_t low = 0;
+    size_t t1;
+    size_t high = _set->size;
+    if(_set->size > 0) {
+        
+        do {
+            size_t mid = low + (high - low) / 2; /* low <= mid < high */
+            t1 = mid * _set->step;
+            
+            int cmp = _set->compare(_set->data + t1, data);
+
+            if(cmp < 0) {
+                low = mid + 1;
+            } else if(cmp > 0) {
+                high = mid;
+            } else {
+                return 0;
+            }
+        } while(low < high);
     }
 
-    int32_t r = array_list_append(_set, data);
-    //if(_set->compare != NULL)
-    //{
-    //    set_sort(_set);
-    //}
-    return r;
+    return array_list_insert_at(_set, data, low);
 }
 
 int32_t set_remove(set_t* _set, void* data)
@@ -79,7 +90,7 @@ int32_t set_remove(set_t* _set, void* data)
 
 int32_t set_find(set_t *_set, void* data)
 {
-    return array_list_find(_set, data);
+    return array_list_find(_set, data, 1);
 }
 
 int32_t set_value_at(set_t* _set, int32_t index, void* data)
@@ -103,5 +114,9 @@ int32_t set_size(set_t* _set)
  */
 void set_sort(set_t* _set){
 
-	qsort(_set->data, _set->size, _set->step, _set->compare);
+	array_list_sort(_set);
+}
+
+int32_t set_empty(set_t* _set) {
+    return array_list_empty(_set);
 }

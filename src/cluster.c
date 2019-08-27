@@ -41,7 +41,7 @@
 
 #include <float.h>
 
-cluster* cluster_init(cluster* cl, int32_t label, cluster* parent, double birthLevel, int32_t numPoints){
+cluster* cluster_init(cluster* cl, label_t label, cluster* parent, distance_t birthLevel, index_t numPoints){
 	if(cl == NULL){
 		cl = (cluster*)malloc(sizeof(cluster));
 	}
@@ -56,15 +56,23 @@ cluster* cluster_init(cluster* cl, int32_t label, cluster* parent, double birthL
 		cl->offset = 0;
 		cl->stability = 0;
 		cl->propagatedStability = 0;
-		cl->propagatedLowestChildDeathLevel = DBL_MAX;
+		cl->propagatedLowestChildDeathLevel = D_MAX;
 		cl->numConstraintsSatisfied = 0;
 		cl->propagatedNumConstraintsSatisfied = 0;
 		cl->parent = parent;
 		if (cl->parent != NULL)
 			cl->parent->hasChildren = TRUE;
 		cl->hasChildren = FALSE;
-		cl->virtualChildCluster = gl_oset_nx_create_empty (GL_ARRAY_OSET, (gl_setelement_compar_fn) int_compare, NULL);
-		cl->propagatedDescendants = ptr_array_list_init(1, cluster_compare);
+		cl->virtualChildCluster = set_init(sizeof(index_t), NULL);
+		if(sizeof(index_t) == sizeof(int)) {
+			cl->virtualChildCluster->compare = int_compare;
+		} else if(sizeof(index_t) == sizeof(long)) {
+			cl->virtualChildCluster->compare = long_compare;
+		} else {
+			cl->virtualChildCluster->compare = short_compare;
+		}
+
+		cl->propagatedDescendants = ptr_array_list_init(2, cluster_compare);
 	}
 
 	return cl;
@@ -73,7 +81,7 @@ cluster* cluster_init(cluster* cl, int32_t label, cluster* parent, double birthL
 void cluster_destroy(cluster* cl){
 	if(cl != NULL){
 		if(cl->virtualChildCluster != NULL){
-			gl_oset_free(cl->virtualChildCluster);
+			set_delete(cl->virtualChildCluster);
 			cl->virtualChildCluster = NULL;
 		}
 
@@ -85,8 +93,7 @@ void cluster_destroy(cluster* cl){
 	}
 }
 
-
-int cluster_detach_points(cluster* cl, int numPoints, double level){
+int cluster_detach_points(cluster* cl, index_t numPoints, distance_t level){
 
 	cl->numPoints -= numPoints;
 	cl->stability += (numPoints * (1 / level - 1 / cl->birthLevel));
@@ -105,7 +112,7 @@ void cluster_propagate(cluster* cl){
 
 	if (cl->parent != NULL) {
 		//Propagate lowest death level of any descendants:
-        if (cl->propagatedLowestChildDeathLevel == DBL_MAX){
+        if (cl->propagatedLowestChildDeathLevel == D_MAX){
         	cl->propagatedLowestChildDeathLevel = cl->deathLevel;
 		}
 
@@ -123,7 +130,7 @@ void cluster_propagate(cluster* cl){
 			cl->parent->propagatedNumConstraintsSatisfied += cl->propagatedNumConstraintsSatisfied;
 			cl->parent->propagatedStability += cl->propagatedStability;
 
-			for(int32_t i = 0; i < cl->propagatedDescendants->size; i++)
+			for(index_t i = 0; i < cl->propagatedDescendants->size; i++)
 			{
 				cluster* c = NULL;
 				array_list_value_at(cl->propagatedDescendants, i, &c);
@@ -143,7 +150,7 @@ void cluster_propagate(cluster* cl){
 				cl->parent->propagatedNumConstraintsSatisfied += cl->propagatedNumConstraintsSatisfied;
 				cl->parent->propagatedStability += cl->propagatedStability;
 
-				for(int32_t i = 0; i < cl->propagatedDescendants->size; i++)
+				for(index_t i = 0; i < cl->propagatedDescendants->size; i++)
 				{
 					cluster *c = NULL;
 					array_list_value_at(cl->propagatedDescendants, i, &c);
@@ -156,27 +163,30 @@ void cluster_propagate(cluster* cl){
 }
 
 
-int cluster_add_points_to_virtual_child_cluster(cluster* cl, gl_oset_t points){
-	
-	for(size_t i = 0; i < points->count; i++){
-		int32_t d;
-		gl_oset_value_at(points, i, &d);
-		gl_oset_nx_add(cl->virtualChildCluster, d);
+int cluster_add_points_to_virtual_child_cluster(cluster* cl, set_t* points){
+	index_t d;
+	for(index_t i = 0; i < points->size; i++){
+		
+		set_value_at(points, i, &d);
+		set_insert(cl->virtualChildCluster, &d);
 	}
-
+	
 	return 1;
 }
 
-boolean cluster_virtual_child_contains_point(cluster* cl, int32_t point){
-	return gl_oset_search(cl->virtualChildCluster, point);
+boolean cluster_virtual_child_contains_point(cluster* cl, index_t point){
+	if(set_find(cl->virtualChildCluster, &point) >= 0) {
+		return 1;
+	} 
+	return 0;
 }
 
-void cluster_add_virtual_child_constraints_satisfied(cluster* cl, int32_t numConstraints){
+void cluster_add_virtual_child_constraints_satisfied(cluster* cl, index_t numConstraints){
 
 	cl->propagatedNumConstraintsSatisfied += numConstraints;
 }
 
-void cluster_add_constraints_satisfied(cluster* cl, int32_t numConstraints){
+void cluster_add_constraints_satisfied(cluster* cl, index_t numConstraints){
 
 	cl->numConstraintsSatisfied += numConstraints;
 }

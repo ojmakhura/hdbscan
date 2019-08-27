@@ -32,9 +32,9 @@
 extern "C" {
 #endif
 
+#include "config.h"
 #include "hdbscan/utils.h"
-#include "listlib/intlist.h"
-#include "listlib/doublelist.h"
+#include "listlib/list.h"
 
 #define GRAPH_SUCCESS 1
 #define GRAPH_ERROR 0
@@ -48,11 +48,11 @@ namespace clustering {
  */
 struct UndirectedGraph {
 
-	int32_t numVertices;
-	IntArrayList* verticesA;
-	IntArrayList* verticesB;
-	DoubleArrayList* edgeWeights;
-	IntArrayList** edges;   				// This is an array of lists
+	index_t numVertices;
+	ArrayList* verticesA;
+	ArrayList* verticesB;
+	ArrayList* edgeWeights;
+	ArrayList** edges;   				// This is an array of lists
 
 #ifdef __cplusplus
 public:
@@ -77,7 +77,7 @@ public:
 	 * @param verticesB An array of vertices corresponding to the array of edges
 	 * @param edgeWeights An array of edges corresponding to the arrays of vertices
 	 */
-	UndirectedGraph(int32_t numVertices, IntArrayList* verticesA, IntArrayList* verticesB, DoubleArrayList* edgeWeights);
+	UndirectedGraph(index_t numVertices, ArrayList* verticesA, ArrayList* verticesB, ArrayList* edgeWeights);
 
 	/**
 	 * @brief Construct a new Undirected Graph object
@@ -126,7 +126,7 @@ typedef struct UndirectedGraph UndirectedGraph;
  * @param startIndex The lowest index to be included in the sort
  * @param endIndex The highest index to be included in the sort
  */
-void graph_quicksort(UndirectedGraph* g, int32_t startIndex, int32_t endIndex);
+void graph_quicksort(UndirectedGraph* g, int64_t startIndex, int64_t endIndex);
 
 /**
  * @brief Returns a pivot index by finding the median of edge weights between the startIndex, endIndex,
@@ -136,7 +136,7 @@ void graph_quicksort(UndirectedGraph* g, int32_t startIndex, int32_t endIndex);
  * @param endIndex The highest index from which the pivot index should come
  * @return A pivot index
  */
-int32_t graph_select_pivot_index(UndirectedGraph* g, int32_t startIndex, int32_t endIndex);
+int32_t graph_select_pivot_index(UndirectedGraph* g, int64_t startIndex, int64_t endIndex);
 
 /**
  * @brief Partitions the array in the interval [startIndex, endIndex] around the value at pivotIndex.
@@ -146,7 +146,7 @@ int32_t graph_select_pivot_index(UndirectedGraph* g, int32_t startIndex, int32_t
  * @param pivotIndex The index of the edge weight to partition around
  * @return The index position of the pivot edge weight after the partition
  */
-int32_t graph_partition(UndirectedGraph* g, int32_t startIndex, int32_t endIndex, int32_t pivotIndex);
+int32_t graph_partition(UndirectedGraph* g, int64_t startIndex, int64_t endIndex, int64_t pivotIndex);
 
 /**
  * @brief Swaps the vertices and edge weights between two index locations in the graph.
@@ -154,7 +154,7 @@ int32_t graph_partition(UndirectedGraph* g, int32_t startIndex, int32_t endIndex
  * @param indexOne The first index location
  * @param indexTwo The second index location
  */
-void graph_swap_edges(UndirectedGraph* g, int32_t indexOne, int32_t indexTwo);
+void graph_swap_edges(UndirectedGraph* g, int64_t indexOne, int64_t indexTwo);
 
 // ------------------------------ CONSTRUCTORS ------------------------------
 
@@ -176,7 +176,7 @@ void graph_swap_edges(UndirectedGraph* g, int32_t indexOne, int32_t indexTwo);
  * @param edgeWeights An array of edges corresponding to the arrays of vertices
  * @return UndirectedGraph* 
  */
-UndirectedGraph* graph_init(UndirectedGraph* g, int32_t numVertices, IntArrayList* verticesA, IntArrayList* verticesB, DoubleArrayList* edgeWeights) ;
+UndirectedGraph* graph_init(UndirectedGraph* g, index_t numVertices, ArrayList* verticesA, ArrayList* verticesB, ArrayList* edgeWeights) ;
 
 /**
  * @brief Deallocate memory for UndirectedGraph components and for the graph itself
@@ -241,16 +241,16 @@ int32_t graph_get_second_vertex_at_index(UndirectedGraph* g, int32_t index);
  * @param index 
  * @return double 
  */
-double graph_get_edge_weight_at_index(UndirectedGraph* g, int32_t index);
+distance_t graph_get_edge_weight_at_index(UndirectedGraph* g, int32_t index);
 
 /**
  * @brief 
  * 
  * @param g 
  * @param vertex 
- * @return IntArrayList* 
+ * @return ArrayList* 
  */
-IntArrayList* graph_get_edge_list_for_vertex(UndirectedGraph* g, int32_t vertex);
+ArrayList* graph_get_edge_list_for_vertex(UndirectedGraph* g, int32_t vertex);
 
 /**
  * @brief Remove vb from edge list of va
@@ -259,7 +259,7 @@ IntArrayList* graph_get_edge_list_for_vertex(UndirectedGraph* g, int32_t vertex)
  * @param va 
  * @param vb 
  */
-void graph_remove_edge(UndirectedGraph* g, int32_t va, int32_t vb);
+void graph_remove_edge(UndirectedGraph* g, index_t va, index_t vb);
 
 /**
  * @brief 

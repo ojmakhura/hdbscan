@@ -200,13 +200,13 @@ void int_ptr_array_list_test()
 
     int32_t d1 = 1;
     int32_t* d2 = &d1;
-    CU_ASSERT_EQUAL_FATAL(1, array_list_find(list, &d2));
+    CU_ASSERT_EQUAL_FATAL(1, array_list_find(list, &d2, 0));
 
     d1 = 120;
-    CU_ASSERT_EQUAL_FATAL(2, array_list_find(list, &d2));
+    CU_ASSERT_EQUAL_FATAL(2, array_list_find(list, &d2, 0));
 
     d1 = 999;
-    CU_ASSERT_EQUAL_FATAL(-1, array_list_find(list, &d2));
+    CU_ASSERT_EQUAL_FATAL(-1, array_list_find(list, &d2, 0));
     
     d = malloc(sizeof(int32_t));
     *d = -5;
@@ -374,7 +374,7 @@ void double_ptr_array_list_test()
     for(int32_t i = 0; i < list->size; i++)
     {
         array_list_value_at(list, i, &d);
-        free(d);
+        //free(d);
     }    
     array_list_delete(list);
     printf("\n********************************************************************************************\n");
@@ -392,7 +392,7 @@ void str_array_list_test()
     printf("\n");
     ArrayList* list = NULL;
     CU_ASSERT_PTR_NULL(list);
-    list = array_list_init(5, sizeof(void *), strcmp);
+    list = array_list_init(5, sizeof(void *), (int32_t (*)(const void *, const void *))strcmp);
     CU_ASSERT_PTR_NOT_NULL(list);
     CU_ASSERT_EQUAL_FATAL(list->size, 0);
     CU_ASSERT_EQUAL_FATAL(list->max_size, 5);

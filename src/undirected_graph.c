@@ -42,7 +42,7 @@
 #include <omp.h>
 #endif
 
-UndirectedGraph* graph_init(UndirectedGraph* g, int32_t numVertices, IntArrayList* verticesA, IntArrayList* verticesB, DoubleArrayList* edgeWeights) {
+UndirectedGraph* graph_init(UndirectedGraph* g, index_t numVertices, ArrayList* verticesA, ArrayList* verticesB, ArrayList* edgeWeights) {
 	if(g == NULL)
 		g = (UndirectedGraph*)malloc(sizeof(UndirectedGraph));
 
@@ -55,7 +55,7 @@ UndirectedGraph* graph_init(UndirectedGraph* g, int32_t numVertices, IntArrayLis
 	g->verticesA = verticesA;
 	g->verticesB = verticesB;
 	g->edgeWeights = edgeWeights;
-	g->edges = (IntArrayList**) malloc(numVertices * sizeof(IntArrayList*));
+	g->edges = (ArrayList**) malloc(numVertices * sizeof(ArrayList*));
 
 	if(g->edges == NULL){
 		printf("Graph Init: Could not allocate memory for edges.\n");
@@ -65,19 +65,25 @@ UndirectedGraph* graph_init(UndirectedGraph* g, int32_t numVertices, IntArrayLis
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-	for(int32_t i = 0; i < numVertices; i++){
-		g->edges[i] = int_array_list_init();
+	for(index_t i = 0; i < numVertices; i++){
+		g->edges[i] = array_list_init(16, sizeof(index_t), NULL);
+		if(sizeof(index_t) == sizeof(int)) {
+			g->edges[i]->compare = int_compare;
+		} else if(sizeof(index_t) == sizeof(long)) {
+			g->edges[i]->compare = long_compare;
+		} else {
+			g->edges[i]->compare = short_compare;
+		}
 	}
+	index_t vertexOne, vertexTwo;
+	for (index_t i = 0; i < g->verticesA->size; i++) {
+		
+		array_list_value_at(g->verticesA, i, &vertexOne);
+		array_list_value_at(g->verticesB, i, &vertexTwo);
 
-	for (unsigned int i = 0; i < g->verticesA->size; i++) {
-
-		int vertexOne, vertexTwo;
-		int_array_list_data(g->verticesA, i, &vertexOne);
-		int_array_list_data(g->verticesB, i, &vertexTwo);
-
-		int_array_list_append(g->edges[vertexOne], vertexTwo);
+		array_list_append(g->edges[vertexOne], &vertexTwo);
 		if (vertexOne != vertexTwo) {
-			int_array_list_append(g->edges[vertexTwo], vertexOne);
+			array_list_append(g->edges[vertexTwo], &vertexOne);
 		}
 	}
 
@@ -95,25 +101,25 @@ void graph_clean(UndirectedGraph* g) {
 	if(g != NULL){
 
 		if (g->verticesA != NULL) {
-			int_array_list_delete(g->verticesA);
+			array_list_delete(g->verticesA);
 			g->verticesA = NULL;
 		}
 
 		if (g->verticesB != NULL) {
-			int_array_list_delete(g->verticesB);
+			array_list_delete(g->verticesB);
 			g->verticesB = NULL;
 		}
 
 		if (g->edgeWeights != NULL) {
-			double_array_list_delete(g->edgeWeights);
+			array_list_delete(g->edgeWeights);
 			g->edgeWeights = NULL;
 		}
 
 		if (g->edges != NULL) {
 
 			for (int32_t i = 0; i < g->numVertices; i++) {
-				IntArrayList* list = g->edges[i];
-				int_array_list_delete(list);
+				ArrayList* list = g->edges[i];
+				array_list_delete(list);
 			}
 			free(g->edges);
 			g->edges = NULL;
@@ -122,20 +128,20 @@ void graph_clean(UndirectedGraph* g) {
 }
 
 void graph_quicksort_by_edge_weight(UndirectedGraph* g) {
-	int32_t esize = g->edgeWeights->size;
+	size_t esize = g->edgeWeights->size;
 	if (esize <= 1)
 		return;
 
-	int startIndexStack[esize/2];
-	int endIndexStack[esize/2];
+	index_t startIndexStack[esize/2];
+	index_t endIndexStack[esize/2];
 
 	(startIndexStack)[0] = 0;
 	(endIndexStack)[0] = esize - 1;
 	int stackTop = 0;
 
 	while (stackTop >= 0) {
-		int32_t startIndex = (startIndexStack)[stackTop];
-		int32_t endIndex = (endIndexStack)[stackTop];
+		int64_t startIndex = (startIndexStack)[stackTop];
+		int64_t endIndex = (endIndexStack)[stackTop];
 		stackTop--;
 
 		int pivotIndex = graph_select_pivot_index(g, startIndex, endIndex);
@@ -155,14 +161,14 @@ void graph_quicksort_by_edge_weight(UndirectedGraph* g) {
 	}
 }
 
-int32_t graph_select_pivot_index(UndirectedGraph* g, int32_t startIndex, int32_t endIndex) {
+int32_t graph_select_pivot_index(UndirectedGraph* g, int64_t startIndex, int64_t endIndex) {
 	if (startIndex - endIndex <= 1)
 		return startIndex;
 
-	double first, middle, last;
-	double_array_list_data(g->edgeWeights, startIndex, &first);
-	double_array_list_data(g->edgeWeights, startIndex + (endIndex - startIndex) / 2, &middle);
-	double_array_list_data(g->edgeWeights, endIndex, &last);
+	distance_t first, middle, last;
+	array_list_value_at(g->edgeWeights, startIndex, &first);
+	array_list_value_at(g->edgeWeights, startIndex + (endIndex - startIndex) / 2, &middle);
+	array_list_value_at(g->edgeWeights, endIndex, &last);
 
 	if (first <= middle) {
 		if (middle <= last)
@@ -181,41 +187,40 @@ int32_t graph_select_pivot_index(UndirectedGraph* g, int32_t startIndex, int32_t
 	}
 }
 
-void graph_swap_edges(UndirectedGraph* g, int32_t indexOne, int32_t indexTwo){
+void graph_swap_edges(UndirectedGraph* g, int64_t indexOne, int64_t indexTwo){
 	if (indexOne != indexTwo){
-		int32_t tempVertexA, tempVertexB;
-		int_array_list_data(g->verticesA, indexOne, &tempVertexA);
-		int_array_list_data(g->verticesB, indexOne, &tempVertexB);
+		distance_t* dt = g->edgeWeights->data;
+		index_t* da = g->verticesA->data;
+		index_t* db = g->verticesB->data;
+
+		index_t tempVertexA, tempVertexB;
+		tempVertexA = da[indexOne];
+		tempVertexB = db[indexOne];
 		
-		double tempEdgeDistance;
-		double_array_list_data(g->edgeWeights, indexOne, &tempEdgeDistance);
+		distance_t tempEdgeDistance;
+		tempEdgeDistance = dt[indexOne];
 
-		int32_t tmp;
-		int_array_list_data(g->verticesA, indexTwo, &tmp);
-		int_array_list_set_value_at(g->verticesA, tmp, indexOne);
+		da[indexOne] = da[indexTwo];
+		db[indexOne] = db[indexTwo];
+		dt[indexOne] = dt[indexTwo];
 
-		int_array_list_data(g->verticesB, indexTwo, &tmp);
-		int_array_list_set_value_at(g->verticesB, tmp, indexOne);
+		da[indexTwo] = tempVertexA;
+		db[indexTwo] = tempVertexB;
+		dt[indexTwo] = tempEdgeDistance;
 
-		double tmp2;
-		double_array_list_data(g->edgeWeights, indexTwo, &tmp2);
-		double_array_list_set_value_at(g->edgeWeights, tmp2, indexOne);
-
-		int_array_list_set_value_at(g->verticesA, tempVertexA, indexTwo);
-		int_array_list_set_value_at(g->verticesB, tempVertexB, indexTwo);
-		double_array_list_set_value_at(g->edgeWeights, tempEdgeDistance, indexTwo);
 	}
 }
 
-int32_t graph_partition(UndirectedGraph* g, int32_t startIndex, int32_t endIndex, int32_t pivotIndex) {
-	double pivotValue;
-	double_array_list_data(g->edgeWeights, pivotIndex, &pivotValue);//g->edgeWeights[pivotIndex];
+int32_t graph_partition(UndirectedGraph* g, int64_t startIndex, int64_t endIndex, int64_t pivotIndex) {
+	distance_t pivotValue;
+	distance_t* dt = g->edgeWeights->data;
+	pivotValue = dt[pivotIndex];
 	graph_swap_edges(g, pivotIndex, endIndex);
-	int32_t lowIndex = startIndex;
+	int64_t lowIndex = startIndex;
+	distance_t c;
 
-	for (int32_t i = startIndex; i < endIndex; i++) {
-		double c;
-		double_array_list_data(g->edgeWeights, i, &c);
+	for (int64_t i = startIndex; i < endIndex; i++) {
+		c = dt[i];
 		if (c < pivotValue) {
 			graph_swap_edges(g, i, lowIndex);
 			lowIndex++;
@@ -226,30 +231,32 @@ int32_t graph_partition(UndirectedGraph* g, int32_t startIndex, int32_t endIndex
 	return lowIndex;
 }
 
-void graph_quicksort(UndirectedGraph* g, int32_t startIndex, int32_t endIndex) {
+void graph_quicksort(UndirectedGraph* g, int64_t startIndex, int64_t endIndex) {
 	if (startIndex < endIndex) {
-		int32_t pivotIndex = graph_select_pivot_index(g, startIndex, endIndex);
+		int64_t pivotIndex = graph_select_pivot_index(g, startIndex, endIndex);
 		pivotIndex = graph_partition(g, startIndex, endIndex, pivotIndex);
 		graph_quicksort(g, startIndex, pivotIndex - 1);
 		graph_quicksort(g, pivotIndex + 1, endIndex);
 	}
 }
 
-void graph_remove_edge(UndirectedGraph* g, int32_t va, int32_t vb){
+void graph_remove_edge(UndirectedGraph* g, index_t va, index_t vb){
 	// get the edge list for va
 	// find position for vb in the edge list for va
-
-	int_array_list_remove(g->edges[va], vb);
-
+	array_list_remove(g->edges[va], &vb);
+	
 	/**
 	 * Have to repeat for the opposite in case va=vb in which case calling this method twice
 	 * would miss the second time.
 	 */
-	int_array_list_remove(g->edges[vb], va);
+	array_list_remove(g->edges[vb], &va);
 
 }
 
 void graph_print(UndirectedGraph* g) {
+	distance_t* dt = g->edgeWeights->data;
+	index_t* da = g->verticesA->data;
+	index_t* db = g->verticesB->data;
 
 	printf(
 			"numVertices: %d, verticesA.length: %ld,  verticesB.length: %ld, edgeWeights.length: %ld, edges.length: %d\n",
@@ -257,35 +264,32 @@ void graph_print(UndirectedGraph* g) {
 	printf("\nVertices A\n");
 
 	for (size_t i = 0; i < g->verticesA->size; i++) {
-		int vertex;
-		int_array_list_data(g->verticesA, i, &vertex);
+		index_t vertex = da[i];
 		printf("%d, ", vertex);
 	}
 
 	printf("\n\nVertices B\n");
 	for (size_t i = 0; i < g->verticesB->size; i++) {
-		int vertex;
-		int_array_list_data(g->verticesB, i, &vertex);
+		index_t vertex = db[i];
 		printf("%d, ", vertex);
 	}
 
 	printf("\n\nedgeWeights\n");
     for (size_t i = 0; i < g->edgeWeights->size; i++) {
-		double weight;
-		double_array_list_data(g->edgeWeights, i, &weight);
+		distance_t weight = dt[i];
 		printf("%f, ", weight);
 	}
 
 	printf("\n\nEdges\n");
 
 	for(uint i = 0; i < g->numVertices; i++){
-		IntArrayList* edge = g->edges[i];
+		ArrayList* edge = g->edges[i];
 
 		//printf("Edge length is %d\n", g_list_length(edge));
 		printf("[");
-		int32_t* ldata = edge->data;
+		index_t* ldata = edge->data;
 
-		for(int32_t i = 0; i < edge->size; i++){
+		for(index_t i = 0; i < edge->size; i++){
 			printf("%d, ", ldata[i]);
 		}
 

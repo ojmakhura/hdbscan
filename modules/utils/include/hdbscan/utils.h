@@ -206,6 +206,8 @@ int32_t str_hash(void *key, size_t buckets);
  */
 int32_t hashtable_entry_compare(const void* a, const void* b);
 
+void distance_timsort();
+
 #ifdef __cplusplus
 }
 #endif

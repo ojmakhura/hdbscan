@@ -42,7 +42,6 @@ extern "C" {
 #include "set.h"
 #include "primes.h"
 #include "hdbscan/utils.h"
-#include "gnulib/gl_array_oset.h"
 
 typedef struct HTBL_ENTRY
 {

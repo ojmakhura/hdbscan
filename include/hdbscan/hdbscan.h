@@ -42,8 +42,7 @@ extern "C" {
 #include "distance.h"
 #include "outlier_score.h"
 #include "undirected_graph.h"
-#include "listlib/intlist.h"
-#include "listlib/doublelist.h"
+#include "listlib/list.h"
 #include "listlib/hashtable.h"
 
 #define FILE_BUFFER_SIZE = 32678
@@ -83,13 +82,13 @@ namespace clustering {
  * distance min, max and confidence values.
  */
 typedef struct distance_values{
-	double min_cr;				/// Minimum core distance in the cluster
-	double max_cr;				/// Maximum core distance in the cluster
-	double cr_confidence;		/// Cluster confidence based on core distances
+	distance_t min_cr;				/// Minimum core distance in the cluster
+	distance_t max_cr;				/// Maximum core distance in the cluster
+	distance_t cr_confidence;		/// Cluster confidence based on core distances
 
-	double max_dr;				/// Minimum actual distance in the cluster
-	double min_dr;				/// Maximum actua distance in the cluster
-	double dr_confidence;		/// Cluster confidence based on actual distances
+	distance_t max_dr;				/// Minimum actual distance in the cluster
+	distance_t min_dr;				/// Maximum actua distance in the cluster
+	distance_t dr_confidence;		/// Cluster confidence based on actual distances
 } distance_values; /** \typedef distance_values */
 
 /**
@@ -97,12 +96,12 @@ typedef struct distance_values{
  * @brief The statistical values
  */
 typedef struct stats_values{
-	double mean;
-	double standardDev;
-	double variance;
-	double max;					///
-	double kurtosis;
-	double skewness;
+	distance_t mean;
+	distance_t standardDev;
+	distance_t variance;
+	distance_t max;					///
+	distance_t kurtosis;
+	distance_t skewness;
 } stats_values; /** \typedef stats_values */
 
 /**
@@ -111,7 +110,7 @@ typedef struct stats_values{
  * 
  */
 typedef struct _clustering_stats{
-	int32_t count;
+	index_t count;
 	stats_values coreDistanceValues;
 	stats_values intraDistanceValues;
 } clustering_stats; /** \typedef clustering_stats */
@@ -122,8 +121,8 @@ typedef struct _clustering_stats{
  * 
  */
 typedef struct _hierarchy_entry{
-	double edgeWeight;
-	int32_t* labels;
+	distance_t edgeWeight;
+	label_t* labels;
 } hierarchy_entry; /** \typedef hierarchy_entry */
 
 /**
@@ -133,17 +132,16 @@ typedef struct _hierarchy_entry{
  */
 struct hdbscan {
 	distance distanceFunction;				/// The distance function calculator object
-	double* dataSet;						/// The dataset
 	UndirectedGraph* mst;					/// The dendogram graph
 	ArrayList* constraints;					/// Constraints
-	double* coreDistances;					/// Core distances
+	distance_t* coreDistances;					/// Core distances
 	ArrayList* clusters;
 	outlier_score* outlierScores;
-	int32_t* clusterLabels;
+	label_t* clusterLabels;
 	hashtable* hierarchy;
 	IntDoubleMap* clusterStabilities;
 	boolean selfEdges;
-	uint minPoints, minClusterSize, numPoints;
+	index_t minPoints, minClusterSize, numPoints;
 
 #ifdef __cplusplus
 
@@ -159,7 +157,7 @@ public:
 	 * 
 	 * @param minPts 
 	 */
-	hdbscan(uint minPts);
+	hdbscan(index_t minPts);
 
 	/**
 	 * @brief Destroy the hdbscan object
@@ -177,14 +175,14 @@ public:
 	 * @param rowwise 
 	 * @param datatype 
 	 */
-	void run(void* dataset, uint rows, uint cols, boolean rowwise, uint datatype);
+	void run(void* dataset, index_t rows, index_t cols, boolean rowwise, index_t datatype);
 
 	/**
 	 * @brief Re-runs HDBSCAN without re-calculating the distances. It MUST be run after run()
 	 * 
 	 * @param minPts 
 	 */
-	void reRun(int32_t minPts);
+	void reRun(index_t minPts);
 
 	/**
 	 * @brief Calculates the core distances for each point in the data set.
@@ -193,7 +191,7 @@ public:
 	 * @param rows 
 	 * @param cols 
 	 */
-	void calculateCoreDistances(void* dataSet, uint rows, uint cols);
+	void calculateCoreDistances(void* dataSet, index_t rows, index_t cols);
 
 	
 	/**
@@ -212,10 +210,10 @@ public:
 	 * a true MST).
 	 * 
 	 * @param compactHierarchy 
-	 * @param pointNoiseLevels A double array to be filled with the levels at which each point becomes noise
+	 * @param pointNoiseLevels A distance_t array to be filled with the levels at which each point becomes noise
 	 * @param pointLastClusters An int array to be filled with the last label each point had before becoming noise
 	 */
-	void computeHierarchyAndClusterTree(boolean compactHierarchy, double* pointNoiseLevels, int32_t* pointLastClusters);
+	void computeHierarchyAndClusterTree(boolean compactHierarchy, distance_t* pointNoiseLevels, label_t* pointLastClusters);
 
 	/**
 	 * @brief Propagates constraint satisfaction, stability, and lowest child death level from each child
@@ -239,11 +237,11 @@ public:
 	 * 
 	 * propagateTree() must be called before calling this method.
 	 * 
-	 * @param pointNoiseLevels A double array with the levels at which each point became noise
+	 * @param pointNoiseLevels A distance_t array with the levels at which each point became noise
 	 * @param pointLastClusters An int array with the last label each point had before becoming noise
 	 * @param infiniteStability true if there are any clusters with infinite stability, false otherwise
 	 */
-	void calculateOutlierScores(double* pointNoiseLevels, int* pointLastClusters, boolean infiniteStability);
+	void calculateOutlierScores(distance_t* pointNoiseLevels, label_t* pointLastClusters, boolean infiniteStability);
 
 	/**
 	 * @brief C++ version of hdbscan_clean
@@ -263,7 +261,7 @@ typedef struct hdbscan hdbscan;
  * @param minPoints HDBSCAN's minPts parameter
  * @return hdbscan* 
  */
-hdbscan* hdbscan_init(hdbscan* sc, uint minPoints);
+hdbscan* hdbscan_init(hdbscan* sc, index_t minPoints);
 
 /**
  * @brief Deallocate all memory including for the sc itself
@@ -291,7 +289,7 @@ void hdbscan_clean(hdbscan* sc);
  * @param datatype 
  * @return int 
  */
-int hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean rowwise, uint datatype);
+int hdbscan_run(hdbscan* sc, void* dataset, index_t rows, index_t cols, boolean rowwise, index_t datatype);
 
 /**
  * @brief In case you need to re-cluster with a differnt minPts without changing the dataset.
@@ -302,7 +300,7 @@ int hdbscan_run(hdbscan* sc, void* dataset, uint rows, uint cols, boolean rowwis
  * @param minPts 
  * @return int 
  */
-int hdbscan_rerun(hdbscan* sc, int32_t minPts);
+int hdbscan_rerun(hdbscan* sc, index_t minPts);
 
 /**
  * @brief Given min and max values of minPts, select the best minPts from min
@@ -335,11 +333,11 @@ int hdbscan_construct_mst(hdbscan* sc);
  * 
  * @param sc 
  * @param compactHierarchy 
- * @param pointNoiseLevels A double array to be filled with the levels at which each point becomes noise
+ * @param pointNoiseLevels A distance_t array to be filled with the levels at which each point becomes noise
  * @param pointLastClusters An int array to be filled with the last label each point had before becoming noise
  * @return int32_t 
  */
-int32_t hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int32_t compactHierarchy, double* pointNoiseLevels, int32_t* pointLastClusters);
+int32_t hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int32_t compactHierarchy, distance_t* pointNoiseLevels, label_t* pointLastClusters);
 
 /**
  * @brief Propagates constraint satisfaction, stability, and lowest child death level from each child
@@ -365,12 +363,12 @@ void hdbscan_find_prominent_clusters(hdbscan* sc, int32_t infiniteStability);
  * scores.  hdbscan_propagate_tree() must be called before calling this method.
  * 
  * @param sc 
- * @param pointNoiseLevels A vector<double> with the levels at which each point became noise
+ * @param pointNoiseLevels A distance_t array with the levels at which each point became noise
  * @param pointLastClusters An vector<int> with the last label each point had before becoming noise
  * @param infiniteStability true if there are any clusters with infinite stability, false otherwise
  * @return int 
  */
-int hdbscsan_calculate_outlier_scores(hdbscan* sc, double* pointNoiseLevels, int* pointLastClusters, boolean infiniteStability);
+int hdbscsan_calculate_outlier_scores(hdbscan* sc, distance_t* pointNoiseLevels, label_t* pointLastClusters, boolean infiniteStability);
 
 /**
  * @brief Given an array of labels, create a hash table where the keys are the labels and the values are the indices.
@@ -380,7 +378,7 @@ int hdbscsan_calculate_outlier_scores(hdbscan* sc, double* pointNoiseLevels, int
  * @param end 
  * @return IntIntListMap* 
  */
-hashtable* hdbscan_create_cluster_map(int32_t* labels, int32_t begin, int32_t end);
+hashtable* hdbscan_create_cluster_map(label_t* labels, int32_t begin, int32_t end);
 
 /**
  * @brief Create a hash table that maps the different statistical values to their values.
@@ -400,7 +398,7 @@ void hdbscan_calculate_stats(hashtable* distanceMap, clustering_stats* stats);
  * @param dr 
  * @param stats 
  */
-void hdbscan_calculate_stats_helper(double* cr, double* dr, clustering_stats* stats);
+void hdbscan_calculate_stats_helper(distance_t* cr, distance_t* dr, clustering_stats* stats);
 
 /**
  * @brief Create a hash table for statistical values describing the clustering results
@@ -427,7 +425,7 @@ hashtable* hdbscan_get_min_max_distances(hdbscan* sc, hashtable* clusterTable);
  * @param distanceType 
  * @return IntArrayList* 
  */
-IntArrayList* hdbscan_sort_by_similarity(hashtable* distanceMap, IntArrayList *clusters, int32_t distanceType);
+ArrayList* hdbscan_sort_by_similarity(hashtable* distanceMap, ArrayList *clusters, int32_t distanceType);
 
 /**
  * @brief Sorts clusters according to how the size of the clusters
@@ -436,7 +434,7 @@ IntArrayList* hdbscan_sort_by_similarity(hashtable* distanceMap, IntArrayList *c
  * @param clusters 
  * @return IntArrayList* 
  */
-IntArrayList* hdbscan_sort_by_length(hashtable* clusterTable, IntArrayList *clusters);
+ArrayList* hdbscan_sort_by_length(hashtable* clusterTable, ArrayList *clusters);
 
 /**
  * @brief Uses quick sort algorithm to sort clusters based on the data
@@ -446,7 +444,7 @@ IntArrayList* hdbscan_sort_by_length(hashtable* clusterTable, IntArrayList *clus
  * @param left 
  * @param right 
  */
-void hdbscan_quicksort(IntArrayList *clusters, DoubleArrayList *sortData, int32_t left, int32_t right);
+void hdbscan_quicksort(ArrayList *clusters, ArrayList *sortData, int32_t left, int32_t right);
 
 /**
  * @brief Deallocate the memory used for the cluster map

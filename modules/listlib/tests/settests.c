@@ -42,6 +42,7 @@
 #include "hdbscan/utils.h"
 #include <CUnit/Basic.h>
 #include <stdio.h>
+#include<time.h> 
 
 /**
  * @brief Initialise the int array list test suite
@@ -100,6 +101,12 @@ void set_int_test()
     d = -45;
     CU_ASSERT_EQUAL_FATAL(1, set_insert(set, &d));
     CU_ASSERT_EQUAL_FATAL(4, set->size);
+    printf("\n");
+    for(size_t i = 0; i < set_size(set); i++)
+    {
+        set_value_at(set, i, &d);
+        printf("%d ", d);
+    }
 
     d = 2;
     CU_ASSERT_EQUAL_FATAL(1, set_find(set, &d));
@@ -108,13 +115,6 @@ void set_int_test()
 
     d = 5;
     CU_ASSERT_EQUAL_FATAL(1, set_remove(set, &d));
-
-    printf("\n");
-    for(size_t i = 0; i < set_size(set); i++)
-    {
-        set_value_at(set, i, &d);
-        printf("%d ", d);
-    }
     
     printf("\n");
     set_remove_at(set, 2, &d);
@@ -124,6 +124,27 @@ void set_int_test()
         set_value_at(set, i, &d);
         printf("%d ", d);
     }
+    
+    /*clock_t start, end;
+    double cpu_time_used;
+     
+    start = clock();
+
+    printf("\n");
+    srand(time(0)); 
+    for(int32_t i = 0; i < 10000; i++) {
+        d = rand() % 10000;
+        set_insert(set, &d);
+    }
+    end = clock();
+    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+
+    printf("\nInserted in %f seconds\n", cpu_time_used);
+    for(size_t i = 0; i < set_size(set); i++)
+    {
+        set_value_at(set, i, &d);
+        printf("%d ", d);
+    }*/
 
     set_delete(set);
     printf("\n********************************************************************************************\n");
@@ -131,7 +152,7 @@ void set_int_test()
 
 void set_str_test()
 {
-    set_t* set = set_init(sizeof(void *), strcmp);
+    set_t* set = set_init(sizeof(void *), (int32_t (*)(const void *, const void *))strcmp);
     CU_ASSERT_PTR_NOT_NULL(set);
     CU_ASSERT_EQUAL_FATAL(0, set->size);
     CU_ASSERT_PTR_NOT_NULL(set->data);

@@ -48,9 +48,18 @@ JNIEXPORT void JNICALL Java_hdbscan_Hdbscan_initHdbscan(JNIEnv *env, jobject obj
 	hdbscan_init(&scan, minPoints);
 }
 
-jintArray getLabelsArray(JNIEnv *env, int32_t *lbs, int rows){
+jintArray getLabelsArray(JNIEnv *env, label_t *lbs, int rows){
 	jintArray labels = env->NewIntArray(rows);	
-	env->SetIntArrayRegion(labels, 0, rows, lbs);
+	int32_t tmp[rows];
+
+	#ifdef _OPENMP
+	#pragma omp parallel for
+	#endif
+	for(int i = 0; i < rows; i++) {
+		tmp[i] = lbs[i];
+	}
+
+	env->SetIntArrayRegion(labels, 0, rows, tmp);
 	return labels;
 }
 
@@ -71,7 +80,7 @@ JNIEXPORT jintArray JNICALL Java_hdbscan_Hdbscan_runImpl(JNIEnv *env, jobject ob
 			dIdx++;
 		}
 	}
-	scan.run(dset, rows, cols, TRUE, H_DOUBLE);
+	scan.run(dset, (index_t)rows, (index_t)cols, TRUE, H_DOUBLE);
 	
 	delete dset;
 	

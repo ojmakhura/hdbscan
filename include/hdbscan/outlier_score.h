@@ -35,6 +35,7 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include "config.h"
 #include "hdbscan/utils.h"
 
 #define OUTLIERSCORE_SUCCESS 1
@@ -51,9 +52,9 @@ namespace clustering {
  * outlier score ties, and ids used to break core distance ties.
  */
 struct OutlierScore{
-	double score;
-	double coreDistance;
-	int32_t id;
+	distance_t score;
+	distance_t coreDistance;
+	index_t id;
 
 #ifdef __cplusplus
 public:
@@ -63,7 +64,7 @@ public:
 	 * @param coreDistance The point's core distance
 	 * @param id The id (index) of the point
 	 */
-	OutlierScore(float score, float coreDistance, int id);
+	OutlierScore(distance_t score, distance_t coreDistance, index_t id);
 
 	/**
 	 * @brief Construct a new Outlier Score object
@@ -108,7 +109,7 @@ typedef struct OutlierScore outlier_score;
  * @param id 
  * @return outlier_score* 
  */
-outlier_score* outlier_score_init(outlier_score* os, double score, double coreDistance, int32_t id);
+outlier_score* outlier_score_init(outlier_score* os, distance_t score, distance_t coreDistance, index_t id);
 
 /**
  * @brief 

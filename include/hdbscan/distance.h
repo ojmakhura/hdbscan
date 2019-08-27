@@ -38,6 +38,7 @@ extern "C" {
 
 #include <math.h>
 #include <stdint.h>
+#include "config.h"
 #include "hdbscan/utils.h"
 
 
@@ -64,11 +65,11 @@ typedef unsigned int calculator;
  * @brief The distance structure.
  */
 struct Distance{
-	double* distances;
-	double* coreDistances;
-	uint rows, cols;
-	uint internalRows, internalCols;
-	int numNeighbors;
+	distance_t* distances;
+	distance_t* coreDistances;
+	index_t rows, cols;
+	index_t internalRows, internalCols;
+	index_t numNeighbors;
 	calculator cal;
 	enum HTYPES datatype;
 
@@ -106,14 +107,14 @@ public:
 	 * is an upper triangular matrix stored as a 1 dimensional array
 	 *
 	 */
-    double getDistance(uint row, uint col);
+    distance_t getDistance(index_t row, index_t col);
 
 	/**
 	 * @brief Get the Core Distances object
 	 * 
 	 * @param numNeighbors 
 	 */
-    void getCoreDistances(int32_t numNeighbors);
+    void getCoreDistances(index_t numNeighbors);
 
 private:
 	/**
@@ -122,7 +123,7 @@ private:
 	 * @param rows 
 	 * @param cols 
 	 */
-    void setDimenstions(uint rows, uint cols);
+    void setDimenstions(index_t rows, index_t cols);
 	
 	/**
 	 * @brief C++ version of distance_compute
@@ -133,7 +134,7 @@ private:
 	 * @param cols 
 	 * @param numNeighbors 
 	 */
-	void computeDistance(Distance* dis, void* dataset, int rows, int cols, int numNeighbors);
+	void computeDistance(Distance* dis, void* dataset, index_t rows, index_t cols, index_t numNeighbors);
 #endif
 };
 
@@ -172,9 +173,9 @@ void distance_clean(distance* d);
  * @param dis 
  * @param row 
  * @param col 
- * @return double 
+ * @return distance_t 
  */
-double distance_get(distance* dis, uint row, uint col);
+distance_t distance_get(distance* dis, index_t row, index_t col);
 
 /**
  * @brief Computes the euclidean distance between two points, 
@@ -192,7 +193,7 @@ double distance_get(distance* dis, uint row, uint col);
  * @param cols numer of columns
  * @param numNeighbors minimum number of neighbours
  */
-void distance_compute(distance* dis, void* dataset, int rows, int cols, int numNeighbors);
+void distance_compute(distance* dis, void* dataset, index_t rows, index_t cols, index_t numNeighbors);
 
 /**
  * @brief Find the core distances based on the number of neighbours
@@ -200,6 +201,8 @@ void distance_compute(distance* dis, void* dataset, int rows, int cols, int numN
  * @param dis 
  */
 void distance_get_core_distances(distance *dis);
+
+void distances_print(distance *dis);
 
 #ifdef __cplusplus
 };

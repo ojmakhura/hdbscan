@@ -39,7 +39,7 @@
  */
 #include "hdbscan/outlier_score.h"
 
-outlier_score* create_outlier_score(outlier_score* os, double score, double coreDistance, int id){
+outlier_score* create_outlier_score(outlier_score* os, distance_t score, distance_t coreDistance, index_t id){
 	if(os == NULL)
 		os = (outlier_score*)malloc(sizeof(outlier_score));
 

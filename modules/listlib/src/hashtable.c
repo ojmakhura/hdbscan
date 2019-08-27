@@ -183,7 +183,6 @@ hashtable* hashtable_init_size(size_t buckets, enum HTYPES ktype, enum HTYPES dt
 int32_t hashtable_insert(hashtable* htbl, void *key, void* value)
 {
     int32_t bucket = htbl->key_hash(key, htbl->buckets); // hash the key
-    hashtable_entry* list = htbl->table[bucket];
     hashtable_entry* entry = hashtable_lookup_entry(htbl, key);
 
     if(entry == NULL) /// The key is not in the table

@@ -118,6 +118,8 @@ int32_t set_remove_at(set_t* _set, int32_t pos, void* data);
 
 void set_sort(set_t* _set);
 
+int32_t set_empty(set_t* _set);
+
 #ifdef __cplusplus
 };
 #endif

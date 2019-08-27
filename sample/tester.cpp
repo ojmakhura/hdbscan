@@ -44,7 +44,7 @@ void dummy_tester(int minPts){
 		map_t clusterTable = createClusterMap(scan.clusterLabels, 0, scan.numPoints);
 		printClusterMap(clusterTable);
 
-		map<int32_t, distance_values> dMap = getMinMaxDistances(scan, clusterTable);
+		map<label_t, distance_values> dMap = getMinMaxDistances(scan, clusterTable);
 		clustering_stats stats;
 		calculateStats(dMap, stats);
 		printDistanceMap(dMap);
@@ -52,7 +52,7 @@ void dummy_tester(int minPts){
 
 		printf("Clustering validity : %d\n", analyseStats(stats));
 
-		vector<int32_t> sorted;
+		vector<label_t> sorted;
 		sortByLength(clusterTable, sorted);
 
 		printf("\n\nSorted by length = [\n");
@@ -66,7 +66,7 @@ void dummy_tester(int minPts){
 		sortBySimilarity(dMap, sorted, INTRA_DISTANCE_TYPE);
 		printf("Sorted by similarity = [");
 		for(size_t i = 0; i < sorted.size(); i++){
-			map<int32_t, distance_values>::iterator it = dMap.find(sorted[i]);
+			map<label_t, distance_values>::iterator it = dMap.find(sorted[i]);
 			printf("%d : (%f, %f)\n", sorted[i], it->second.dr_confidence, it->second.cr_confidence);
 		}
 		printf("]\n\n");

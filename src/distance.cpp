@@ -60,12 +60,12 @@ Distance::~Distance(){
 	distance_clean(this);
 }
 
-void Distance::getCoreDistances(int numNeighbors){
+void Distance::getCoreDistances(index_t numNeighbors){
 	this->numNeighbors = numNeighbors;
 	distance_get_core_distances(this);
 }
 
-void Distance::computeDistance(distance* dis, void* dataset, int rows, int cols, int numNeighbors)
+void Distance::computeDistance(distance* dis, void* dataset, index_t rows, index_t cols, index_t numNeighbors)
 {
 	distance_compute(this, dataset, rows, cols, numNeighbors);
 }

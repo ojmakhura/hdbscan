@@ -54,10 +54,9 @@
 ArrayList* array_list_init(size_t initial_size, size_t step, int32_t (*compare)(const void *a, const void *b))
 {
 	assert(initial_size > 0);
-	ArrayList* list = (ArrayList *)malloc(sizeof(ArrayList));
+	ArrayList* list = malloc(sizeof(ArrayList));
 
 	if(list != NULL){
-		size_t s = initial_size * step;
 		list->data = calloc(initial_size, step); 
 
 		if(list->data == NULL){
@@ -97,7 +96,7 @@ int32_t array_list_value_at(ArrayList* list, size_t pos, void* data)
 	}
 
 	size_t p = pos * list->step; /// Calculate the location of the proper byte
-	void* d = ((char *)list->data) + p;
+	void* d = list->data + p;
 
 	memcpy(data, d, list->step);
 
@@ -163,7 +162,7 @@ int32_t array_list_insertion_helper(ArrayList* list, void* data, size_t index)
 	size_t p = index * list->step;
 
 	// Memory location of the byte where to start copying.
-	void* np = ((char *)list->data) + p;
+	void* np = list->data + p;
 
 	// Copy the 'step' bytes from data into np
 	memcpy(np, data, list->step);
@@ -171,13 +170,12 @@ int32_t array_list_insertion_helper(ArrayList* list, void* data, size_t index)
 	return 1;
 }
 
-int32_t array_list_insert_at(ArrayList* list, void* data, size_t index){
-
-	if(index == 0 || index >= list->size)
+int32_t array_list_replace_at(ArrayList* list, void* data, size_t index){
+	if(index >= list->size)
 	{
 		return 0;
 	}
-
+	
 	return array_list_insertion_helper(list, data, index);
 }
 
@@ -200,21 +198,34 @@ int32_t array_list_append(ArrayList* list, void* data)
 	return 1;
 }
 
+int32_t array_list_insert_at(ArrayList* list, void* data, size_t pos) {
+
+	if(list->size == list->max_size) {
+       array_list_grow(list);
+    }
+
+    size_t t1 = pos * list->step;					// Beginning of the source
+    size_t t2 = (pos + 1) * list->step;				// Beginning of the destination
+    size_t tmp = (list->size - pos) * list->step; 	// Number of bytes to copy
+
+	/* Shift the data to the right */
+    memmove(list->data + t2, list->data + t1, tmp);
+	list->size++;
+
+	return array_list_insertion_helper(list, data, pos);
+}
+
 size_t array_list_size(ArrayList* list)
 {
 	return list == NULL ? 0 : list->size;
 }
 
-int32_t array_list_find(ArrayList* list, void* data)
-{
+int32_t unordered_search(ArrayList* list, void* data) {
 	int32_t tmp = -1;
-	void* t = malloc(list->step);
+	void* t;
 	for(size_t i = 0; i < list->size; i++)
 	{
-		if(!array_list_value_at(list, i, t))
-		{
-			return -1;
-		}
+		t = list->data + i * list->step;
 
 		if(list->compare(t, data) == 0)
 		{
@@ -223,9 +234,39 @@ int32_t array_list_find(ArrayList* list, void* data)
 		}
 	}
 
-	free(t);
-
 	return tmp;
+}
+
+int32_t binary_search(ArrayList* list, int32_t l, int32_t r, void* data) {
+
+	if(r >= l) {
+		int32_t mid = l + (r - l) / 2; 
+		size_t pos = mid * list->step;
+		void* ld = list->data + pos;
+
+		int32_t cmp = list->compare(ld, data);
+
+		if(cmp == 0) {
+			return mid;
+		}
+
+		if(cmp > 0) {
+			return binary_search(list, l, mid - 1, data);
+		}
+
+		return binary_search(list, mid + 1, r, data);
+	}
+
+	return -1;
+}
+
+int32_t array_list_find(ArrayList* list, void* data, int32_t sorted)
+{
+	if(sorted == 1) {
+		return binary_search(list, 0, list->size - 1, data);
+	} 
+	
+	return unordered_search(list, data);
 }
 
 void array_list_clear(ArrayList* list, int32_t resize)
@@ -242,27 +283,27 @@ int32_t array_list_remove_at(ArrayList* list, size_t pos, void* data)
 	{
 		data = NULL;
 		return 0;
-	}
+	} 
 
-
-	// Create byte array versions list->data and data
-	char* dt = (char *)list->data;
-	char* d1 = (char *)data;
-	// Copy the some data from list->data to data
-	for(size_t i = 0; i < list->step; i++)
-	{
-		d1[i] = dt[pos + 1];
-	}
+	array_list_value_at(list, pos, data);
 	
-	size_t last = list->size * list->step;
-	for(size_t pos_b = pos * list->step; pos_b < last; pos_b++)
-	{
-		dt[pos_b] = dt[pos_b + list->step];
-	}
+	size_t t1 = pos * list->step;					// Beginning of the destination
+    size_t t2 = t1 + list->step;					// Beginning of the source
+    size_t tmp = (list->size - pos -1) * list->step;
+
+	/// We shift the contents to the left
+	memmove(list->data + t1, list->data + t2, tmp);
 
 	list->size--;
 
 	return 1;
+}
+
+int32_t array_list_remove(ArrayList* list, void* data) {
+
+	int32_t ret = array_list_find(list, data, 0);
+	ret = array_list_remove_at(list, ret, data);
+	return ret;
 }
 
 int32_t array_list_pop(ArrayList* list, void* data)
@@ -271,7 +312,7 @@ int32_t array_list_pop(ArrayList* list, void* data)
 	{
 		return 0;
 	}
-
+	array_list_value_at(list, list->size-1, data);
 	list->size--;
 	
 	return 1;

@@ -99,7 +99,7 @@ void int_linked_list_test()
     int *x;
     
     x = linkedlist_lookup(list, &d, 0, int_compare);
-    printf(">>>>>>>>>> %d\n", x ? *x : NULL);
+    printf(">>>>>>>>>> %d\n", x ? *x : 0);
 
     node* nd = list->head;
     printf("\n");
