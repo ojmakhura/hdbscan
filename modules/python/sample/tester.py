@@ -35,7 +35,7 @@ def main(fname):
 	scan = PyHdbscan.PyHdbscan(6)
 		
 	print("\n***********************************************************************************\n")
-	for i in range(3, 11):
+	for i in range(3, 4):
 		if i == 3:
 			print("Clustering for dataset with minPts =", 3)
 			scan.run(dataset)

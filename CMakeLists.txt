@@ -3,9 +3,9 @@ cmake_minimum_required (VERSION 2.8)
 project(hdbscan)
 set(HDBSCAN_DESCRIPTION "Implementation of HDBSCAN algorithm in C, C++, Java and python(2, 3)")
 # The version number.
-set (HDBSCAN_MAJOR_VERSION 3)
-set (HDBSCAN_MINOR_VERSION 1)
-set (HDBSCAN_PATCH_VERSION 6)
+set (HDBSCAN_MAJOR_VERSION 4)
+set (HDBSCAN_MINOR_VERSION 0)
+set (HDBSCAN_PATCH_VERSION 0)
 set (HDBSCAN_VERSION ${HDBSCAN_MAJOR_VERSION}.${HDBSCAN_MINOR_VERSION}.${HDBSCAN_PATCH_VERSION})
 
 # Set modules to build

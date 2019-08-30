@@ -124,9 +124,9 @@ hashtable* hashtable_init_size(size_t buckets, enum HTYPES ktype, enum HTYPES dt
     }
 
     htbl->buckets = buckets;
-    if(htbl->buckets <= 0)
+    if(buckets <= 0)
     {
-        htbl->buckets = buckets;
+        htbl->buckets = 37;
     }
 
     htbl->ktype = ktype;

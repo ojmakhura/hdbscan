@@ -134,8 +134,7 @@ void cluster_propagate(cluster* cl){
 			{
 				cluster* c = NULL;
 				array_list_value_at(cl->propagatedDescendants, i, &c);
-				cluster* tmp = c;
-				array_list_append(cl->parent->propagatedDescendants, &tmp);
+				array_list_append(cl->parent->propagatedDescendants, &c);
 			}
 		}
 		else if (cl->numConstraintsSatisfied == cl->propagatedNumConstraintsSatisfied) {
@@ -154,8 +153,7 @@ void cluster_propagate(cluster* cl){
 				{
 					cluster *c = NULL;
 					array_list_value_at(cl->propagatedDescendants, i, &c);
-					cluster *tmp = c;
-					array_list_append(cl->parent->propagatedDescendants, &tmp);
+					array_list_append(cl->parent->propagatedDescendants, &c);
 				}
 			}
 		}

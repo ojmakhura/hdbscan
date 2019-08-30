@@ -48,6 +48,7 @@ double* getDset(char* filename, int *rs, int *cs){
 	if(!fp){
 		printf("Could not open file%s\n", filename);
 	}
+	
 	char buff[2048];
 	char* delim = " ,\n\t\r\v";
 	while(fgets(buff, 2048, fp) != 0) {
@@ -182,7 +183,7 @@ int main(int argc, char** argv){
 		}
 
 		printf("***********************************************************************************\n\n");
-		//break;
+		break;
 	}
 
 	hdbscan_destroy(scan);

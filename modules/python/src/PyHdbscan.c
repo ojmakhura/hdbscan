@@ -70,7 +70,7 @@ hdbscan* scan = NULL;
 typedef struct {
 	PyObject_HEAD
 	PyObject *labels;
-	uint minPoints, cols, rows;     /// TODO: change rows and cols to use long or ulong
+	index_t minPoints, cols, rows;     /// TODO: change rows and cols to use long or ulong
 } PyHdbscan;
 
 /**
@@ -121,7 +121,16 @@ PyHdbscan_init(PyHdbscan *self, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"minPoints", NULL};
 
-    if (! PyArg_ParseTupleAndKeywords(args, kwds, "i", kwlist, &self->minPoints))
+    char* c;
+    if(sizeof(index_t) == sizeof(int)) {
+        c = "I";
+    } else if(sizeof(index_t) == sizeof(int)) {
+        c = "k";
+    } else {
+        c ="H";
+    }
+
+    if (! PyArg_ParseTupleAndKeywords(args, kwds, c, kwlist, &self->minPoints))
         return -1;
     
     if(self->minPoints < 2){
@@ -139,9 +148,17 @@ PyHdbscan_init(PyHdbscan *self, PyObject *args, PyObject *kwds)
  * @param self 
  * @param labels 
  */
-void get_labels(PyHdbscan *self, int32_t *labels){
+void get_labels(PyHdbscan *self, label_t *labels){
+    char* c;
+    if(sizeof(label_t) == sizeof(int)) {
+        c = "I";
+    } else if(sizeof(label_t) == sizeof(int)) {
+        c = "k";
+    } else {
+        c ="H";
+    }
 	for(uint i = 0; i < self->rows; i++){
-		PyList_Append(self->labels, Py_BuildValue("i", labels[i]));
+		PyList_Append(self->labels, Py_BuildValue(c, labels[i]));
 	}
 }
 
@@ -194,7 +211,7 @@ static PyObject *PyHdbscan_run(PyHdbscan *self, PyObject *args){
     // Create a contigous array from dataset
     PyArrayObject* d_arr = (PyArrayObject*)PyArray_ContiguousFromAny(dataset, typenum, 0, 0);
 	
-    int nd = nd = PyArray_NDIM(d_arr);
+    int nd = PyArray_NDIM(d_arr);
 	npy_intp *dimensions = PyArray_DIMS(d_arr);
 
     // Get numpy array dimensions

@@ -106,6 +106,9 @@ cluster* hdbscan_create_new_cluster(hdbscan* sc, set_t* points, label_t* cluster
  * @return hdbscan* 
  */
 hdbscan* hdbscan_init(hdbscan* sc, index_t minPoints){
+
+	assert(minPoints > 1);
+
 	if(sc == NULL)
 		sc = (hdbscan*) malloc(sizeof(hdbscan));
 
@@ -244,7 +247,6 @@ int hdbscan_do_run(hdbscan* sc){
 	//printf("graph_quicksort_by_edge_weight\n");
 	graph_quicksort_by_edge_weight(sc->mst);
 	
-
 	distance_t pointNoiseLevels[sc->numPoints];
 	label_t pointLastClusters[sc->numPoints];
 
@@ -937,18 +939,19 @@ boolean hdbscan_propagate_tree(hdbscan* sc){
 
 	boolean addedToExaminationList[sc->clusters->size];
 	boolean infiniteStability = FALSE;
+	size_t i;
 
 	#ifdef _OPENMP
 	#pragma omp parallel for
 	#endif
-	for(size_t i = 0; i < sc->clusters->size; i++){
+	for(i = 0; i < sc->clusters->size; i++){
 		addedToExaminationList[i] = FALSE;
 	}
 
 	#ifdef _OPENMP
 	#pragma omp parallel for
 	#endif
-	for(size_t i = 0; i < sc->clusters->size; i++){
+	for(i = 0; i < sc->clusters->size; i++){
 
 		cluster* cl = ((cluster**)sc->clusters->data)[i];
 		if(cl != NULL && cl->hasChildren == FALSE){
@@ -956,18 +959,18 @@ boolean hdbscan_propagate_tree(hdbscan* sc){
 			#pragma omp critical
 			#endif
 			{
-			label_t tm = cl->label;
-			set_insert(clustersToExamine, &tm);
+			set_insert(clustersToExamine, &cl->label);
 			addedToExaminationList[cl->label] = TRUE;
 			}
 		}
 	}
 
 	label_t x;
+	cluster* currentCluster;
 	while(!set_empty(clustersToExamine)){
 		
 		set_remove_at(clustersToExamine, clustersToExamine->size-1, &x);
-		cluster* currentCluster = ((cluster **)sc->clusters->data)[x];
+		currentCluster = ((cluster **)sc->clusters->data)[x];
 		cluster_propagate(currentCluster);
 
 		if(currentCluster->stability == D_MAX){
@@ -977,8 +980,7 @@ boolean hdbscan_propagate_tree(hdbscan* sc){
 			cluster *parent = currentCluster->parent;
 
 			if(addedToExaminationList[parent->label] == FALSE){
-				label_t tm = parent->label;
-				set_insert(clustersToExamine, &tm);
+				set_insert(clustersToExamine, &parent->label);
 				addedToExaminationList[parent->label] = TRUE;
 			}
 		}
@@ -995,7 +997,7 @@ boolean hdbscan_propagate_tree(hdbscan* sc){
 					"-------------------------------------------------------------------------------------------------------";
 		printf(message);
 	}
-	
+	currentCluster = NULL;
 	set_delete(clustersToExamine);
 
 	return infiniteStability;
@@ -1198,7 +1200,7 @@ hashtable* hdbscan_get_min_max_distances(hdbscan* sc, hashtable* clusterTable){
 		distance_values* dl = NULL;
 		hashtable_lookup(distanceMap, &key, &dl);
 		
-		for(size_t j = 0; j < clusterList->size; j++){
+		for(size_t j = 0; j < clusterList->size; j++) {
 			index_t index = idxList[j];
 			if(dl == NULL)
 			{
@@ -1225,7 +1227,7 @@ hashtable* hdbscan_get_min_max_distances(hdbscan* sc, hashtable* clusterTable){
 			}
 			
 			// Calculating min and max distances
-			for(size_t k = j+1; k < clusterList->size; k++){
+			for(size_t k = j+1; k < clusterList->size; k++) {
 				distance_t d = distance_get(&(sc->distanceFunction), index, idxList[k]);
 
 				if(dl->min_dr > d && (d < zero || d > zero)){
