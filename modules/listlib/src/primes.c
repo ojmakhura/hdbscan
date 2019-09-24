@@ -106,6 +106,6 @@ int32_t find_prime_less_than(int32_t num)
    // {
    //     return get_prime(num);
    // } else {
-    return binary_search_primes(0, sz-1, num);
+    return binary_search_primes(0, p_sz-1, num);
     //}
 }

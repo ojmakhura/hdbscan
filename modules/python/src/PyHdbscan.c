@@ -69,7 +69,9 @@ hdbscan* scan = NULL;
  */
 typedef struct {
 	PyObject_HEAD
-	PyObject *labels;
+	PyObject* labels;
+    PyObject* clusterMap;
+    PyObject* hierarchy;
 	index_t minPoints, cols, rows;     /// TODO: change rows and cols to use long or ulong
 } PyHdbscan;
 
@@ -81,6 +83,8 @@ typedef struct {
 static void PyHdbscan_dealloc(PyHdbscan* self){
 	hdbscan_clean(scan);
     Py_XDECREF(self->labels);
+    Py_XDECREF(self->clusterMap);
+    Py_XDECREF(self->hierarchy);
     Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
@@ -100,6 +104,8 @@ PyHdbscan_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     self = (PyHdbscan *)type->tp_alloc(type, 0);
     if (self != NULL) {
         self->labels = NULL;
+        self->clusterMap = NULL;
+        self->hierarchy = NULL;
 		self->minPoints = 0;
 		self->rows = 0;
 		self->cols = 0;
@@ -124,13 +130,13 @@ PyHdbscan_init(PyHdbscan *self, PyObject *args, PyObject *kwds)
     char* c;
     if(sizeof(index_t) == sizeof(int)) {
         c = "I";
-    } else if(sizeof(index_t) == sizeof(int)) {
+    } else if(sizeof(index_t) == sizeof(long)) {
         c = "k";
     } else {
         c ="H";
     }
 
-    if (! PyArg_ParseTupleAndKeywords(args, kwds, c, kwlist, &self->minPoints))
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, c, kwlist, &self->minPoints))
         return -1;
     
     if(self->minPoints < 2){
@@ -152,7 +158,7 @@ void get_labels(PyHdbscan *self, label_t *labels){
     char* c;
     if(sizeof(label_t) == sizeof(int)) {
         c = "I";
-    } else if(sizeof(label_t) == sizeof(int)) {
+    } else if(sizeof(label_t) == sizeof(long)) {
         c = "k";
     } else {
         c ="H";
@@ -243,7 +249,7 @@ static PyObject *PyHdbscan_run(PyHdbscan *self, PyObject *args){
  * @param args 
  * @return PyObject* 
  */
-static PyObject *PyHdbscan_rerun(PyHdbscan *self, PyObject *args){
+static PyObject* PyHdbscan_rerun(PyHdbscan *self, PyObject *args) {
 	Py_XDECREF(self->labels); 
     if (!PyArg_ParseTuple(args, "i", &self->minPoints))
         return NULL;
@@ -256,10 +262,81 @@ static PyObject *PyHdbscan_rerun(PyHdbscan *self, PyObject *args){
 	int err = hdbscan_rerun(scan, self->minPoints);
 
     npy_intp dims[] = {self->rows, 1};
-    self->labels = PyArray_SimpleNewFromData(1, dims, NPY_INT, scan->clusterLabels);
+    enum NPY_TYPES tp = NPY_SHORT;
+
+    if(sizeof(label_t) == sizeof(int)) {
+        tp = NPY_INT;
+    } else if (sizeof(label_t) == sizeof(long)) {
+        tp = NPY_LONG;
+    }
+
+    self->labels = PyArray_SimpleNewFromData(1, dims, tp, scan->clusterLabels);
     Py_INCREF(self->labels);
 	
 	return Py_BuildValue("i", err);
+}
+
+static PyObject* PyHdbscan_getClusterMap(PyHdbscan *self, PyObject *args) {
+    Py_XDECREF(self->clusterMap); 
+    int32_t begin, end;
+    if (!PyArg_ParseTuple(args, "ii", &begin, &end))
+        return NULL;
+
+    enum NPY_TYPES tp = NPY_SHORT;
+
+    if(sizeof(label_t) == sizeof(int)) {
+        tp = NPY_INT;
+    } else if (sizeof(label_t) == sizeof(long)) {
+        tp = NPY_LONG;
+    }
+
+    int err = 1;
+    hashtable* tmp = hdbscan_create_cluster_map(scan->clusterLabels, begin, end);
+    self->clusterMap = PyDict_New();
+    label_t label;
+
+    for(size_t i = 0; i < tmp->size; i++) {
+        label = ((label_t *)tmp->keys->data)[i];
+        PyObject* key = Py_BuildValue("i", label);
+        ArrayList* lst;
+        hashtable_lookup(tmp, &label, &lst);
+        npy_intp dims[] = {lst->size, 1};
+        label_t* labels = lst->data;
+        PyObject* value = PyArray_SimpleNewFromData(1, dims, tp, labels);
+        PyDict_SetItem(self->clusterMap, key, value);
+    }
+
+    Py_INCREF(self->clusterMap);
+    return Py_BuildValue("i", err);
+}
+
+static PyObject* PyHdbscan_getHierarchies(PyHdbscan *self, PyObject *args) {
+    Py_XDECREF(self->hierarchy); 
+    enum NPY_TYPES tp = NPY_SHORT;
+
+    if(sizeof(label_t) == sizeof(int)) {
+        tp = NPY_INT;
+    } else if (sizeof(label_t) == sizeof(long)) {
+        tp = NPY_LONG;
+    }
+
+    int err = 1;
+    self->hierarchy = PyDict_New();
+    int64_t level;
+	hierarchy_entry* data;
+
+    for(size_t i = 0; i < hashtable_size(scan->hierarchy); i++) {
+        
+		set_value_at(scan->hierarchy->keys, i, &level);
+        hashtable_lookup(scan->hierarchy, &level, &data);
+        npy_intp dims[] = {scan->numPoints, 1};
+        PyObject* value = PyArray_SimpleNewFromData(1, dims, tp, data->labels);
+        PyObject* key = Py_BuildValue("k", level);
+        PyDict_SetItem(self->hierarchy, key, value);
+    }
+    
+    Py_INCREF(self->hierarchy);
+    return Py_BuildValue("i", err);
 }
 
 /**
@@ -267,8 +344,10 @@ static PyObject *PyHdbscan_rerun(PyHdbscan *self, PyObject *args){
  * 
  */
 static PyMethodDef PyHdbscan_methods[] = {
-    {"run", (PyCFunction)PyHdbscan_run, METH_VARARGS, "Run the clustering algorithm and extract cluster labels"},
-    {"rerun", (PyCFunction)PyHdbscan_rerun, METH_VARARGS, "Extract clusters using old dataset and new minPoints"},
+    {"run", (PyCFunction)PyHdbscan_run, METH_VARARGS, "Run the clustering algorithm and extract cluster labels."},
+    {"rerun", (PyCFunction)PyHdbscan_rerun, METH_VARARGS, "Extract clusters using old dataset and new minPoints."},
+    {"getClusterMap", (PyCFunction)PyHdbscan_getClusterMap, METH_VARARGS, "Get a mapping of the cluster labels to the points."},
+    {"getHierarchies", (PyCFunction)PyHdbscan_getHierarchies, METH_VARARGS, "Get the hierarchy data."},
     {NULL}  /* Sentinel */
 };
 
@@ -278,6 +357,8 @@ static PyMethodDef PyHdbscan_methods[] = {
  */
 static PyMemberDef PyHdbscan_members[] = {
     {"labels", T_OBJECT_EX, offsetof(PyHdbscan, labels), 0, "Cluster labels"},
+    {"clusterMap", T_OBJECT_EX, offsetof(PyHdbscan, clusterMap), 0, "Dictionary of the clusters and the points"},
+    {"hierarchy", T_OBJECT_EX, offsetof(PyHdbscan, hierarchy), 0, "Dictionary of the hierarchies"},
     {"minPoints", T_INT, offsetof(PyHdbscan, minPoints), 0, "Minimum number of point in a cluster"},
     {"rows", T_INT, offsetof(PyHdbscan, rows), 0, "number of data points"},
     {"cols", T_INT, offsetof(PyHdbscan, cols), 0, "The size of each data point"},

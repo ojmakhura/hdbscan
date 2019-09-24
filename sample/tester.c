@@ -122,7 +122,7 @@ int main(int argc, char** argv){
 			printf("SUCCESS: hdbscan clustering completed\n");
 			IntIntListMap* clusterTable = hdbscan_create_cluster_map(scan->clusterLabels, 0, scan->numPoints);
 			hdbscan_print_cluster_map(clusterTable);
-			//hdbscan_print_hierarchies(scan->hierarchy, scan->numPoints, NULL);
+			hdbscan_print_hierarchies(scan->hierarchy, scan->numPoints, NULL);
 
 			IntDistancesMap* dMap = hdbscan_get_min_max_distances(scan, clusterTable);
 			clustering_stats stats;
@@ -156,7 +156,7 @@ int main(int argc, char** argv){
 			}
 			printf("]\n\n");
 			
-			sorted = hdbscan_sort_by_similarity(dMap, sorted, INTRA_DISTANCE_TYPE); // There is choice to use CORE_doubleYPE
+			sorted = hdbscan_sort_by_similarity(dMap, sorted, INTRA_DISTANCE_TYPE); // There is choice to use CORE_DISTANCE_TYPE
 			printf("Sorted by similarity = [");
 
 			data = (label_t *)sorted->data;
@@ -178,7 +178,45 @@ int main(int argc, char** argv){
 			}
 			printf("]\n\n");
 			
-			hdbscan_destroy_distance_map(dMap);
+			/*label_t lb = 26;
+			ArrayList* l1;
+			hashtable_lookup(clusterTable, &lb, &l1);
+			index_t *dxs = l1->data;
+			index_t f1 = 4;
+
+			//lb = 8;
+			//hashtable_lookup(clusterTable, &lb, &l1);
+			//dxs = l1->data;
+
+			ArrayList* sorted  = array_list_init(rows, sizeof(label_t), NULL);
+			ArrayList* dixs  = array_list_init(rows, sizeof(distance_t), NULL);
+			distance_t *d_data = dixs->data;
+			label_t* s_data = sorted->data;
+
+			for(size_t i = 0; i < rows; i++) {
+				distance_t dis = distance_get(&scan->distanceFunction, f1, i);
+				//printf("%ld : %f\n", dxs[i], dis);
+				d_data[i] = dis;
+				//s_data[i] = (label_t)dxs[i];
+				s_data[i] = (label_t)i;
+				//printf("(%ld , %ld) : %f\n", f1, d_data[i], s_data[i]);
+			}
+			dixs->size = rows;
+			sorted->size = rows;
+			hdbscan_quicksort(sorted, dixs, 0, sorted->size-1);
+
+			printf("\n");
+			for(size_t i = 0; i < rows; i++) {
+				if(scan->clusterLabels[s_data[i]] == 0)
+					continue;
+
+				printf("(%ld, %ld , %ld) : %f\n", scan->clusterLabels[s_data[i]], f1, d_data[i], s_data[i]);
+			}
+
+			printf("\n");
+			*/
+
+			//hdbscan_destroy_distance_map(dMap);
 			hdbscan_destroy_cluster_map(clusterTable);
 		}
 

@@ -72,11 +72,11 @@ int32_t get_prime(int32_t min);
  */
 int32_t binary_search_primes(int32_t l, int32_t r, int32_t x) ;
 
-#define sz 200
+#define p_sz 200
 // Creating an array of prime numbers for creating key hashes
 // We only need 120 primes from 29 to 409. If we need more we
 // will have to calculate them.
-static const int32_t primes[sz] = {
+static const int32_t primes[p_sz] = {
     3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,
     71,73,79,83,89,97,101,103,107,109,113,127,131,137,139,149,151,157,163,167,
     173,179,181,191,193,197,199,211,223,227,229,233,239,241,251,257,263,269,271,277,

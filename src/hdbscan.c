@@ -1143,6 +1143,7 @@ hashtable* hdbscan_create_cluster_map(label_t* labels, int32_t begin, int32_t en
 		clusterTable = hashtable_init(bsize, H_SHORT, H_PTR, short_compare);		
 	}
 
+	clusterTable->size = 0;
 	index_t size = end - begin;
 	
 	for(index_t i = begin; i < end; i++){
@@ -1419,8 +1420,8 @@ void hdbscan_calculate_stats_helper(distance_t* cr, distance_t* dr, clustering_s
 	stats->coreDistanceValues.standardDev = sqrt(stats->coreDistanceValues.variance);
 	stats->intraDistanceValues.standardDev = sqrt(stats->intraDistanceValues.variance);
 
-	//hdbscan_skew_kurt_1(stats, sum_sc, sum_sd, sum_dc, sum_dd);
-	hdbscan_skew_kurt_2(stats, sum_sc, sum_sd, sum_dc, sum_dd);
+	hdbscan_skew_kurt_1(stats, sum_sc, sum_sd, sum_dc, sum_dd);
+	//hdbscan_skew_kurt_2(stats, sum_sc, sum_sd, sum_dc, sum_dd);
 	//hdbscan_skew_kurt_gsl(stats, cr, dr);
 	
 }

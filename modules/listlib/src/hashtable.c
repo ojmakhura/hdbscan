@@ -457,7 +457,8 @@ void hashtable_entry_destroy(hashtable_entry *entry, void* data, size_t dsize)
 size_t hashtable_size(hashtable* htbl)
 {
     assert(htbl != NULL);
-    return htbl->size;
+    //printf("hashtable_size: size is %ld\n", htbl->size);
+    return htbl->keys->size;
 }
 
 int32_t hashtable_empty(hashtable* htbl)
