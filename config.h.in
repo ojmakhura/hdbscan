@@ -17,6 +17,8 @@ typedef @DISTANCE_TYPE@ distance_t;
 
 typedef @INDEX_TYPE@ index_t;
 
+#define @CMAKE_BUILD_TYPE@
+
 /* always defined to indicate that i18n is enabled */
 #undef ENABLE_NLS
 

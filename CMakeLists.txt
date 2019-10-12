@@ -32,6 +32,9 @@ endif()
 set(INDEX_TYPE "unsigned int" CACHE STRING "Data types for indexing.")
 set_property(CACHE INDEX_TYPE PROPERTY STRINGS "unsigned int" "unsigned short" "unsigned long")
 
+set(CMAKE_BUILD_TYPE "DEBUG" CACHE STRING "Build type.")
+set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "DEBUG" "RELEASE")
+
 OPTION (USE_CUDA "Use CUDA" OFF)
 IF(USE_CUDA)
   #complete
