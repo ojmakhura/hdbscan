@@ -46,8 +46,8 @@ extern "C" {
 #include "listlib/hashtable.h"
 
 #define FILE_BUFFER_SIZE = 32678
-#define HDBSCAN_SUCCESS 1
-#define HDBSCAN_ERROR	0
+#define HDBSCAN_SUCCESS 0
+#define HDBSCAN_ERROR	1
 
 #define CORE_DISTANCE_TYPE	0
 #define INTRA_DISTANCE_TYPE	1
@@ -68,8 +68,6 @@ typedef hashtable IntClusterListMap;
  * Implementation of the HDBSCAN* algorithm, which is broken into several methods.
  * @author ojmakhura
  */
-
-//string getWarningMessage();
 
 #ifdef __cplusplus
 namespace clustering {
