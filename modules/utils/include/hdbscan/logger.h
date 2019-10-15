@@ -3,7 +3,7 @@
  *
  *  Created on: 16 Sep 2017
  *      Author: junior
- * 
+ *
  * Copyright 2018 Onalenna Junior Makhura
  *
  * Permission is hereby granted, free of charge, to any person
@@ -36,28 +36,19 @@ extern "C" {
 #endif
 #include <stdio.h>
 #include <stdlib.h>
-#include "hdbscan/utils.h"
 
 enum LOGTYPE {
-    LOGFILE,
-    CONSOLE
-};
-
-enum LOGLEVEL {
     FATAL,      // A fatal error has occured: program will exit immediately
     ERROR,      // An error has occured: program may not exit
     INFO,       // Nessessary information regarding program operation
     WARN       // Any circumstance that may not affect normal operation
 };
 
-typedef struct LOGGER {
-    FILE* log_file;
-    enum LOGTYPE log_type;
-} logger;
+static FILE* log_file = NULL;
 
-logger* logger_init(logger* log, enum LOGTYPE type);
-void logger_write(logger* log, enum LOGLEVEL level, const char* str);
-void logger_close(logger* log);
+void logger_init();
+void logger_write(enum LOGTYPE type, const char* str);
+void logger_close();
 
 #ifdef __cplusplus
 }

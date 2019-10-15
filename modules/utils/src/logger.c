@@ -3,7 +3,7 @@
  *
  *  Created on: 13 October 2019
  *      Author: junior
- * 
+ *
  * Copyright 2019 Onalenna Junior Makhura
  *
  * Permission is hereby granted, free of charge, to any person
@@ -30,17 +30,17 @@
 /**
  * @file logger.c
  * @author Onalenna Junior Makhura (ojmakhura@roguesystems.co.bw)
- * 
+ *
  * @brief Logging facility implementation
- * 
- * @version 
+ *
+ * @version
  * @date 2019-10-13
- * 
+ *
  * @copyright Copyright (c) 2019
- * 
+ *
  */
 
-#include "hdbscan/logger.h"
+#include "logger.h"
 #include <assert.h>
 #include <time.h>
 
@@ -57,62 +57,44 @@ static char* getDateString() {
     return date;
 }
 
-logger* logger_init(logger* log, enum LOGTYPE type)
+void logger_init()
 {
-    if(log == NULL) {
-        log = malloc(sizeof(logger));
-        if(log == NULL) {
-            return NULL;
+    if(log_file == NULL) {
+    	
+        log_file = fopen("hdbscan.log", "a");
+
+        if(log_file == NULL) {
+            printf("Log file not opened.");
         }
-
-        if(type == LOGFILE) {
-
-            log->log_file = fopen("hdbscan.log", "a");
-
-            if(log->log_file == NULL) {
-            printf("Log file not opened."); 
-            }
-        }
-
-        log->log_type = type;
     }
 
-    return log;
 }
 
-void logger_write(logger* log, enum LOGLEVEL level, const char* str) {
-    
-    assert(log != NULL);
-    const char* date = getDateString();
-    const char* lvl;
+void logger_write(enum LOGTYPE type, const char* str) {
 
-    if(level == FATAL) {
-        lvl = "FATAL";
-    } else if (level == ERROR) {
-        lvl = "ERROR";
-    } else if (level == INFO) {
-        lvl = "INFO";
+    assert(log_file != NULL);
+    const char* date = getDateString();
+    const char* tp;
+
+    if(type == FATAL) {
+        tp = "FATAL";
+    } else if (type == ERROR) {
+        tp = "ERROR";
+    } else if (type == INFO) {
+        tp = "INFO";
     } else {
-        lvl = "WARN";
-    } 
-    size_t sz = strlen(date) + strlen(lvl) + strlen(str) + 10;
+        tp = "WARN";
+    }
+    size_t sz = strlen(date) + strlen(tp) + strlen(str) + 10;
     char buffer[sz];
-    int n = sprintf(buffer, "%s %s: %s\n", date, lvl, str);
+    int n = sprintf(buffer, "%s %s: %s\n", date, tp, str);
     free(date);
 
-    if(log->log_type == CONSOLE) {
-        printf("%s", buffer);
-    } else {
-        fprintf(log->log_file, "%s", buffer);
-    }
+    fprintf(log_file, "%s", buffer);
 }
 
-void logger_close(logger* log) {
+void logger_close() {
 
-    assert(log != NULL);
-
-    if(log->log_type == LOGFILE)
-        fclose(log->log_file);
-
-    free(log);
+    assert(log_file != NULL);
+    fclose(log_file);
 }

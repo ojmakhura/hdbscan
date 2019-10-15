@@ -38,6 +38,7 @@
  */
 
 #include "hdbscan/hdbscan.h"
+#include "hdbscan/logger.h"
 #include <assert.h>
 #include <time.h>
 #include <math.h>
@@ -113,7 +114,11 @@ hdbscan* hdbscan_init(hdbscan* sc, index_t minPoints){
 		sc = (hdbscan*) malloc(sizeof(hdbscan));
 
 	if(sc == NULL){
-		printf("Error: Could not allocate memory for HDBSCAN.\n");
+		#ifdef DEBUG
+			logger_write(FATAL, "Error: Could not allocate memory for HDBSCAN.\n")
+		#else
+			printf("FATAL: Could not allocate memory for HDBSCAN.\n");
+		#endif
 	} else{
 		sc->minPoints = minPoints;
 		sc->selfEdges = TRUE;
@@ -240,7 +245,7 @@ int hdbscan_do_run(hdbscan* sc){
 	int err = hdbscan_construct_mst(sc);
 	
 	if(err == HDBSCAN_ERROR){
-		printf("Error: Could not construct the minimum spanning tree.\n");
+		printf("FATAL: Could not construct the minimum spanning tree.\n");
 		return HDBSCAN_ERROR;
 	}
 

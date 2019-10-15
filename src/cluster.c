@@ -38,6 +38,7 @@
  * 
  */
 #include "hdbscan/cluster.h"
+#include "hdbscan/logger.h"
 
 #include <float.h>
 
