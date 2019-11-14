@@ -263,6 +263,8 @@ int hdbscan_do_run(hdbscan* sc){
 	//printf("hdbscan_find_prominent_clusters\n");
 	hdbscan_find_prominent_clusters(sc, infiniteStability);
 
+	hdbscsan_calculate_outlier_scores(sc, pointNoiseLevels, pointLastClusters, infiniteStability);
+
 	return HDBSCAN_SUCCESS;
 }
 
@@ -659,8 +661,6 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 		}
 
 		// Assign offsets and calculate the number of constraints satisfied:
-		//set_t* newClusterLabels = set_init(sizeof(long), long_compare);
-
 		cluster* newCluster = NULL;
 		
 		#ifdef _OPENMP
@@ -668,10 +668,8 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 		#endif
 		for(i = 0; i < array_list_size(newClusters); i++)
 		{
-			//array_list_value_at(newClusters, i, &newCluster);
 			newCluster = ((cluster**)newClusters->data)[i];
 			newCluster->offset = lineCount;
-			//set_insert(newClusterLabels, &lineCount);
 		}
 		
 		#ifdef _OPENMP
@@ -688,7 +686,6 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 		}
 
 		array_list_clear(newClusters, 0);
-		//set_delete(newClusterLabels);
 	}
 	array_list_delete(newClusters);
 
@@ -1805,7 +1802,7 @@ void hdbscan_print_cluster_sizes(hashtable* table){
  * @param numPoints 
  * @param filename 
  */
-void hdbscan_print_hierarchies(hashtable* hierarchy, uint numPoints, char *filename){
+void hdbscan_print_hierarchies(hashtable* hierarchy, index_t numPoints, char *filename){
 
 	assert(hierarchy != NULL);
 	FILE *visFile = NULL;
@@ -1862,6 +1859,16 @@ void hdbscan_print_hierarchies(hashtable* hierarchy, uint numPoints, char *filen
 		fclose(hierarchyFile);
 	}
 	printf("//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////\n\n");
+}
+
+void hdbscan_print_outlier_scores(outlier_score* scores, index_t numPoints) {
+	printf("\n////////////////////////////////////////////////////// Printing outlier Scores //////////////////////////////////////////////////////\n");
+	for(index_t i = 0; i < numPoints; i++) {
+		outlier_score* score = scores + i;
+		printf("%ld : (%f, %f)\n", score->id, score->coreDistance, score->score);
+	}
+	printf("//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////\n\n");
+
 }
 
 /**

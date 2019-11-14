@@ -73,7 +73,7 @@ cluster* cluster_init(cluster* cl, label_t label, cluster* parent, distance_t bi
 			cl->virtualChildCluster->compare = short_compare;
 		}
 
-		cl->propagatedDescendants = ptr_array_list_init(2, cluster_compare);
+		cl->propagatedDescendants = ptr_array_list_init(1, cluster_compare);
 	}
 
 	return cl;

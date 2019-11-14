@@ -122,7 +122,7 @@ int main(int argc, char** argv){
 			printf("SUCCESS: hdbscan clustering completed\n");
 			IntIntListMap* clusterTable = hdbscan_create_cluster_map(scan->clusterLabels, 0, scan->numPoints);
 			hdbscan_print_cluster_map(clusterTable);
-			//hdbscan_print_hierarchies(scan->hierarchy, scan->numPoints, NULL);
+			hdbscan_print_hierarchies(scan->hierarchy, scan->numPoints, NULL);
 
 			IntDistancesMap* dMap = hdbscan_get_min_max_distances(scan, clusterTable);
 			clustering_stats stats;
@@ -178,45 +178,36 @@ int main(int argc, char** argv){
 			}
 			printf("]\n\n");
 			
-			/*label_t lb = 26;
-			ArrayList* l1;
-			hashtable_lookup(clusterTable, &lb, &l1);
-			index_t *dxs = l1->data;
-			index_t f1 = 4;
+			hdbscan_print_outlier_scores(scan->outlierScores, scan->numPoints);
+			printf("***********************************************************************************\n\n");
+			cluster* cl;
+			for(size_t i = 0; i < scan->clusters->size; i++){
 
-			//lb = 8;
-			//hashtable_lookup(clusterTable, &lb, &l1);
-			//dxs = l1->data;
+				array_list_value_at(scan->clusters, i, &cl);
 
-			ArrayList* sorted  = array_list_init(rows, sizeof(label_t), NULL);
-			ArrayList* dixs  = array_list_init(rows, sizeof(distance_t), NULL);
-			distance_t *d_data = dixs->data;
-			label_t* s_data = sorted->data;
-
-			for(size_t i = 0; i < rows; i++) {
-				distance_t dis = distance_get(&scan->distanceFunction, f1, i);
-				//printf("%ld : %f\n", dxs[i], dis);
-				d_data[i] = dis;
-				//s_data[i] = (label_t)dxs[i];
-				s_data[i] = (label_t)i;
-				//printf("(%ld , %ld) : %f\n", f1, d_data[i], s_data[i]);
-			}
-			dixs->size = rows;
-			sorted->size = rows;
-			hdbscan_quicksort(sorted, dixs, 0, sorted->size-1);
-
-			printf("\n");
-			for(size_t i = 0; i < rows; i++) {
-				if(scan->clusterLabels[s_data[i]] == 0)
+				if(cl == NULL) {
 					continue;
+				}
 
-				printf("(%ld, %ld , %ld) : %f\n", scan->clusterLabels[s_data[i]], f1, d_data[i], s_data[i]);
+				double_t a = 0, 
+					     b = 0;
+				if(scan->constraints != NULL) {
+					a = (0.5 * cl->numConstraintsSatisfied) / scan->constraints->size;
+					b = (0.5 * cl->propagatedNumConstraintsSatisfied) / scan->constraints->size;
+				}
+
+				label_t pl = 0;
+
+				if(cl->parent != NULL) {
+					pl = cl->parent->label;
+				}
+
+				printf("%ld %6f %6f %6f %6f %6f %ld %ld\n", 
+							cl->label, cl->birthLevel, cl->deathLevel, cl->stability,
+							a, b, cl->offset, pl);
 			}
-
-			printf("\n");
-			*/
-
-			//hdbscan_destroy_distance_map(dMap);
+			
+			hdbscan_destroy_distance_map(dMap);
 			hdbscan_destroy_cluster_map(clusterTable);
 		}
 

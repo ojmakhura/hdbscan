@@ -499,7 +499,12 @@ void hdbscan_print_stats(clustering_stats* stats);
  * @param numPoints 
  * @param filename 
  */
-void hdbscan_print_hierarchies(hashtable* hierarchy, uint numPoints, char *filename);
+void hdbscan_print_hierarchies(hashtable* hierarchy, index_t numPoints, char *filename);
+
+/**
+ * 
+ */ 
+void hdbscan_print_outlier_scores(outlier_score* scores, index_t numPoints);
 
 /**
  * @brief 

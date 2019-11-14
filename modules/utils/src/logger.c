@@ -40,7 +40,7 @@
  *
  */
 
-#include "logger.h"
+#include "hdbscan/logger.h"
 #include <assert.h>
 #include <time.h>
 

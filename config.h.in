@@ -2,6 +2,8 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
+#cmakedefine DEBUG
+
 #define HDBSCAN_MAJOR_VERSION (@HDBSCAN_MAJOR_VERSION@)
 #define HDBSCAN_MINOR_VERSION (@HDBSCAN_MINOR_VERSION@)
 #define HDBSCAN_PATCH_VERSION (@HDBSCAN_PATCH_VERSION@)
@@ -16,8 +18,6 @@ typedef @DISTANCE_TYPE@ distance_t;
 #define D_MIN @D_MIN@
 
 typedef @INDEX_TYPE@ index_t;
-
-#define @CMAKE_BUILD_TYPE@
 
 /* always defined to indicate that i18n is enabled */
 #undef ENABLE_NLS
