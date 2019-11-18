@@ -178,7 +178,7 @@ int main(int argc, char** argv){
 			}
 			printf("]\n\n");
 			*/
-			hdbscan_print_outlier_scores(scan->outlierScores, scan->numPoints);
+			//hdbscan_print_outlier_scores(scan->outlierScores, scan->numPoints);
 						
 			hdbscan_destroy_distance_map(dMap);
 			hdbscan_destroy_cluster_map(clusterTable);

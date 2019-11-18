@@ -78,7 +78,7 @@ uint hdbscan_get_dataset_size(uint rows, uint cols, boolean rowwise){
  * @return cluster*
  */
 cluster* hdbscan_create_new_cluster(hdbscan* sc, set_t* points, label_t* clusterLabels, cluster* parentCluster, label_t clusterLabel, distance_t edgeWeight){
-	//printf("createNewCluster : %ld %f\n", clusterLabel, edgeWeight);
+	
 	index_t d ;
 	#ifdef _OPENMP
 	#pragma omp parallel for private(d)
@@ -304,10 +304,9 @@ int hdbscan_run(hdbscan* sc, void* dataset, index_t rows, index_t cols, boolean 
 		printf("hdbscan_run: sc has not been initialised.\n");
 		return HDBSCAN_ERROR;
 	}
-	//printf("distance_init\n");
+	
 	distance_init(&sc->distanceFunction, _EUCLIDEAN, datatype);
 
-	//printf("hdbscan_get_dataset_size\n");
 	sc->numPoints = hdbscan_get_dataset_size(rows, cols, rowwise);
 	distance_compute(&(sc->distanceFunction), dataset, rows, cols, sc->minPoints-1);
 

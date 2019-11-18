@@ -285,7 +285,6 @@ void graph_print(UndirectedGraph* g) {
 	for(uint i = 0; i < g->numVertices; i++){
 		ArrayList* edge = g->edges[i];
 
-		//printf("Edge length is %d\n", g_list_length(edge));
 		printf("[");
 		index_t* ldata = edge->data;
 

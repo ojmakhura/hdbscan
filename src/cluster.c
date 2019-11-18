@@ -43,7 +43,7 @@
 #include <float.h>
 
 cluster* cluster_init(cluster* cl, label_t label, cluster* parent, distance_t birthLevel, index_t numPoints){
-	//printf("Cluster Init: for %d\n", label);
+	
 	if(cl == NULL){
 		cl = (cluster*)malloc(sizeof(cluster));
 	}
