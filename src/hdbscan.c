@@ -78,6 +78,7 @@ uint hdbscan_get_dataset_size(uint rows, uint cols, boolean rowwise){
  * @return cluster*
  */
 cluster* hdbscan_create_new_cluster(hdbscan* sc, set_t* points, label_t* clusterLabels, cluster* parentCluster, label_t clusterLabel, distance_t edgeWeight){
+	//printf("createNewCluster : %ld %f\n", clusterLabel, edgeWeight);
 	index_t d ;
 	#ifdef _OPENMP
 	#pragma omp parallel for private(d)
@@ -249,18 +250,13 @@ int hdbscan_do_run(hdbscan* sc){
 		return HDBSCAN_ERROR;
 	}
 
-	//printf("graph_quicksort_by_edge_weight\n");
 	graph_quicksort_by_edge_weight(sc->mst);
 	
 	distance_t pointNoiseLevels[sc->numPoints];
 	label_t pointLastClusters[sc->numPoints];
 
-	//printf("hdbscan_compute_hierarchy_and_cluster_tree\n");
 	hdbscan_compute_hierarchy_and_cluster_tree(sc, 0, pointNoiseLevels, pointLastClusters);
-	//printf("hdbscan_propagate_tree\n");
 	int infiniteStability = hdbscan_propagate_tree(sc);
-
-	//printf("hdbscan_find_prominent_clusters\n");
 	hdbscan_find_prominent_clusters(sc, infiniteStability);
 
 	hdbscsan_calculate_outlier_scores(sc, pointNoiseLevels, pointLastClusters, infiniteStability);
@@ -400,15 +396,15 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 	} else {
 		affectedVertices->compare = short_compare;
 	}
-
+	
 	ArrayList* newClusters = array_list_init(2, sizeof(cluster *), cluster_compare);
 	index_t i;
 	distance_t currentEdgeWeight, tmp_w;
 
-//#pragma omp parallel
 	while (currentEdgeIndex >= 0) {
 		
 		currentEdgeWeight = ((distance_t *)sc->mst->edgeWeights->data)[currentEdgeIndex];
+		
 		if(!array_list_empty(newClusters))
 		{
 			array_list_clear(newClusters, 0);
@@ -515,7 +511,7 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 				set_remove_at(examinedVertices, examinedVertices->size-1, &rootVertex);
 				set_insert(constructingSubCluster, &rootVertex);
 				array_list_append(unexploredSubClusterPoints, &rootVertex);
-
+				
 				//Explore this potential child cluster as long as there are unexplored points:
 				while (unexploredSubClusterPoints->size > 0) {
 					index_t vertexToExplore;
@@ -557,6 +553,7 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 						}
 					}
 				}
+				
 				cluster* examinedCluster = NULL;
 				//If there could be a split, and this child cluster is valid:
 				if(numChildClusters >= 2 && constructingSubCluster->size >= sc->minPoints && anyEdges == TRUE){
@@ -584,6 +581,7 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 				else if(constructingSubCluster->size < sc->minPoints || anyEdges == FALSE){
 
 					examinedCluster = ((cluster**)sc->clusters->data)[examinedClusterLabel];
+					
 					cluster* newCluster = hdbscan_create_new_cluster(sc, constructingSubCluster, currentClusterLabels, examinedCluster, 0, currentEdgeWeight);
 					index_t point;
 					#ifdef _OPENMP
@@ -627,6 +625,7 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 
 				cluster* examinedCluster = NULL;
 				examinedCluster = ((cluster**)sc->clusters->data)[examinedClusterLabel];
+				
 				cluster* newCluster = hdbscan_create_new_cluster(sc, firstChildCluster, currentClusterLabels, examinedCluster, nextClusterLabel, currentEdgeWeight);
 				array_list_append(newClusters, &newCluster);
 				nextClusterLabel++;
@@ -856,9 +855,6 @@ int hdbscan_construct_mst(hdbscan* sc){
 		distance_t nearestMRDDistance = D_MAX;
 
 		//Iterate through all unattached points, updating distances using the current point:
-		#ifdef _OPENMP
-		#pragma omp parallel for
-		#endif
 		for (index_t neighbor = 0; neighbor < size; neighbor++) {
 
 			if (currentPoint == neighbor) {
@@ -870,7 +866,6 @@ int hdbscan_construct_mst(hdbscan* sc){
 			}
 			
 			distance_t mutualReachabiltiyDistance = distance_get(&sc->distanceFunction, neighbor, currentPoint);
-
 			if (coreDistances[currentPoint] > mutualReachabiltiyDistance) {
 				mutualReachabiltiyDistance = coreDistances[currentPoint];
 			}
@@ -913,6 +908,7 @@ int hdbscan_construct_mst(hdbscan* sc){
 	}
 
 	sc->mst = graph_init(NULL, size, nearestMRDNeighbors, otherVertexIndices, nearestMRDDistances);
+	
 	if(sc->mst == NULL){
 		printf("Error: Could not initialise mst.\n");
 		return HDBSCAN_ERROR;
@@ -1120,7 +1116,7 @@ int hdbscsan_calculate_outlier_scores(hdbscan* sc, distance_t* pointNoiseLevels,
 	}
 
 	//Sort the outlier scores:
-	qsort(sc->outlierScores, numPoints, sizeof(outlier_score), outlier_score_compare);
+	//qsort(sc->outlierScores, numPoints, sizeof(outlier_score), outlier_score_compare);
 
 	return 1;
 }
@@ -1865,7 +1861,7 @@ void hdbscan_print_outlier_scores(outlier_score* scores, index_t numPoints) {
 	printf("\n////////////////////////////////////////////////////// Printing outlier Scores //////////////////////////////////////////////////////\n");
 	for(index_t i = 0; i < numPoints; i++) {
 		outlier_score* score = scores + i;
-		printf("%ld : (%f, %f)\n", score->id, score->coreDistance, score->score);
+		printf("%ld : (%6f, %6f)\n", score->id, score->coreDistance, score->score);
 	}
 	printf("//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////\n\n");
 
@@ -1902,7 +1898,6 @@ void hdbscan_print_distance_map(hashtable* distancesMap){
 void hdbscan_print_stats(clustering_stats* stats){
 
 	printf("////////////////////////////////////////////////////// Statistical Values ////////////////////////////////////////////////////////\n");
-
 	printf("Cluster Count 					: %d\n", stats->count);
 	printf("Core Distances - Max 			: %.5f\n", stats->coreDistanceValues.max);
 	printf("Core Distances - Mean 			: %.5f\n", stats->coreDistanceValues.mean);
