@@ -41,6 +41,7 @@
  */
 
 #include "hdbscan/logger.h"
+#include <string.h>
 #include <assert.h>
 #include <time.h>
 
@@ -73,7 +74,7 @@ void logger_init()
 void logger_write(enum LOGTYPE type, const char* str) {
 
     assert(log_file != NULL);
-    const char* date = getDateString();
+    char* date = getDateString();
     const char* tp;
 
     if(type == FATAL) {
@@ -87,7 +88,7 @@ void logger_write(enum LOGTYPE type, const char* str) {
     }
     size_t sz = strlen(date) + strlen(tp) + strlen(str) + 10;
     char buffer[sz];
-    int n = sprintf(buffer, "%s %s: %s\n", date, tp, str);
+    sprintf(buffer, "%s %s: %s\n", date, tp, str);
     free(date);
 
     fprintf(log_file, "%s", buffer);

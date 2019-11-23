@@ -111,7 +111,7 @@ int32_t array_list_value_at(ArrayList* list, size_t pos, void* data)
  */
 int32_t array_list_grow(ArrayList* list){
 
-	int32_t newmax = highestPowerof2(list->max_size*2);
+	size_t newmax = highestPowerof2(list->max_size*2);
 	list->data = realloc(list->data, newmax * list->step);
 
 	if(list->data == NULL){
@@ -220,8 +220,8 @@ size_t array_list_size(ArrayList* list)
 	return list == NULL ? 0 : list->size;
 }
 
-int32_t unordered_search(ArrayList* list, void* data) {
-	int32_t tmp = -1;
+int64_t unordered_search(ArrayList* list, void* data) {
+	int64_t tmp = -1;
 	void* t;
 	for(size_t i = 0; i < list->size; i++)
 	{
@@ -229,7 +229,7 @@ int32_t unordered_search(ArrayList* list, void* data) {
 
 		if(list->compare(t, data) == 0)
 		{
-			tmp = i;
+			tmp = (int64_t)i;
 			break;
 		}
 	}
@@ -237,14 +237,14 @@ int32_t unordered_search(ArrayList* list, void* data) {
 	return tmp;
 }
 
-int32_t binary_search(ArrayList* list, int32_t l, int32_t r, void* data) {
+int64_t binary_search(ArrayList* list, int64_t l, int64_t r, void* data) {
 
 	if(r >= l) {
-		int32_t mid = l + (r - l) / 2; 
-		size_t pos = mid * list->step;
+		int64_t mid = l + (r - l) / 2; 
+		size_t pos = (size_t)mid * list->step;
 		void* ld = list->data + pos;
 
-		int32_t cmp = list->compare(ld, data);
+		int64_t cmp = list->compare(ld, data);
 
 		if(cmp == 0) {
 			return mid;
@@ -260,10 +260,10 @@ int32_t binary_search(ArrayList* list, int32_t l, int32_t r, void* data) {
 	return -1;
 }
 
-int32_t array_list_find(ArrayList* list, void* data, int32_t sorted)
+int64_t array_list_find(ArrayList* list, void* data, int32_t sorted)
 {
 	if(sorted == 1) {
-		return binary_search(list, 0, list->size - 1, data);
+		return binary_search(list, 0, (int64_t)list->size - 1, data);
 	} 
 	
 	return unordered_search(list, data);
@@ -301,16 +301,21 @@ int32_t array_list_remove_at(ArrayList* list, size_t pos, void* data)
 
 int32_t array_list_remove(ArrayList* list, void* data) {
 
-	int32_t ret = array_list_find(list, data, 0);
-	ret = array_list_remove_at(list, ret, data);
-	return ret;
+	int64_t ret = array_list_find(list, data, 0);
+
+	if(ret < 0) {
+		return -1;
+	}
+
+	ret = (int64_t)array_list_remove_at(list, (size_t)ret, data);
+	return (int32_t)ret;
 }
 
 int32_t array_list_pop(ArrayList* list, void* data)
 {
 	if(array_list_empty(list))
 	{
-		return 0;
+		return -1;
 	}
 	array_list_value_at(list, list->size-1, data);
 	list->size--;

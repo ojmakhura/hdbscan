@@ -169,7 +169,7 @@ void distance_compute(distance* dis, void* dataset, index_t rows, index_t cols, 
 
 			// Calculate the linearised upper triangular matrix offset
 			size_t offset = i * dis->rows + j;
-			size_t c = offset - TRIANGULAR_H(i + 1);
+			size_t c = offset - TRIANGULAR_H((uint)i + 1);
 			//printf("%ld: c = %ld\n", (rows * rows -rows)/2, c);			
 			dis->distances[c] = sum;
 			
@@ -251,9 +251,9 @@ void distance_get_core_distances(distance *dis)
 
 void distances_print(distance *dis) {
 	
-	for (size_t i = 0; i < dis->rows; i++) {
+	for (index_t i = 0; i < dis->rows; i++) {
 		printf("[");
-		for (size_t j = i + 1; j < dis->rows; j++) {
+		for (index_t j = i + 1; j < dis->rows; j++) {
 			printf("%f ", distance_get(dis, i, j));
 		}
 		printf("]\n");

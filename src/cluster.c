@@ -48,7 +48,11 @@ cluster* cluster_init(cluster* cl, label_t label, cluster* parent, distance_t bi
 		cl = (cluster*)malloc(sizeof(cluster));
 	}
 	if(cl == NULL){
-		printf("ERROR: cluster_init - Could not allocate memory for cluster");
+		if(log_file == NULL) {
+			printf("ERROR: cluster_init - Could not allocate memory for cluster.");
+		} else {
+			logger_write(ERROR, "cluster_init - Could not allocate memory for cluster.");
+		}
 	} else {
 
 		cl->label = label;

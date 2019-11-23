@@ -30,10 +30,10 @@
 #include "hdbscan/utils.h"
 #include <stdlib.h>
 
-int32_t highestPowerof2(int32_t n)
+size_t highestPowerof2(size_t n)
 {
-	int32_t p = (int32_t)log2(n);
-   	return (int32_t)pow(2, p+1);
+	size_t p = (size_t)log2((double)n);
+   	return (size_t)pow(2, (double)p+1);
 }
 
 int32_t int_compare(const void *ptr_a, const void *ptr_b) {
@@ -301,57 +301,68 @@ size_t get_htype_size(enum HTYPES type)
 	return sizeof(void *); /// Other wise it is a pointer
 }
 
-int32_t int_hash(void* key, size_t buckets)
+size_t int_hash(void* key, size_t buckets)
 {
-    return (*(int32_t *)key) % buckets;
+	int32_t k = (*(int32_t *)key);
+	size_t tmp = (size_t)k;
+    return tmp % buckets;
 }
 
-int32_t long_hash(void* key, size_t buckets)
+size_t long_hash(void* key, size_t buckets)
 {
-    return (*(long *)key) % buckets;
+	long k = (*(long *)key);
+	size_t tmp = (size_t)k;
+    return tmp % buckets;
 }
 
-int32_t short_hash(void* key, size_t buckets)
+size_t short_hash(void* key, size_t buckets)
 {
-    return (*(short *)key) % buckets;
+	short k = (*(short *)key);
+	size_t tmp = (size_t)k;
+    return tmp % buckets;
 }
 
-int32_t char_hash(void* key, size_t buckets)
+size_t char_hash(void* key, size_t buckets)
 {
     char *db = (char *)key;
-    return (int32_t)(*db) % buckets;
+	size_t tmp = (size_t)(*db);
+    return tmp % buckets;
 }
 
-int32_t double_hash(void* key, size_t buckets)
+size_t double_hash(void* key, size_t buckets)
 {
     double *db = (double *)key;
-    return (int32_t)(*db) % buckets;
+	size_t tmp = (size_t)(*db);
+    return tmp % buckets;
 }
 
-int32_t float_hash(void* key, size_t buckets)
+size_t float_hash(void* key, size_t buckets)
 {
     float *db = (float *)key;
-    return (int32_t)(*db) % buckets;
+	size_t tmp = (size_t)(*db);
+    return tmp % buckets;
 }
 
-int32_t str_hash(void *key, size_t buckets)
+size_t str_hash(void *key, size_t buckets)
 {
     const char *cptr = key;
-    int val = 0;
+    unsigned int val = 0;
 
     while(*cptr != '\0')
     {
-        int tmp;
-        val = (val << 4) + (*cptr);
+        uint tmp;
+        val = (val << 4) + (uint)(*cptr);
         tmp = (val & 0xf0000000);
         if(tmp)
         {
-            val = val ^ (tmp >> 24);
+            val = val ^ (uint)(tmp >> 24);
             val = val ^ tmp;
         }
 
          cptr++;
     }
+    
+	size_t tmp = (size_t)val;
 
-    return val % buckets;
+    return tmp % buckets;
 }

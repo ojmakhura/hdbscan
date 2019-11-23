@@ -77,7 +77,7 @@ int32_t set_insert(set_t* _set, void* data);
  * @param _set 
  * @return int32_t 
  */
-int32_t set_size(set_t* _set);
+size_t set_size(set_t* _set);
 
 /**
  * @brief Remove data from set
@@ -93,9 +93,9 @@ int32_t set_remove(set_t* _set, void* data);
  * 
  * @param _set 
  * @param data 
- * @return int32_t 
+ * @return int64_t 
  */
-int32_t set_find(set_t* _set, void* data);
+int64_t set_find(set_t* _set, void* data);
 
 /**
  * @brief Find the data at index
@@ -105,7 +105,7 @@ int32_t set_find(set_t* _set, void* data);
  * @param data 
  * @return int32_t 
  */
-int32_t set_value_at(set_t* _set, int32_t index, void* data);
+int32_t set_value_at(set_t* _set, size_t index, void* data);
 
 /**
  * @brief Remove the data at pos
@@ -114,7 +114,7 @@ int32_t set_value_at(set_t* _set, int32_t index, void* data);
  * @param pos 
  * @return int32_t 
  */
-int32_t set_remove_at(set_t* _set, int32_t pos, void* data);
+int32_t set_remove_at(set_t* _set, size_t pos, void* data);
 
 void set_sort(set_t* _set);
 

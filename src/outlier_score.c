@@ -74,7 +74,7 @@ int outlier_score_compare(const void* score1, const void* score2){
 		else if (s1.coreDistance < s2.coreDistance)
 			return -1;
 		else
-			return s1.id - s2.id;
+			return (int) (s1.id - s2.id);
 	}
 }
 

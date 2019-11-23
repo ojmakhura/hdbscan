@@ -76,7 +76,7 @@ typedef struct HASHTABLE_
     int32_t collisions;         //! For diagnostic information on the collision
     int32_t (*key_compare)(const void *a, const void *b);
     void (*key_deallocate)(void *key);
-    int32_t (*key_hash)(void* key, size_t buckets);
+    size_t (*key_hash)(void* key, size_t buckets);
 } hashtable;
 
 /**

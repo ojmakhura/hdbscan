@@ -42,7 +42,7 @@
 #include <CUnit/Basic.h>
 #include <stdio.h>
 #include "listlib/hashtable.h"
-#include "listlib/intlist.h"
+#include "listlib/list.h"
 
 /**
  * @brief Initialise the hashtable test suite.
@@ -85,7 +85,7 @@ void hash_table_int_test()
     // since we need to access each bucket through the 
     // array_list_value_at() function, we hack the size
     // to be the same as the number of buckets
-    for(int32_t i = 0; i < htbl->buckets; i++)
+    for(size_t i = 0; i < htbl->buckets; i++)
     {
         hashtable_entry* tmp = htbl->table[i];
         CU_ASSERT_PTR_NULL_FATAL(tmp);
@@ -96,7 +96,7 @@ void hash_table_int_test()
     int32_t k = 55;
     CU_ASSERT_EQUAL_FATAL(1, hashtable_insert(htbl, &k, &x));
     CU_ASSERT_EQUAL_FATAL(htbl->size, 1);
-    printf("size is %d\n", set_size(htbl->keys));
+    printf("size is %d\n", (int32_t)set_size(htbl->keys));
     CU_ASSERT_EQUAL_FATAL(set_size(htbl->keys), 1);
     
     x = 0;     
@@ -279,7 +279,7 @@ void hash_table_str_test()
  * @brief Testing hashtable with int array list
  * 
  */
-void hash_table_int_list_test()
+/*void hash_table_int_list_test()
 {
     //Testing creation of a hashtable
     printf("\n");
@@ -356,12 +356,12 @@ void hash_table_int_list_test()
 
 
     printf("\nHash table has %ld elements.\n", htbl->size);
-    
+    */
     /**
      * @brief Iteration over the hash table
      * 
      */
-    for(size_t i = 0; i <set_size(htbl->keys); i++)
+    /*for(size_t i = 0; i <set_size(htbl->keys); i++)
     {
         set_value_at(htbl->keys, i, &key);
         hashtable_lookup(htbl, &key, &list);
@@ -377,7 +377,7 @@ void hash_table_int_list_test()
 
     hashtable_destroy(htbl, NULL, (void (*)(void *))int_array_list_delete);
     printf("\n********************************************************************************************\n");
-}
+}*/
 
 /**
  * @brief Run the test suite
@@ -416,12 +416,12 @@ int main()
         return CU_get_error();
     }
 
-    if ((NULL == CU_add_test(suite, "Test for int:IntArrayList hashtable", hash_table_int_list_test)))
+    /*if ((NULL == CU_add_test(suite, "Test for int:IntArrayList hashtable", hash_table_int_list_test)))
     {
         printf("Could not add the test to the suite\n");
         CU_cleanup_registry();
         return CU_get_error();
-    }
+    }*/
 
     /* Run all tests using the CUnit Basic interface */
     CU_basic_set_mode(CU_BRM_VERBOSE);

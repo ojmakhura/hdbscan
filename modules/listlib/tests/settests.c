@@ -182,7 +182,7 @@ void set_str_test()
     CU_ASSERT_EQUAL_FATAL(3, set->size);
 
     printf("\n");
-    for(int i = 0; i < set->size; i++)
+    for(size_t i = 0; i < set->size; i++)
     {
         char *s;
         set_value_at(set, i, &s);

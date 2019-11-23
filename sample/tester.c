@@ -33,16 +33,15 @@
 //#include "config.h"
 #include "hdbscan/hdbscan.h"
 #include "dataset.h"
-#include "listlib/intlist.h"
-#include "listlib/doublelist.h"
+#include "listlib/list.h"
 #include <time.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 
-double* getDset(char* filename, int *rs, int *cs){
+double* getDset(char* filename, index_t *rs, index_t *cs){
 
-	DoubleArrayList* list = (DoubleArrayList *)double_array_list_init_size(10);
+	ArrayList* list = (ArrayList *)array_list_init(10, sizeof(double), double_compare);
 
 	FILE *fp = fopen(filename,"r");
 	if(!fp){
@@ -56,27 +55,29 @@ double* getDset(char* filename, int *rs, int *cs){
 		while(toks != NULL && !(strlen(toks) == 1 && isspace(toks[0]))){
 
 			if(strlen(toks) > 0){
-				double_array_list_append(list, atof(toks));
+				double d = atof(toks);
+				array_list_append(list, &d);
 			}
 			toks = strtok (NULL, delim);
 		}
 
 		(*rs)++;
 	}
-	*cs = list->size/(*rs);
+	*cs = (index_t)list->size/(*rs);
 	double* dset = (double *) malloc(list->size * sizeof(double));
 	double *ddata = (double *)list->data;
-	for(int32_t i = 0; i < list->size; i++){
+	for(size_t i = 0; i < list->size; i++){
 		dset[i] = ddata[i];
 	}
-	double_array_list_delete(list);
+	array_list_delete(list);
 	fclose(fp);
 	return dset;
 }
 
 int main(int argc, char** argv){
 	clock_t begin, end;
-	int err, rs = 0, cs = 0;
+	int err;
+	index_t rs = 0, cs = 0;
 	double time_spent;
 	printf("argc = %d\n", argc);
 	double* dset = NULL;
@@ -85,11 +86,11 @@ int main(int argc, char** argv){
 		dset = getDset(argv[2], &rs, &cs);
 	} else { // will use the default dataset in dataset.h
 		dset = dataset;
-		rs = rows;
-		cs = cols;
+		rs = (index_t)rows;
+		cs = (index_t)cols;
 	}
 	printf("(rows, cols) = (%d, %d)\n", rs, cs);
-	hdbscan* scan = hdbscan_init(NULL, atoi(argv[1]));
+	hdbscan* scan = hdbscan_init(NULL, (index_t)atoi(argv[1]));
 	boolean rerun_ = FALSE;
 	if(scan == NULL){
 		printf("ERROR: Could not initialise hdbscan\n");
@@ -108,7 +109,7 @@ int main(int argc, char** argv){
 			rerun_ = TRUE;
 		} else{
 			begin = clock();
-			hdbscan_rerun(scan, atoi(argv[1]) + i);
+			hdbscan_rerun(scan, (index_t)(atoi(argv[1]) + i));
 			end = clock();
 			time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 			printf("hdbscan rerun Process took %f\n", time_spent);

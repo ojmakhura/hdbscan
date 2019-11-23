@@ -117,7 +117,7 @@ void graph_clean(UndirectedGraph* g) {
 
 		if (g->edges != NULL) {
 
-			for (int32_t i = 0; i < g->numVertices; i++) {
+			for (index_t i = 0; i < g->numVertices; i++) {
 				ArrayList* list = g->edges[i];
 				array_list_delete(list);
 			}
@@ -136,7 +136,7 @@ void graph_quicksort_by_edge_weight(UndirectedGraph* g) {
 	index_t endIndexStack[esize/2];
 
 	(startIndexStack)[0] = 0;
-	(endIndexStack)[0] = esize - 1;
+	(endIndexStack)[0] = (index_t)esize - 1;
 	int stackTop = 0;
 
 	while (stackTop >= 0) {
@@ -148,14 +148,14 @@ void graph_quicksort_by_edge_weight(UndirectedGraph* g) {
 		pivotIndex = graph_partition(g, startIndex, endIndex, pivotIndex);
 
 		if (pivotIndex > startIndex + 1) {
-			(startIndexStack)[stackTop + 1] = startIndex;
-			(endIndexStack)[stackTop + 1] = pivotIndex - 1;
+			(startIndexStack)[stackTop + 1] = (index_t)startIndex;
+			(endIndexStack)[stackTop + 1] = (index_t)pivotIndex - 1;
 			stackTop++;
 		}
 
 		if (pivotIndex < endIndex - 1) {
-			(startIndexStack)[stackTop + 1] = pivotIndex + 1;
-			(endIndexStack)[stackTop + 1] = endIndex;
+			(startIndexStack)[stackTop + 1] = (index_t)pivotIndex + 1;
+			(endIndexStack)[stackTop + 1] = (index_t)endIndex;
 			stackTop++;
 		}
 	}
@@ -163,27 +163,27 @@ void graph_quicksort_by_edge_weight(UndirectedGraph* g) {
 
 int32_t graph_select_pivot_index(UndirectedGraph* g, int64_t startIndex, int64_t endIndex) {
 	if (startIndex - endIndex <= 1)
-		return startIndex;
+		return (int32_t)startIndex;
 
 	distance_t first, middle, last;
-	array_list_value_at(g->edgeWeights, startIndex, &first);
-	array_list_value_at(g->edgeWeights, startIndex + (endIndex - startIndex) / 2, &middle);
-	array_list_value_at(g->edgeWeights, endIndex, &last);
+	array_list_value_at(g->edgeWeights, (size_t)startIndex, &first);
+	array_list_value_at(g->edgeWeights, (size_t)(startIndex + (endIndex - startIndex) / 2), &middle);
+	array_list_value_at(g->edgeWeights, (size_t)endIndex, &last);
 
 	if (first <= middle) {
 		if (middle <= last)
-			return startIndex + (endIndex - startIndex) / 2;
+			return  (int32_t)(startIndex + (endIndex - startIndex) / 2);
 		else if (last >= first)
-			return endIndex;
+			return (int32_t)endIndex;
 		else
-			return startIndex;
+			return (int32_t)startIndex;
 	} else {
 		if (first <= last)
-			return startIndex;
+			return (int32_t)startIndex;
 		else if (last >= middle)
-			return endIndex;
+			return (int32_t)endIndex;
 		else
-			return startIndex + (endIndex - startIndex) / 2;
+			return (int32_t)(startIndex + (endIndex - startIndex) / 2);
 	}
 }
 
@@ -228,7 +228,7 @@ int32_t graph_partition(UndirectedGraph* g, int64_t startIndex, int64_t endIndex
 	}
 
 	graph_swap_edges(g, lowIndex, endIndex);
-	return lowIndex;
+	return (int32_t)lowIndex;
 }
 
 void graph_quicksort(UndirectedGraph* g, int64_t startIndex, int64_t endIndex) {

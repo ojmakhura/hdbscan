@@ -71,7 +71,7 @@ struct ArrayList{
 	void* data;		    /// The pointer to the data
 	size_t size;		/// Current number of items in the list
 	size_t max_size;	/// Maximum number of items that can be stored
-	int32_t step;		/// The number of bytes each element takes
+	size_t step;		/// The number of bytes each element takes
 	int32_t (*compare)(const void *a, const void *b);
 };
 
@@ -199,7 +199,7 @@ size_t array_list_size(ArrayList* list);
  * @param data 
  * @return int32_t returns index of the data otherwise -1 
  */
-int32_t array_list_find(ArrayList* list, void* data, int32_t sorted);
+int64_t array_list_find(ArrayList* list, void* data, int32_t sorted);
 
 /**
  * @brief Reset the list to 0

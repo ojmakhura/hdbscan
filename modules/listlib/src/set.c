@@ -84,26 +84,31 @@ int32_t set_insert(set_t* _set, void* data)
 
 int32_t set_remove(set_t* _set, void* data)
 {
-    int32_t d = set_find(_set, data);
-    return set_remove_at(_set, d, data);
+    int64_t d = set_find(_set, data);
+
+    if(d < 0) {
+        return -1;
+    }
+
+    return set_remove_at(_set, (size_t)d, data);
 }
 
-int32_t set_find(set_t *_set, void* data)
+int64_t set_find(set_t *_set, void* data)
 {
     return array_list_find(_set, data, 1);
 }
 
-int32_t set_value_at(set_t* _set, int32_t index, void* data)
+int32_t set_value_at(set_t* _set, size_t index, void* data)
 {
     return array_list_value_at(_set, index, data);
 }
 
-int32_t set_remove_at(set_t* _set, int32_t pos, void* data)
+int32_t set_remove_at(set_t* _set, size_t pos, void* data)
 {
     return array_list_remove_at(_set, pos, data);
 }
 
-int32_t set_size(set_t* _set)
+size_t set_size(set_t* _set)
 {
     return array_list_size(_set);
 }

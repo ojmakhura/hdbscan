@@ -376,7 +376,7 @@ int hdbscsan_calculate_outlier_scores(hdbscan* sc, distance_t* pointNoiseLevels,
  * @param end 
  * @return IntIntListMap* 
  */
-hashtable* hdbscan_create_cluster_map(label_t* labels, int32_t begin, int32_t end);
+hashtable* hdbscan_create_cluster_map(label_t* labels, index_t begin, index_t end);
 
 /**
  * @brief Create a hash table that maps the different statistical values to their values.

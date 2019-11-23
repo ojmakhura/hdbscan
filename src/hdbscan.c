@@ -89,9 +89,9 @@ cluster* hdbscan_create_new_cluster(hdbscan* sc, set_t* points, label_t* cluster
 		clusterLabels[d] = clusterLabel;
 	}
 
-	cluster_detach_points(parentCluster, points->size, edgeWeight);
+	cluster_detach_points(parentCluster, (index_t)points->size, edgeWeight);
 	if (clusterLabel != 0) {
-		cluster* new = cluster_init(NULL, clusterLabel, parentCluster, edgeWeight, points->size);
+		cluster* new = cluster_init(NULL, clusterLabel, parentCluster, edgeWeight, (index_t)points->size);
 		return new;
 	} else{
 		cluster_add_points_to_virtual_child_cluster(parentCluster, points);
@@ -159,7 +159,7 @@ void hdbscan_minimal_clean(hdbscan* sc){
 
 	if(sc->constraints != NULL){
 
-		for(int32_t i = 0; i < sc->constraints->size; i++)
+		for(index_t i = 0; i < sc->constraints->size; i++)
 		{
 			constraint* c;
 			array_list_value_at(sc->constraints, i, &c);
@@ -351,7 +351,7 @@ int hdbscan_compute_hierarchy_and_cluster_tree(hdbscan* sc, int compactHierarchy
 
 	//The current edge being removed from the MST:
 	// NOTE: This should always be a signed long
-	int64_t currentEdgeIndex = sc->mst->edgeWeights->size - 1;
+	int64_t currentEdgeIndex = (int64_t)sc->mst->edgeWeights->size - 1;
 
 	label_t nextClusterLabel = 2;
 	boolean nextLevelSignificant = TRUE;
@@ -769,7 +769,7 @@ void print_graph_components(ArrayList *nearestMRDNeighbors, ArrayList *otherVert
 int hdbscan_construct_mst(hdbscan* sc){
 	distance_t*  coreDistances = sc->distanceFunction.coreDistances;
 
-	int selfEdgeCapacity = 0;
+	index_t selfEdgeCapacity = 0;
 	index_t size = sc->numPoints;
 	if (sc->selfEdges == TRUE){
 		selfEdgeCapacity = size;
@@ -850,7 +850,7 @@ int hdbscan_construct_mst(hdbscan* sc){
 
 	//Continue attaching points to the MST until all points are attached:
 	for (index_t numAttachedPoints = 1; numAttachedPoints < size; numAttachedPoints++) {
-		int nearestMRDPoint = -1;
+		int32_t nearestMRDPoint = -1;
 		distance_t nearestMRDDistance = D_MAX;
 
 		//Iterate through all unattached points, updating distances using the current point:
@@ -883,14 +883,14 @@ int hdbscan_construct_mst(hdbscan* sc){
 			d = distances[neighbor];
 			if (d <= nearestMRDDistance) {
 				nearestMRDDistance = d;
-				nearestMRDPoint = neighbor;
+				nearestMRDPoint = (int32_t)neighbor;
 			}
 		}
 
 		//Attach the closest point found in this iteration to the tree:
 		attachedPoints[nearestMRDPoint] = TRUE;
 		others[numAttachedPoints] = numAttachedPoints;
-		currentPoint = nearestMRDPoint;
+		currentPoint = (index_t)nearestMRDPoint;
 	}
 
 	//If necessary, attach self edges:
@@ -992,7 +992,7 @@ boolean hdbscan_propagate_tree(hdbscan* sc){
 					"the post-processing routine to extract a flat partition containing the most stable clusters may\n"
 					"produce unexpected results. It may be advisable to increase the value of MinPts and/or M_clSize.\n"
 					"-------------------------------------------------------------------------------------------------------";
-		printf(message);
+		printf("%s", message);
 	}
 	currentCluster = NULL;
 	set_delete(clustersToExamine);
@@ -1018,7 +1018,7 @@ void hdbscan_find_prominent_clusters(hdbscan* sc, int infiniteStability){
 	#ifdef _OPENMP
 	#pragma omp parallel for private(ret, c)
 	#endif
-	for(int32_t i = 0; i < solution->size; i++){
+	for(size_t i = 0; i < solution->size; i++){
 		
 		#ifdef _OPENMP
 		#pragma omp critical
@@ -1065,7 +1065,7 @@ void hdbscan_find_prominent_clusters(hdbscan* sc, int infiniteStability){
 		hashtable_lookup(sc->hierarchy, &l, &hpSecond);
 		for(index_t j = 0; j < sc->numPoints; j++){
 			label_t label = (hpSecond->labels)[j];
-			int it = array_list_find(clusterList, &label, 0);
+			int64_t it = array_list_find(clusterList, &label, 0);
 			if(it != -1){
 				sc->clusterLabels[j] = label;
 			}
@@ -1115,7 +1115,7 @@ int hdbscsan_calculate_outlier_scores(hdbscan* sc, distance_t* pointNoiseLevels,
 	}
 
 	//Sort the outlier scores:
-	//qsort(sc->outlierScores, numPoints, sizeof(outlier_score), outlier_score_compare);
+	qsort(sc->outlierScores, numPoints, sizeof(outlier_score), outlier_score_compare);
 
 	return 1;
 }
@@ -1128,7 +1128,7 @@ int hdbscsan_calculate_outlier_scores(hdbscan* sc, distance_t* pointNoiseLevels,
  * @param end 
  * @return hashtable* 
  */
-hashtable* hdbscan_create_cluster_map(label_t* labels, int32_t begin, int32_t end){
+hashtable* hdbscan_create_cluster_map(label_t* labels, index_t begin, index_t end){
 	index_t bsize = (end - begin)/4;
 	hashtable* clusterTable;
 	
@@ -1202,8 +1202,7 @@ hashtable* hdbscan_get_min_max_distances(hdbscan* sc, hashtable* clusterTable){
 			index_t index = idxList[j];
 			if(dl == NULL)
 			{
-				dl = (distance_values *)malloc(sizeof(distance_values));
-				int32_t index = idxList[j];
+				dl = (distance_values *)malloc(sizeof(distance_values));				
 				dl->min_cr = core[index];
 				dl->max_cr = core[index];
 				dl->cr_confidence = 0.0;
@@ -1270,12 +1269,12 @@ void hdbscan_skew_kurt_1(clustering_stats* stats, distance_t sum_sc, distance_t 
 	#pragma omp parallel
 	{
 	#endif
-	int32_t N = stats->count;
-	stats->coreDistanceValues.skewness = sum_sc / (N * pow(stats->coreDistanceValues.standardDev, 3));
-	stats->intraDistanceValues.skewness = sum_sd / (N * pow(stats->intraDistanceValues.standardDev, 3));
+	//int32_t N = stats->count;
+	stats->coreDistanceValues.skewness = sum_sc / (stats->count * pow(stats->coreDistanceValues.standardDev, 3));
+	stats->intraDistanceValues.skewness = sum_sd / (stats->count * pow(stats->intraDistanceValues.standardDev, 3));
 
-	stats->coreDistanceValues.kurtosis = (sum_dc / (N * pow(stats->coreDistanceValues.standardDev, 4))) - 3;
-	stats->intraDistanceValues.kurtosis = (sum_dd / (N *pow(stats->intraDistanceValues.standardDev, 4))) - 3;
+	stats->coreDistanceValues.kurtosis = (sum_dc / (stats->count * pow(stats->coreDistanceValues.standardDev, 4))) - 3;
+	stats->intraDistanceValues.kurtosis = (sum_dd / (stats->count *pow(stats->intraDistanceValues.standardDev, 4))) - 3;
 	#ifdef _OPENMP
 	}
 	#endif
@@ -1299,7 +1298,7 @@ void hdbscan_skew_kurt_2(clustering_stats* stats, distance_t sum_sc, distance_t 
 	#pragma omp parallel
 	{
 	#endif
-	int32_t N = stats->count;
+	index_t N = stats->count;
 	
 	// Calculate the skewness
 	if(stats->count >= 2){
@@ -1369,7 +1368,7 @@ void hdbscan_calculate_stats_helper(distance_t* cr, distance_t* dr, clustering_s
 	stats->intraDistanceValues.mean = dr[0];
 	stats->intraDistanceValues.max = dr[0];
 
-	for(int32_t i = 1; i < stats->count; i++)
+	for(index_t i = 1; i < stats->count; i++)
 	{
 		// Core distance statistics
 		if(cr[i] > stats->coreDistanceValues.max)
@@ -1398,7 +1397,7 @@ void hdbscan_calculate_stats_helper(distance_t* cr, distance_t* dr, clustering_s
 	distance_t sum_dc = 0;
 	distance_t sum_dd = 0;
 	
-	for(int32_t i = 0; i < stats->count; i++)
+	for(index_t i = 0; i < stats->count; i++)
 	{
 		distance_t tmp_c = cr[i] - stats->coreDistanceValues.mean;
 		stats->coreDistanceValues.variance += tmp_c * tmp_c;
@@ -1447,7 +1446,7 @@ void hdbscan_calculate_stats(hashtable* distanceMap, clustering_stats* stats){
 		dr[i] = dl->max_dr/dl->min_dr;
 	}
 
-	stats->count = hashtable_size(distanceMap);
+	stats->count = (index_t)hashtable_size(distanceMap);
 	hdbscan_calculate_stats_helper(cr, dr, stats);
 
 	//#ifdef _OPENMP
@@ -1611,7 +1610,7 @@ ArrayList* hdbscan_sort_by_similarity(hashtable* distanceMap, ArrayList *cluster
 	}
 
 
-	int32_t size = clusters->size;
+	size_t size = clusters->size;
 
 	if(size == 0){     /// If clusters had nothing in it, we will use the whole hash table
 
@@ -1645,7 +1644,7 @@ ArrayList* hdbscan_sort_by_similarity(hashtable* distanceMap, ArrayList *cluster
 #ifdef _OPENMP
 #pragma omp parallel for private(key, dv, conf)
 #endif
-		for(int32_t i = 0; i < clusters->size; i++){
+		for(size_t i = 0; i < clusters->size; i++){
 			key = ((label_t *)distanceMap->keys->data)[i];			
 			hashtable_lookup(distanceMap, &key, &dv);
 			
@@ -1659,7 +1658,7 @@ ArrayList* hdbscan_sort_by_similarity(hashtable* distanceMap, ArrayList *cluster
 	}
 
 	// sort
-	hdbscan_quicksort(clusters, distances, 0, clusters->size-1);
+	hdbscan_quicksort(clusters, distances, 0, (int32_t)(clusters->size-1));
 	array_list_delete(distances);
 
 	return clusters;
@@ -1698,7 +1697,7 @@ ArrayList* hdbscan_sort_by_length(hashtable* clusterTable, ArrayList *clusters){
 		lengths->compare = float_compare;
 	}
 	
-	int32_t size = clusters->size;
+	size_t size = clusters->size;
 
 	if(size == 0){     /// If clusters had nothing in it, we will use the whole hash table
 		label_t key;
@@ -1718,7 +1717,7 @@ ArrayList* hdbscan_sort_by_length(hashtable* clusterTable, ArrayList *clusters){
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-		for(int32_t i = 0; i < clusters->size; i++){
+		for(size_t i = 0; i < clusters->size; i++){
 			label_t *key = data + i;
 			ArrayList *lst = NULL;
 			hashtable_lookup(clusterTable, key, &lst);
@@ -1727,7 +1726,7 @@ ArrayList* hdbscan_sort_by_length(hashtable* clusterTable, ArrayList *clusters){
 		}		
 	}
 	// sort
-	hdbscan_quicksort(clusters, lengths, 0, clusters->size-1);
+	hdbscan_quicksort(clusters, lengths, 0, (int32_t)(clusters->size-1));
 	array_list_delete(lengths);
 
 	return clusters;
@@ -1786,7 +1785,10 @@ void hdbscan_print_cluster_sizes(hashtable* table){
 	{	
 		key = ((label_t *)table->keys->data)[i];
 		hashtable_lookup(table, &key, &clusterList);
-		printf("%d : %ld\n", key, clusterList->size);
+		if(log_file != NULL)
+			logger_write(INFO, "");
+		else 
+			printf("%d : %ld\n", key, clusterList->size);
 	}
 }
 
@@ -1835,7 +1837,7 @@ void hdbscan_print_hierarchies(hashtable* hierarchy, index_t numPoints, char *fi
 			printf("%ld : %.15f -> [", level, data->edgeWeight);
 		}
 
-		for(int j = 0; j < numPoints; j++){
+		for(size_t j = 0; j < numPoints; j++){
 			if(hierarchyFile){
 				fprintf(hierarchyFile, "%d,", data->labels[j]);
 			} else {
@@ -1860,7 +1862,7 @@ void hdbscan_print_outlier_scores(outlier_score* scores, index_t numPoints) {
 	printf("\n////////////////////////////////////////////////////// Printing outlier Scores //////////////////////////////////////////////////////\n");
 	for(index_t i = 0; i < numPoints; i++) {
 		outlier_score* score = scores + i;
-		printf("%ld : (%6f, %6f)\n", score->id, score->coreDistance, score->score);
+		printf("%ld : (%6f, %6f)\n", (long)score->id, score->coreDistance, score->score);
 	}
 	printf("//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////\n\n");
 

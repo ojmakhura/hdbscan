@@ -137,7 +137,7 @@ map<label_t, distance_values> getMinMaxDistances(hdbscan& scan, map_t& clusterTa
 			}
 
 			// Calculating min and max distances
-			for(index_t j = i+1; j < idxList.size(); j++){
+			for(index_t j = (index_t)i+1; j < idxList.size(); j++){
 				distance_t d = distance_get(&scan.distanceFunction, index, idxList[j]);
 
 				if(iter->second.min_dr > d && (d < zero || d > zero)){
@@ -276,7 +276,7 @@ void sortBySimilarity(map<label_t, distance_values>& distanceMap, vector<label_t
 	}
 
 	// sort
-	quickSort(clusters, distances, 0, clusters.size()-1);
+	quickSort(clusters, distances, 0, (index_t)clusters.size()-1);
 }
 
 /**
@@ -291,7 +291,7 @@ void sortByLength(map_t& clusterTable, vector<label_t>& clusters)
 		for(map_t::iterator it = clusterTable.begin(); it != clusterTable.end(); ++it)
 		{
 			clusters.push_back(it->first);
-			lengths.push_back(it->second.size());
+			lengths.push_back((index_t)(it->second.size()));
 		}
 	} else { /// else we just need to get the lengths from the hash table
 		lengths.resize(clusters.size());
@@ -307,7 +307,7 @@ void sortByLength(map_t& clusterTable, vector<label_t>& clusters)
 		}
 	}
 	// sort
-	quickSort(clusters, lengths, 0, clusters.size()-1);
+	quickSort(clusters, lengths, 0, (index_t)clusters.size()-1);
 }
 
 /**

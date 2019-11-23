@@ -39,6 +39,7 @@ extern "C" {
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include "config.h"
 
 #ifndef boolean
 typedef int boolean;
@@ -81,9 +82,9 @@ size_t get_htype_size(enum HTYPES type);
  * @brief Find the higherst power of 2 greater than n
  * 
  * @param n 
- * @return int32_t 
+ * @return size_t 
  */
-int32_t highestPowerof2(int32_t n);
+size_t highestPowerof2(size_t n);
 
 /**
  * @brief Compare integers
@@ -173,7 +174,7 @@ inline uint TRIANGULAR_H(uint n) {
  */
 inline uint hostFistTriangleNum(uint p)
 {
-    return ceil((sqrt(8 * p + 1) - 1) / 2);
+    return (uint)ceil((sqrt(8 * p + 1) - 1) / 2);
 }
 
 /**
@@ -183,19 +184,19 @@ inline uint hostFistTriangleNum(uint p)
  * @param size 
  * @return int32_t 
  */
-int32_t int_hash(void* key, size_t buckets);
+size_t int_hash(void* key, size_t buckets);
 
-int32_t long_hash(void* key, size_t buckets);
+size_t long_hash(void* key, size_t buckets);
 
-int32_t short_hash(void* key, size_t buckets);
+size_t short_hash(void* key, size_t buckets);
 
-int32_t char_hash(void* key, size_t buckets);
+size_t char_hash(void* key, size_t buckets);
 
-int32_t double_hash(void* key, size_t buckets);
+size_t double_hash(void* key, size_t buckets);
 
-int32_t float_hash(void* key, size_t buckets);
+size_t float_hash(void* key, size_t buckets);
 
-int32_t str_hash(void *key, size_t buckets);
+size_t str_hash(void *key, size_t buckets);
 
 /**
  * @brief Compare hashtable entries using keys

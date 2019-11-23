@@ -101,7 +101,7 @@ int32_t hashtable_entry_compare(const void* a, const void* b)
  */
 hashtable* hashtable_init(size_t buckets, enum HTYPES ktype, enum HTYPES dtype, int32_t (*compare)(const void *a, const void *b))
 {
-    return hashtable_init_size(find_prime_less_than(buckets), ktype, dtype, compare);
+    return hashtable_init_size((size_t)find_prime_less_than((int32_t)buckets), ktype, dtype, compare);
 }
 
 /**
@@ -182,7 +182,7 @@ hashtable* hashtable_init_size(size_t buckets, enum HTYPES ktype, enum HTYPES dt
  */ 
 int32_t hashtable_insert(hashtable* htbl, void *key, void* value)
 {
-    int32_t bucket = htbl->key_hash(key, htbl->buckets); // hash the key
+    size_t bucket = htbl->key_hash(key, htbl->buckets); // hash the key
     hashtable_entry* entry = hashtable_lookup_entry(htbl, key);
 
     if(entry == NULL) /// The key is not in the table
@@ -227,7 +227,7 @@ int32_t hashtable_insert(hashtable* htbl, void *key, void* value)
  */
 hashtable_entry* hashtable_lookup_entry(hashtable* htbl, void* key)
 {
-    int32_t bucket = htbl->key_hash(key, htbl->buckets);    
+    size_t bucket = htbl->key_hash(key, htbl->buckets);    
     hashtable_entry* entry = htbl->table[bucket];
     
     while(entry)
@@ -285,7 +285,7 @@ int32_t hashtable_remove(hashtable* htbl, void* key, void* data)
         return 0;
     }
 
-    int32_t bucket = htbl->key_hash(key, htbl->buckets);
+    size_t bucket = htbl->key_hash(key, htbl->buckets);
     hashtable_entry* entry = hashtable_lookup_entry(htbl, key);
 
     if(entry == NULL)
@@ -342,10 +342,10 @@ int32_t hashtable_clear(hashtable* htbl, void (*key_destroy)(void *key), void (*
     hashtable_entry* entry = NULL;
     hashtable_entry* tmp = NULL;
 
-    for(int32_t i = 0; i < set_size(htbl->keys); i++)
+    for(size_t i = 0; i < set_size(htbl->keys); i++)
     {
         set_value_at(htbl->keys, i, key);
-        int32_t bucket = htbl->key_hash(key, htbl->buckets);
+        size_t bucket = htbl->key_hash(key, htbl->buckets);
         entry = htbl->table[bucket];
         htbl->table[bucket] = NULL; /// unhook the entries from the bucket
 
