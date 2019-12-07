@@ -280,7 +280,10 @@ void sortBySimilarity(map<label_t, distance_values>& distanceMap, vector<label_t
 }
 
 /**
- * Sorts clusters according to how long the cluster is
+ * \brief Sorts clusters according to how long the clusters are.
+ * 
+ * \param clusterTable 
+ * \param clusters
  */
 void sortByLength(map_t& clusterTable, vector<label_t>& clusters)
 {

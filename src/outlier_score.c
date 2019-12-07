@@ -57,7 +57,6 @@ void destroy_outlier_score(outlier_score* os){
 	free(os);
 }
 
-
 int outlier_score_compare(const void* score1, const void* score2){
 	
 	outlier_score s1 = *(const outlier_score*)score1;

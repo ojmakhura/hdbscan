@@ -99,7 +99,7 @@ int main(int argc, char** argv){
 	printf("SUCCESS: hdbscan fully initialised\n");
 
 	// This lil loop demonstrates how to use the rerun function
-	for(int i = 0; i < 8; i++){
+	for(int i = 0; i < 15; i++){
 		if(!rerun_){
 			begin = clock();
 			err = hdbscan_run(scan, dset, rs, cs, TRUE, H_DOUBLE);
@@ -157,7 +157,7 @@ int main(int argc, char** argv){
 			}
 			printf("]\n\n");
 			
-			/*sorted = hdbscan_sort_by_similarity(dMap, sorted, INTRA_DISTANCE_TYPE); // There is choice to use CORE_DISTANCE_TYPE
+			sorted = hdbscan_sort_by_similarity(dMap, sorted, INTRA_DISTANCE_TYPE); // There is choice to use CORE_DISTANCE_TYPE
 			printf("Sorted by similarity = [");
 
 			data = (label_t *)sorted->data;
@@ -172,7 +172,7 @@ int main(int argc, char** argv){
 			hdbscan_print_distance_map(dMap);
 			hdbscan_print_stats(&stats);
 			printf("Clustering validity : %d\n", hdbscan_analyse_stats(&stats));
-			*/
+			
 			/*printf("\n\nCluster labels = [");
 			for(uint i = 0; i < scan->numPoints; i++){
 				printf("%d ", scan->clusterLabels[i]);
@@ -186,7 +186,7 @@ int main(int argc, char** argv){
 		}
 
 		printf("***********************************************************************************\n\n");
-		break;
+		//break;
 	}
 
 	hdbscan_destroy(scan);

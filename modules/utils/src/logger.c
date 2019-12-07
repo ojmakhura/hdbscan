@@ -90,7 +90,7 @@ void logger_write(enum LOGTYPE type, const char* str) {
     char buffer[sz];
     sprintf(buffer, "%s %s: %s\n", date, tp, str);
     free(date);
-
+    
     fprintf(log_file, "%s", buffer);
 }
 

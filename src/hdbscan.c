@@ -101,7 +101,7 @@ cluster* hdbscan_create_new_cluster(hdbscan* sc, set_t* points, label_t* cluster
 }
 
 /**
- * @brief 
+ * @brief Inialise HDBSCAN with minPts
  * 
  * @param sc 
  * @param minPoints 
@@ -116,7 +116,7 @@ hdbscan* hdbscan_init(hdbscan* sc, index_t minPoints){
 
 	if(sc == NULL){
 		#ifdef DEBUG
-			logger_write(FATAL, "Error: Could not allocate memory for HDBSCAN.\n")
+			logger_write(FATAL, "Error: Could not allocate memory for HDBSCAN.\n");
 		#else
 			printf("FATAL: Could not allocate memory for HDBSCAN.\n");
 		#endif
@@ -246,7 +246,11 @@ int hdbscan_do_run(hdbscan* sc){
 	int err = hdbscan_construct_mst(sc);
 	
 	if(err == HDBSCAN_ERROR){
-		printf("FATAL: Could not construct the minimum spanning tree.\n");
+		#ifdef DEBUG
+			logger_write(FATAL, "FATAL: Could not construct the minimum spanning tree.\n");
+		#else
+			printf("FATAL: Could not construct the minimum spanning tree.\n");
+		#endif
 		return HDBSCAN_ERROR;
 	}
 
@@ -301,7 +305,11 @@ int hdbscan_rerun(hdbscan* sc, index_t minPts){
 int hdbscan_run(hdbscan* sc, void* dataset, index_t rows, index_t cols, boolean rowwise, index_t datatype){
 
 	if(sc == NULL){
-		printf("hdbscan_run: sc has not been initialised.\n");
+		#ifdef DEBUG
+			logger_write(FATAL, "hdbscan_run: sc has not been initialised.\n");
+		#else
+			printf("hdbscan_run: sc has not been initialised.\n");
+		#endif
 		return HDBSCAN_ERROR;
 	}
 	
@@ -729,14 +737,31 @@ hierarchy_entry* hdbscan_create_hierarchy_entry(){
  */
 void print_distances(hdbscan* sc){
 	for (index_t i = 0; i < sc->numPoints; i++) {
-		printf("[");
+		#ifdef DEBUG
+			logger_write(INFO, "[");
+		#else
+			printf("[");
+		#endif
+		char s[50];
 		for (index_t j = 0; j < sc->numPoints; j++) {
-			printf("%f ", distance_get(&sc->distanceFunction, i, j));
+			#ifdef DEBUG
+				sprintf(s,"%f\n", distance_get(&sc->distanceFunction, i, j));
+				logger_write(INFO, s)
+			#else
+				printf("%f ", distance_get(&sc->distanceFunction, i, j));
+			#endif
 		}
-
-		printf("]\n");
+		#ifdef DEBUG
+			logger_write(INFO, "]\n");
+		#else
+			printf("]\n");
+		#endif
 	}
-	printf("\n");
+	#ifdef DEBUG
+		logger_write(INFO, "\n");
+	#else
+		printf("\n");
+	#endif
 }
 
 /**
@@ -747,17 +772,32 @@ void print_distances(hdbscan* sc){
  * @param nearestMRDDistances 
  */
 void print_graph_components(ArrayList *nearestMRDNeighbors, ArrayList *otherVertexIndices, ArrayList *nearestMRDDistances){
-	printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>nearestMRDNeighbors>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+	#ifdef DEBUG
+		logger_write(INFO, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>nearestMRDNeighbors>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+	#else
+		printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>nearestMRDNeighbors>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+	#endif
+
+	char s[100];
+
 	for(size_t i = 0; i < nearestMRDNeighbors->size; i++){
 
 		index_t a = ((index_t *)nearestMRDNeighbors->data)[i];
 		index_t b = ((index_t *)otherVertexIndices->data)[i];
 		distance_t d = ((distance_t *)nearestMRDDistances->data)[i];
-
-		printf("%ld --- (%d, %d) : %f\n", i, a, b, d);
+		
+		#ifdef DEBUG
+			sprintf(s,"%ld --- (%d, %d) : %f\n", i, a, b, d);
+			logger_write(INFO, "[")
+		#else
+			printf("%ld --- (%d, %d) : %f\n", i, a, b, d);
+		#endif
 	}
-
-	printf("\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n\n\n");
+	#ifdef DEBUG
+		logger_write(INFO, "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n\n\n");
+	#else
+		printf("\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n\n\n");
+	#endif
 }
 
 /**
@@ -796,12 +836,22 @@ int hdbscan_construct_mst(hdbscan* sc){
 	ArrayList* otherVertexIndices = array_list_init(ssize, sizeof(index_t), NULL);
 
 	if(nearestMRDNeighbors == NULL){
-		printf("ERROR: hdbscan_construct_mst - Could not construct nearestMRDNeighbors");
+		#ifdef DEBUG
+			logger_write(FATAL, "hdbscan_construct_mst - Could not construct nearestMRDNeighbors\n");
+		#else
+			printf("FATAL: hdbscan_construct_mst - Could not construct nearestMRDNeighbors\n");
+		#endif
+		
 		return HDBSCAN_ERROR;
 	}
 
 	if(otherVertexIndices == NULL){
-		printf("ERROR: hdbscan_construct_mst - Could not construct otherVertexIndices");
+		#ifdef DEBUG
+			logger_write(FATAL, "hdbscan_construct_mst - Could not construct otherVertexIndices\n");
+		#else
+			printf("FATAL: hdbscan_construct_mst - Could not construct otherVertexIndices\n");
+		#endif
+		
 		return HDBSCAN_ERROR;
 	}
 
@@ -844,7 +894,12 @@ int hdbscan_construct_mst(hdbscan* sc){
 	otherVertexIndices->size = ssize;
 
 	if(nearestMRDDistances == NULL){
-		printf("ERROR: hdbscan_construct_mst - Could not construct nearestMRDDistances");
+		#ifdef DEBUG
+			logger_write(INFO, "hdbscan_construct_mst - Could not construct nearestMRDDistances\n");
+		#else
+			printf("FATAL: hdbscan_construct_mst - Could not construct nearestMRDDistances\n");
+		#endif
+		
 		return HDBSCAN_ERROR;
 	}
 
@@ -909,7 +964,12 @@ int hdbscan_construct_mst(hdbscan* sc){
 	sc->mst = graph_init(NULL, size, nearestMRDNeighbors, otherVertexIndices, nearestMRDDistances);
 	
 	if(sc->mst == NULL){
-		printf("Error: Could not initialise mst.\n");
+		#ifdef DEBUG
+			logger_write(FATAL, "Could not initialise mst.\n");
+		#else
+			printf("FATAL: Could not initialise mst.\n");
+		#endif
+
 		return HDBSCAN_ERROR;
 	}
 
@@ -939,21 +999,21 @@ boolean hdbscan_propagate_tree(hdbscan* sc){
 	size_t i;
 
 	#ifdef _OPENMP
-	#pragma omp parallel for
+		#pragma omp parallel for
 	#endif
 	for(i = 0; i < sc->clusters->size; i++){
 		addedToExaminationList[i] = FALSE;
 	}
 
 	#ifdef _OPENMP
-	#pragma omp parallel for
+		#pragma omp parallel for
 	#endif
 	for(i = 0; i < sc->clusters->size; i++){
 
 		cluster* cl = ((cluster**)sc->clusters->data)[i];
 		if(cl != NULL && cl->hasChildren == FALSE){
 			#ifdef _OPENMP
-			#pragma omp critical
+				#pragma omp critical
 			#endif
 			{
 			set_insert(clustersToExamine, &cl->label);
@@ -991,8 +1051,13 @@ boolean hdbscan_propagate_tree(hdbscan* sc){
 					"it affects the computation of cluster stability by means of relative excess of mass. For this reason,\n"
 					"the post-processing routine to extract a flat partition containing the most stable clusters may\n"
 					"produce unexpected results. It may be advisable to increase the value of MinPts and/or M_clSize.\n"
-					"-------------------------------------------------------------------------------------------------------";
-		printf("%s", message);
+					"-------------------------------------------------------------------------------------------------------\n";
+		
+		#ifdef DEBUG
+			logger_write(WARN, message);
+		#else
+			printf("%s", message);
+		#endif
 	}
 	currentCluster = NULL;
 	set_delete(clustersToExamine);
@@ -1016,12 +1081,12 @@ void hdbscan_find_prominent_clusters(hdbscan* sc, int infiniteStability){
 	cluster* c = NULL;
 
 	#ifdef _OPENMP
-	#pragma omp parallel for private(ret, c)
+		#pragma omp parallel for private(ret, c)
 	#endif
 	for(size_t i = 0; i < solution->size; i++){
 		
 		#ifdef _OPENMP
-		#pragma omp critical
+			#pragma omp critical
 		#endif
 		{
 		ret = array_list_value_at(solution, i, &c);
@@ -1051,7 +1116,7 @@ void hdbscan_find_prominent_clusters(hdbscan* sc, int infiniteStability){
 	sc->clusterLabels = (label_t *)calloc(sc->numPoints, sizeof(label_t));
 
 	#ifdef _OPENMP
-	#pragma omp parallel for
+		#pragma omp parallel for
 	#endif
 	for(size_t i = 0; i < set_size(significant->keys); i++)
 	{
@@ -1091,7 +1156,13 @@ int hdbscsan_calculate_outlier_scores(hdbscan* sc, distance_t* pointNoiseLevels,
 	sc->outlierScores = (outlier_score*)malloc(numPoints*sizeof(outlier_score));
 
 	if(!sc->outlierScores){
-		printf("ERROR: Calculate Outlier Score - Could not allocate memory for outlier scores.\n");
+		
+		#ifdef DEBUG
+			logger_write(FATAL, "Calculate Outlier Score - Could not allocate memory for outlier scores.\n");
+		#else
+			printf("ERROR: Calculate Outlier Score - Could not allocate memory for outlier scores.\n");
+		#endif
+		
 		return HDBSCAN_ERROR;
 	}
 
@@ -1332,31 +1403,6 @@ void hdbscan_skew_kurt_2(clustering_stats* stats, distance_t sum_sc, distance_t 
 }
 
 /**
- * Calculate the skewness and kurtosis using the the gsl library.
- * 
- * https://www.gnu.org/software/gsl/doc/html/statistics.html
- */ 
-void hdbscan_skew_kurt_gsl(clustering_stats* stats, distance_t* cr, distance_t* dr)
-{
-	/*
-	stats->coreDistanceValues.standardDev = gsl_stats_sd(cr, 1, stats->count);
-	stats->coreDistanceValues.variance = gsl_stats_variance(cr, 1, stats->count);
-	stats->coreDistanceValues.mean = gsl_stats_mean(cr, 1, stats->count);
-	stats->coreDistanceValues.kurtosis = gsl_stats_kurtosis_m_sd(cr, 1, stats->count, stats->coreDistanceValues.mean, stats->coreDistanceValues.standardDev);
-	stats->coreDistanceValues.skewness = gsl_stats_skew_m_sd(cr, 1, stats->count, stats->coreDistanceValues.mean, stats->coreDistanceValues.standardDev);
-	stats->coreDistanceValues.max = gsl_stats_max(cr, 1, stats->count);
-
-	// calculating intra distance statistics
-	stats->intraDistanceValues.standardDev = gsl_stats_sd(dr, 1, stats->count);
-	stats->intraDistanceValues.variance = gsl_stats_variance(dr, 1, stats->count);
-	stats->intraDistanceValues.mean = gsl_stats_mean(dr, 1, stats->count);
-	stats->intraDistanceValues.kurtosis = gsl_stats_kurtosis_m_sd(dr, 1, stats->count, stats->coreDistanceValues.mean, stats->coreDistanceValues.standardDev);
-	stats->intraDistanceValues.skewness = gsl_stats_skew_m_sd(dr, 1, stats->count, stats->coreDistanceValues.mean, stats->coreDistanceValues.standardDev);
-	stats->intraDistanceValues.max = gsl_stats_max(dr, 1, stats->count);
-	*/
-}
-
-/**
  * @brief 
  * 
  */
@@ -1416,10 +1462,7 @@ void hdbscan_calculate_stats_helper(distance_t* cr, distance_t* dr, clustering_s
 	stats->coreDistanceValues.standardDev = sqrt(stats->coreDistanceValues.variance);
 	stats->intraDistanceValues.standardDev = sqrt(stats->intraDistanceValues.variance);
 
-	hdbscan_skew_kurt_1(stats, sum_sc, sum_sd, sum_dc, sum_dd);
-	//hdbscan_skew_kurt_2(stats, sum_sc, sum_sd, sum_dc, sum_dd);
-	//hdbscan_skew_kurt_gsl(stats, cr, dr);
-	
+	hdbscan_skew_kurt_1(stats, sum_sc, sum_sd, sum_dc, sum_dd);	
 }
 
 /**
@@ -1449,9 +1492,6 @@ void hdbscan_calculate_stats(hashtable* distanceMap, clustering_stats* stats){
 	stats->count = (index_t)hashtable_size(distanceMap);
 	hdbscan_calculate_stats_helper(cr, dr, stats);
 
-	//#ifdef _OPENMP
-	//#pragma omp parallel for
-	//#endif
 	for(size_t i = 0; i < hashtable_size(distanceMap); i++)
 	{
 		key = ((label_t *)distanceMap->keys->data)[i];
@@ -1756,18 +1796,33 @@ void hdbscan_print_cluster_map(hashtable* table){
 	label_t key;
 	ArrayList *clusterList = NULL;
 	for(index_t i = 0; i < hashtable_size(table); i++)
-	{		
+	{
+		char s[50];
 		key = ((label_t *)table->keys->data)[i];
 		hashtable_lookup(table, &key, &clusterList);
-		printf("%d -> [", key);
+		#ifdef DEBUG
+			sprintf(s, "%d -> [", key);
+			logger_write(INFO, s);
+		#else
+			printf("%d -> [", key);
+		#endif
+		
 		index_t dpointer;
-
 		for(index_t j = 0; j < clusterList->size; j++){
 			
 			dpointer = ((label_t *)clusterList->data)[j];
-			printf("%d ", dpointer);
+			#ifdef DEBUG
+				sprintf(s, "%d ", dpointer)
+				logger_write(INFO, s);
+			#else
+				printf("%d ", dpointer);
+			#endif
 		}
-		printf("]\n");
+		#ifdef DEBUG
+			logger_write(INFO, "]\n");
+		#else
+			printf("]\n");
+		#endif
 	}
 }
 
@@ -1781,14 +1836,17 @@ void hdbscan_print_cluster_sizes(hashtable* table){
 	assert(table != NULL);
 	label_t key;
 	ArrayList *clusterList = NULL;
+	char s[10];
 	for(size_t i = 0; i < hashtable_size(table); i++)
 	{	
 		key = ((label_t *)table->keys->data)[i];
 		hashtable_lookup(table, &key, &clusterList);
-		if(log_file != NULL)
-			logger_write(INFO, "");
-		else 
+		#ifdef DEBUG
+			sprintf(s, "%d : %ld\n", key, clusterList->size)
+			logger_write(INFO, s);
+		#else
 			printf("%d : %ld\n", key, clusterList->size);
+		#endif
 	}
 }
 
@@ -1805,10 +1863,9 @@ void hdbscan_print_hierarchies(hashtable* hierarchy, index_t numPoints, char *fi
 	FILE *visFile = NULL;
 	FILE *hierarchyFile = NULL;
 
-	/// TODO: Use strcat_s
 	if(filename != NULL){
 
-		char visFilename[100];
+		char visFilename[300];
 		strcat(visFilename, filename);
 		strcat(visFilename, "_visualization.vis");
 		visFile = fopen(visFilename, "w");
@@ -1821,9 +1878,15 @@ void hdbscan_print_hierarchies(hashtable* hierarchy, index_t numPoints, char *fi
 		strcat(hierarchyFilename, "_hierarchy.csv");
 		hierarchyFile = fopen(hierarchyFilename, "w");
 	}
-
-	printf("\n////////////////////////////////////////////////////// Printing Hierarchies //////////////////////////////////////////////////////\n");
-	printf("hierarchy size = %ld\n", hashtable_size(hierarchy));
+	#ifdef DEBUG
+		logger_write(INFO, "\n////////////////////////////////////////////////////// Printing Hierarchies //////////////////////////////////////////////////////\n");
+		char s[100];
+		sprintf(s, "hierarchy size = %ld\n", hashtable_size(hierarchy));
+		logger_write(INFO, "hierarchy size = %ld\n", hashtable_size(hierarchy));
+	#else
+		printf("\n////////////////////////////////////////////////////// Printing Hierarchies //////////////////////////////////////////////////////\n");
+		printf("hierarchy size = %ld\n", hashtable_size(hierarchy));
+	#endif
 	
 	for(size_t i = 0; i < set_size(hierarchy->keys); i++){
 		int64_t level;
@@ -1874,6 +1937,8 @@ void hdbscan_print_outlier_scores(outlier_score* scores, index_t numPoints) {
  * @param distancesMap 
  */
 void hdbscan_print_distance_map(hashtable* distancesMap){
+
+	char s[512];
 
 	printf("\n/////////////////////////////////////////////////////// Printing Distances ///////////////////////////////////////////////////////\n");
 	for(size_t i = 0; i < hashtable_size(distancesMap); i++)
