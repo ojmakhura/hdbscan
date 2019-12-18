@@ -45,6 +45,7 @@
 #include <assert.h>
 #include <time.h>
 
+static FILE* log_file = NULL;
 static char* getDateString() {
     // Initialize and get current time
     time_t t = time( NULL );
@@ -73,7 +74,10 @@ void logger_init()
 
 void logger_write(enum LOGTYPE type, const char* str) {
 
+#ifdef DEBUG
     assert(log_file != NULL);
+#endif
+
     char* date = getDateString();
     const char* tp;
 
@@ -83,19 +87,34 @@ void logger_write(enum LOGTYPE type, const char* str) {
         tp = "ERROR";
     } else if (type == INFO) {
         tp = "INFO";
-    } else {
+    } else if (type == WARN)  {
         tp = "WARN";
+    } else {
+        tp = "";
     }
-    size_t sz = strlen(date) + strlen(tp) + strlen(str) + 10;
-    char buffer[sz];
-    sprintf(buffer, "%s %s: %s\n", date, tp, str);
-    free(date);
     
-    fprintf(log_file, "%s", buffer);
+    if(type != NONE) {
+        size_t sz = strlen(date) + strlen(tp) + strlen(str) + 10;
+        char buffer[sz];
+        sprintf(buffer, "%s %s: %s", date, tp, str);
+    #ifdef DEBUG
+        fprintf(log_file, "%s", buffer);
+    #else
+        printf("%s", buffer);
+    #endif
+    } else {
+    #ifdef DEBUG
+        fprintf(log_file, "%s", str);
+    #else
+        printf("%s", str);
+    #endif
+    }
+    free(date);
 }
 
 void logger_close() {
-
+#ifdef DEBUG
     assert(log_file != NULL);
     fclose(log_file);
+#endif
 }

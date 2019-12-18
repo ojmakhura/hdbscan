@@ -41,6 +41,7 @@
 #include <math.h>
 #include <float.h>
 #include "hdbscan/distance.h"
+#include "hdbscan/logger.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -61,7 +62,7 @@ distance* distance_init(distance* dis, calculator cal, enum HTYPES datatype) {
 		dis = (distance*)malloc(sizeof(distance));
 
 	if(dis == NULL){
-		printf("ERROR: distance_init - Failed to allocate memory for distance");
+		logger_write(FATAL, "distance_init - Failed to allocate memory for distance");
 	} else{
 		dis->cal = cal;
 		dis->numNeighbors = 2; /// set the distance to minimum possible neighbors
@@ -250,12 +251,17 @@ void distance_get_core_distances(distance *dis)
 }
 
 void distances_print(distance *dis) {
-	
+#ifdef DEBUG
+	char s[20];
+#endif
 	for (index_t i = 0; i < dis->rows; i++) {
-		printf("[");
+		logger_write(NONE, "[");
+
 		for (index_t j = i + 1; j < dis->rows; j++) {
-			printf("%f ", distance_get(dis, i, j));
+			printf(s, "%f ", distance_get(dis, i, j));
+			logger_write(NONE, s);
 		}
-		printf("]\n");
+
+		logger_write(NONE, "]\n");
 	}
 }

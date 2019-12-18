@@ -38,6 +38,8 @@
  * 
  */
 #include "hdbscan/undirected_graph.h"
+#include "hdbscan/logger.h"
+
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -47,7 +49,11 @@ UndirectedGraph* graph_init(UndirectedGraph* g, index_t numVertices, ArrayList* 
 		g = (UndirectedGraph*)malloc(sizeof(UndirectedGraph));
 
 	if(g == NULL){
-		printf("Error: Could not allocate memory for graph");
+	#ifdef DEBUG
+		logger_write(FATAL, "graph_init - Could not allocate memory for graph.");
+	#else
+		printf("FATAL: graph_init - Could not allocate memory for graph.");
+	#endif
 		return NULL;
 	}
 
@@ -58,7 +64,12 @@ UndirectedGraph* graph_init(UndirectedGraph* g, index_t numVertices, ArrayList* 
 	g->edges = (ArrayList**) malloc(numVertices * sizeof(ArrayList*));
 
 	if(g->edges == NULL){
-		printf("Graph Init: Could not allocate memory for edges.\n");
+
+	#ifdef DEBUG
+		logger_write(FATAL, "graph_init - Could not allocate memory for edges.");
+	#else
+		printf("FATAL: graph_init - Could not allocate memory for edges.");
+	#endif
 		return NULL;
 	}
 
@@ -258,41 +269,59 @@ void graph_print(UndirectedGraph* g) {
 	index_t* da = g->verticesA->data;
 	index_t* db = g->verticesB->data;
 
-	printf(
+	char s[300];
+	sprintf(s,
 			"numVertices: %d, verticesA.length: %ld,  verticesB.length: %ld, edgeWeights.length: %ld, edges.length: %d\n",
 			g->numVertices, g->verticesA->size, g->verticesB->size, g->edgeWeights->size, g->numVertices);
-	printf("\nVertices A\n");
+	sprintf(s + strlen(s), "\nVertices A\n");
+
+	logger_write(NONE, s);
 
 	for (size_t i = 0; i < g->verticesA->size; i++) {
 		index_t vertex = da[i];
+	#ifdef DEBUG
+		sprintf(s, "%d, ", vertex);
+		logger_write(NONE, s);
+	#else
 		printf("%d, ", vertex);
+	#endif
+		
 	}
 
-	printf("\n\nVertices B\n");
+	sprintf(s, "\n\nVertices B\n");
+	logger_write(NONE, s);
+
 	for (size_t i = 0; i < g->verticesB->size; i++) {
 		index_t vertex = db[i];
-		printf("%d, ", vertex);
+	
+		sprintf(s, "%d, ", vertex);
+		logger_write(NONE, s);
 	}
 
-	printf("\n\nedgeWeights\n");
+	sprintf(s, "\n\nnedgeWeights\n");
+	logger_write(NONE, s);
+
     for (size_t i = 0; i < g->edgeWeights->size; i++) {
 		distance_t weight = dt[i];
-		printf("%f, ", weight);
+		sprintf(s, "%f, ", weight);
+		logger_write(NONE, s);
 	}
 
-	printf("\n\nEdges\n");
+	sprintf(s, "\n\nEdges\n");
+	logger_write(NONE, s);
 
 	for(uint i = 0; i < g->numVertices; i++){
 		ArrayList* edge = g->edges[i];
-
-		printf("[");
+		logger_write(NONE, "[");
+	
 		index_t* ldata = edge->data;
 
 		for(index_t i = 0; i < edge->size; i++){
-			printf("%d, ", ldata[i]);
+			sprintf(s, "%d, ", ldata[i]);
+			logger_write(NONE, s);			
 		}
-
-		printf("]\n");
+	
+		logger_write(NONE, "]\n");
 	}
 
 }

@@ -38,13 +38,18 @@
  * 
  */
 #include "hdbscan/outlier_score.h"
+#include "hdbscan/logger.h"
 
 outlier_score* create_outlier_score(outlier_score* os, distance_t score, distance_t coreDistance, index_t id){
 	if(os == NULL)
 		os = (outlier_score*)malloc(sizeof(outlier_score));
 
 	if(os == NULL){
-		printf("OUTLIERSCORE_ERROR: Could not allocate memory for Outlier Score");
+	#ifdef DEBUG
+		logger_write(FATAL, "create_outlier_score - Could not allocate memory for Outlier Score");
+	#else
+		printf("FATAL: create_outlier_score - Could not allocate memory for Outlier Score");
+	#endif
 	} else{
 
 		os->coreDistance = coreDistance;

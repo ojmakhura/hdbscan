@@ -38,13 +38,20 @@
  */
 #include "hdbscan/constraint.h"
 #include <stdio.h>
+#ifdef DEBUG
+#include "hdbscan/logger.h"
+#endif
 
 constraint* constraint_create(constraint* c, int pointA, int pointB, CONSTRAINT_TYPE type){
 	if(c == NULL)
 		c = (constraint*)malloc(sizeof(constraint));
 
 	if(c == NULL){
-		printf("CONSTRAINT ERROR: Could not allocate memory for constraint\n");
+	#ifdef DEBUG
+		logger_write(FATAL, "constraint_create - Could not allocate memory for constraint\n");
+	#else
+		printf("FATAL: constraint_create - Could not allocate memory for constraint\n");
+	#endif
 	} else{
 
 		c->pointA = pointA;

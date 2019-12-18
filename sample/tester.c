@@ -30,8 +30,8 @@
  * SOFTWARE.
  */
 
-//#include "config.h"
 #include "hdbscan/hdbscan.h"
+#include "hdbscan/logger.h"
 #include "dataset.h"
 #include "listlib/list.h"
 #include <time.h>
@@ -45,7 +45,8 @@ double* getDset(char* filename, index_t *rs, index_t *cs){
 
 	FILE *fp = fopen(filename,"r");
 	if(!fp){
-		printf("Could not open file%s\n", filename);
+		logger_write(FATAL, "Could not open file%s\n", filename);
+		exit(0);
 	}
 	
 	char buff[2048];
@@ -75,12 +76,14 @@ double* getDset(char* filename, index_t *rs, index_t *cs){
 }
 
 int main(int argc, char** argv){
+
 	clock_t begin, end;
 	int err;
 	index_t rs = 0, cs = 0;
 	double time_spent;
-	printf("argc = %d\n", argc);
+	logger_write(INFO, "argc = %d\n", argc);
 	double* dset = NULL;
+	char tmp[200];
 
 	if(argc == 3){ // will read the dataset from the provided csv file
 		dset = getDset(argv[2], &rs, &cs);
@@ -89,14 +92,15 @@ int main(int argc, char** argv){
 		rs = (index_t)rows;
 		cs = (index_t)cols;
 	}
-	printf("(rows, cols) = (%d, %d)\n", rs, cs);
+	sprintf(tmp, "(rows, cols) = (%d, %d)\n", rs, cs);
+	logger_write(INFO, tmp);
 	hdbscan* scan = hdbscan_init(NULL, (index_t)atoi(argv[1]));
 	boolean rerun_ = FALSE;
 	if(scan == NULL){
-		printf("ERROR: Could not initialise hdbscan\n");
+		logger_write(FATAL, "Could not initialise hdbscan\n");
 		exit(0);
 	}
-	printf("SUCCESS: hdbscan fully initialised\n");
+	logger_write(INFO, "SUCCESS: hdbscan fully initialised\n");
 
 	// This lil loop demonstrates how to use the rerun function
 	for(int i = 0; i < 15; i++){
@@ -105,22 +109,25 @@ int main(int argc, char** argv){
 			err = hdbscan_run(scan, dset, rs, cs, TRUE, H_DOUBLE);
 			end = clock();
 			time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-			printf("hdbscan run Process took %f\n", time_spent);
+			
+			sprintf(tmp, "hdbscan run Process took %f\n", time_spent);
+			logger_write(INFO, tmp);
 			rerun_ = TRUE;
 		} else{
 			begin = clock();
 			hdbscan_rerun(scan, (index_t)(atoi(argv[1]) + i));
 			end = clock();
 			time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-			printf("hdbscan rerun Process took %f\n", time_spent);
+			sprintf(tmp, "hdbscan rerun Process took %f\n", time_spent);
+			logger_write(INFO, tmp);
 		}
-
-		printf("%d ------- ***********************************************************************************\n", scan->minPoints);
+		
+		logger_write(NONE, "%d ------- ***********************************************************************************\n");
 
 		if(err == HDBSCAN_ERROR){
-			printf("ERROR: Could not run hdbscan\n");
+			logger_write(ERROR, "Could not run hdbscan\n");
 		} else{
-			printf("SUCCESS: hdbscan clustering completed\n");
+			logger_write(INFO, "SUCCESS: hdbscan clustering completed\n");
 			IntIntListMap* clusterTable = hdbscan_create_cluster_map(scan->clusterLabels, 0, scan->numPoints);
 			hdbscan_print_cluster_map(clusterTable);
 			//hdbscan_print_hierarchies(scan->hierarchy, scan->numPoints, NULL);
@@ -147,37 +154,37 @@ int main(int argc, char** argv){
 			}
 
 			sorted = hdbscan_sort_by_length(clusterTable, sorted);
-			printf("\n\nSorted by length = [\n");
+			logger_write(NONE, "\n\nSorted by length = [\n");
 
 			label_t *data = (label_t *)sorted->data;
 			for(size_t i = 0; i < sorted->size; i++){
 				ArrayList* l1;
 				hashtable_lookup(clusterTable, data+i, &l1);
-				printf("%d : %ld\n", data[i], l1->size);
+				logger_write(NONE, "%d : %ld\n", data[i], l1->size);
 			}
-			printf("]\n\n");
+			logger_write(NONE, "]\n\n");
 			
 			sorted = hdbscan_sort_by_similarity(dMap, sorted, INTRA_DISTANCE_TYPE); // There is choice to use CORE_DISTANCE_TYPE
-			printf("Sorted by similarity = [");
+			logger_write(NONE, "Sorted by similarity = [");
 
 			data = (label_t *)sorted->data;
 			for(size_t i = 0; i < sorted->size; i++){
 				distance_values* dis;
 				hashtable_lookup(dMap, data+i, &dis);
-				printf("%d : (%f, %f)\n", data[i], dis->dr_confidence, dis->cr_confidence);
+				logger_write(NONE, "%d : (%f, %f)\n", data[i], dis->dr_confidence, dis->cr_confidence);
 			}
-			printf("]\n\n");
+			logger_write(NONE, "]\n\n");
 			array_list_delete(sorted);
 
 			hdbscan_print_distance_map(dMap);
 			hdbscan_print_stats(&stats);
-			printf("Clustering validity : %d\n", hdbscan_analyse_stats(&stats));
+			logger_write(INFO, "Clustering validity : %d\n", hdbscan_analyse_stats(&stats));
 			
-			/*printf("\n\nCluster labels = [");
+			/*logger_write("\n\nCluster labels = [");
 			for(uint i = 0; i < scan->numPoints; i++){
-				printf("%d ", scan->clusterLabels[i]);
+				logger_write("%d ", scan->clusterLabels[i]);
 			}
-			printf("]\n\n");
+			logger_write("]\n\n");
 			*/
 			//hdbscan_print_outlier_scores(scan->outlierScores, scan->numPoints);
 						
@@ -185,7 +192,7 @@ int main(int argc, char** argv){
 			hdbscan_destroy_cluster_map(clusterTable);
 		}
 
-		printf("***********************************************************************************\n\n");
+		logger_write(NONE, "***********************************************************************************\n\n");
 		//break;
 	}
 

@@ -38,11 +38,11 @@
  */
 
 #include "hdbscan/hdbscan.h"
-#include "hdbscan/logger.h"
 #include <assert.h>
 #include <time.h>
 #include <math.h>
 #include "listlib/set.h"
+#include "hdbscan/logger.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -115,11 +115,8 @@ hdbscan* hdbscan_init(hdbscan* sc, index_t minPoints){
 		sc = (hdbscan*) malloc(sizeof(hdbscan));
 
 	if(sc == NULL){
-		#ifdef DEBUG
-			logger_write(FATAL, "Error: Could not allocate memory for HDBSCAN.\n");
-		#else
-			printf("FATAL: Could not allocate memory for HDBSCAN.\n");
-		#endif
+		logger_write(FATAL, "hdbscan_init - Could not allocate memory for HDBSCAN.\n");
+		
 	} else{
 		sc->minPoints = minPoints;
 		sc->selfEdges = TRUE;
@@ -132,6 +129,11 @@ hdbscan* hdbscan_init(hdbscan* sc, index_t minPoints){
 		sc->coreDistances = NULL;
 		sc->outlierScores = NULL;
 	}
+
+#ifdef DEBUG
+	logger_init();
+#endif
+
 	return sc;
 }
 
@@ -227,6 +229,10 @@ void hdbscan_destroy(hdbscan* sc){
 	if(sc != NULL){
 		free(sc);
 	}
+
+#ifdef DEBUG
+	logger_close();
+#endif
 }
 
 /**
@@ -246,11 +252,12 @@ int hdbscan_do_run(hdbscan* sc){
 	int err = hdbscan_construct_mst(sc);
 	
 	if(err == HDBSCAN_ERROR){
-		#ifdef DEBUG
-			logger_write(FATAL, "FATAL: Could not construct the minimum spanning tree.\n");
-		#else
-			printf("FATAL: Could not construct the minimum spanning tree.\n");
-		#endif
+	#ifdef DEBUG
+		logger_write(FATAL, "hdbscan_do_run - Could not construct the minimum spanning tree.\n");
+	#else
+		printf("FATAL: hdbscan_do_run - Could not construct the minimum spanning tree.\n");
+	#endif
+	
 		return HDBSCAN_ERROR;
 	}
 
@@ -305,11 +312,12 @@ int hdbscan_rerun(hdbscan* sc, index_t minPts){
 int hdbscan_run(hdbscan* sc, void* dataset, index_t rows, index_t cols, boolean rowwise, index_t datatype){
 
 	if(sc == NULL){
-		#ifdef DEBUG
-			logger_write(FATAL, "hdbscan_run: sc has not been initialised.\n");
-		#else
-			printf("hdbscan_run: sc has not been initialised.\n");
-		#endif
+	#ifdef DEBUG
+		logger_write(FATAL, "hdbscan_run - sc has not been initialised.\n");
+	#else
+		printf("FATAL: hdbscan_run - sc has not been initialised.\n");
+	#endif
+	
 		return HDBSCAN_ERROR;
 	}
 	
@@ -737,24 +745,25 @@ hierarchy_entry* hdbscan_create_hierarchy_entry(){
  */
 void print_distances(hdbscan* sc){
 	for (index_t i = 0; i < sc->numPoints; i++) {
-		#ifdef DEBUG
-			logger_write(INFO, "[");
-		#else
-			printf("[");
-		#endif
+	#ifdef DEBUG
 		char s[50];
+		logger_write(INFO, "[");
+	#else
+		printf("[");
+	#endif
+		
 		for (index_t j = 0; j < sc->numPoints; j++) {
-			#ifdef DEBUG
-				sprintf(s,"%f\n", distance_get(&sc->distanceFunction, i, j));
-				logger_write(INFO, s)
-			#else
-				printf("%f ", distance_get(&sc->distanceFunction, i, j));
-			#endif
-		}
 		#ifdef DEBUG
-			logger_write(INFO, "]\n");
+			sprintf(s,"%f\n", distance_get(&sc->distanceFunction, i, j));
+			logger_write(INFO, s);
 		#else
-			printf("]\n");
+			printf("%f ", distance_get(&sc->distanceFunction, i, j));
+		#endif
+		}
+	#ifdef DEBUG
+		logger_write(INFO, "]\n");
+	#else
+		printf("]\n");
 		#endif
 	}
 	#ifdef DEBUG
@@ -772,13 +781,12 @@ void print_distances(hdbscan* sc){
  * @param nearestMRDDistances 
  */
 void print_graph_components(ArrayList *nearestMRDNeighbors, ArrayList *otherVertexIndices, ArrayList *nearestMRDDistances){
-	#ifdef DEBUG
-		logger_write(INFO, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>nearestMRDNeighbors>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-	#else
-		printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>nearestMRDNeighbors>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
-	#endif
-
+#ifdef DEBUG
+	logger_write(INFO, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>nearestMRDNeighbors>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 	char s[100];
+#else
+	printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>nearestMRDNeighbors>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+#endif
 
 	for(size_t i = 0; i < nearestMRDNeighbors->size; i++){
 
@@ -786,18 +794,19 @@ void print_graph_components(ArrayList *nearestMRDNeighbors, ArrayList *otherVert
 		index_t b = ((index_t *)otherVertexIndices->data)[i];
 		distance_t d = ((distance_t *)nearestMRDDistances->data)[i];
 		
-		#ifdef DEBUG
-			sprintf(s,"%ld --- (%d, %d) : %f\n", i, a, b, d);
-			logger_write(INFO, "[")
-		#else
-			printf("%ld --- (%d, %d) : %f\n", i, a, b, d);
-		#endif
-	}
 	#ifdef DEBUG
-		logger_write(INFO, "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n\n\n");
+		sprintf(s,"%ld --- (%d, %d) : %f\n", i, a, b, d);
+		logger_write(INFO, "[");
 	#else
-		printf("\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n\n\n");
+		printf("%ld --- (%d, %d) : %f\n", i, a, b, d);
 	#endif
+	}
+
+#ifdef DEBUG
+	logger_write(INFO, "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n\n\n");
+#else
+	printf("\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n\n\n");
+#endif
 }
 
 /**
@@ -836,21 +845,21 @@ int hdbscan_construct_mst(hdbscan* sc){
 	ArrayList* otherVertexIndices = array_list_init(ssize, sizeof(index_t), NULL);
 
 	if(nearestMRDNeighbors == NULL){
-		#ifdef DEBUG
-			logger_write(FATAL, "hdbscan_construct_mst - Could not construct nearestMRDNeighbors\n");
-		#else
-			printf("FATAL: hdbscan_construct_mst - Could not construct nearestMRDNeighbors\n");
-		#endif
+#ifdef DEBUG
+	logger_write(FATAL, "hdbscan_construct_mst - Could not construct nearestMRDNeighbors\n");
+#else
+	printf("FATAL: hdbscan_construct_mst - Could not construct nearestMRDNeighbors\n");
+#endif
 		
 		return HDBSCAN_ERROR;
 	}
 
 	if(otherVertexIndices == NULL){
-		#ifdef DEBUG
-			logger_write(FATAL, "hdbscan_construct_mst - Could not construct otherVertexIndices\n");
-		#else
-			printf("FATAL: hdbscan_construct_mst - Could not construct otherVertexIndices\n");
-		#endif
+	#ifdef DEBUG
+		logger_write(FATAL, "hdbscan_construct_mst - Could not construct otherVertexIndices\n");
+	#else
+		printf("FATAL: hdbscan_construct_mst - Could not construct otherVertexIndices\n");
+	#endif
 		
 		return HDBSCAN_ERROR;
 	}
@@ -894,11 +903,11 @@ int hdbscan_construct_mst(hdbscan* sc){
 	otherVertexIndices->size = ssize;
 
 	if(nearestMRDDistances == NULL){
-		#ifdef DEBUG
-			logger_write(INFO, "hdbscan_construct_mst - Could not construct nearestMRDDistances\n");
-		#else
-			printf("FATAL: hdbscan_construct_mst - Could not construct nearestMRDDistances\n");
-		#endif
+	#ifdef DEBUG
+		logger_write(FATAL, "hdbscan_construct_mst - Could not construct nearestMRDDistances\n");
+	#else
+		printf("FATAL: hdbscan_construct_mst - Could not construct nearestMRDDistances\n");
+	#endif
 		
 		return HDBSCAN_ERROR;
 	}
@@ -964,11 +973,11 @@ int hdbscan_construct_mst(hdbscan* sc){
 	sc->mst = graph_init(NULL, size, nearestMRDNeighbors, otherVertexIndices, nearestMRDDistances);
 	
 	if(sc->mst == NULL){
-		#ifdef DEBUG
-			logger_write(FATAL, "Could not initialise mst.\n");
-		#else
-			printf("FATAL: Could not initialise mst.\n");
-		#endif
+	#ifdef DEBUG
+		logger_write(FATAL, "Could not initialise mst.\n");
+	#else
+		printf("FATAL: Could not initialise mst.\n");
+	#endif
 
 		return HDBSCAN_ERROR;
 	}
@@ -1053,11 +1062,11 @@ boolean hdbscan_propagate_tree(hdbscan* sc){
 					"produce unexpected results. It may be advisable to increase the value of MinPts and/or M_clSize.\n"
 					"-------------------------------------------------------------------------------------------------------\n";
 		
-		#ifdef DEBUG
-			logger_write(WARN, message);
-		#else
-			printf("%s", message);
-		#endif
+	#ifdef DEBUG
+		logger_write(WARN, message);
+	#else
+		printf("%s", message);
+	#endif
 	}
 	currentCluster = NULL;
 	set_delete(clustersToExamine);
@@ -1157,11 +1166,11 @@ int hdbscsan_calculate_outlier_scores(hdbscan* sc, distance_t* pointNoiseLevels,
 
 	if(!sc->outlierScores){
 		
-		#ifdef DEBUG
-			logger_write(FATAL, "Calculate Outlier Score - Could not allocate memory for outlier scores.\n");
-		#else
-			printf("ERROR: Calculate Outlier Score - Could not allocate memory for outlier scores.\n");
-		#endif
+	#ifdef DEBUG
+		logger_write(FATAL, "Calculate Outlier Score - Could not allocate memory for outlier scores.\n");
+	#else
+		printf("FATAL: Calculate Outlier Score - Could not allocate memory for outlier scores.\n");
+	#endif
 		
 		return HDBSCAN_ERROR;
 	}
@@ -1790,39 +1799,31 @@ void hdbscan_destroy_cluster_map(hashtable* table){
  * @param table 
  */
 void hdbscan_print_cluster_map(hashtable* table){
-
+#ifdef DEBUG
+	char s[50];
+#endif
 	assert(table != NULL);
 
 	label_t key;
 	ArrayList *clusterList = NULL;
 	for(index_t i = 0; i < hashtable_size(table); i++)
 	{
-		char s[50];
+		
 		key = ((label_t *)table->keys->data)[i];
 		hashtable_lookup(table, &key, &clusterList);
-		#ifdef DEBUG
-			sprintf(s, "%d -> [", key);
-			logger_write(INFO, s);
-		#else
-			printf("%d -> [", key);
-		#endif
+		
+		sprintf(s, "%d -> [", key);
+		logger_write(NONE, s);
 		
 		index_t dpointer;
 		for(index_t j = 0; j < clusterList->size; j++){
 			
 			dpointer = ((label_t *)clusterList->data)[j];
-			#ifdef DEBUG
-				sprintf(s, "%d ", dpointer)
-				logger_write(INFO, s);
-			#else
-				printf("%d ", dpointer);
-			#endif
+			sprintf(s, "%d ", dpointer);
+			logger_write(NONE, s);
 		}
-		#ifdef DEBUG
-			logger_write(INFO, "]\n");
-		#else
-			printf("]\n");
-		#endif
+		
+		logger_write(NONE, "]\n");
 	}
 }
 
@@ -1837,21 +1838,18 @@ void hdbscan_print_cluster_sizes(hashtable* table){
 	label_t key;
 	ArrayList *clusterList = NULL;
 	char s[10];
+
 	for(size_t i = 0; i < hashtable_size(table); i++)
 	{	
 		key = ((label_t *)table->keys->data)[i];
 		hashtable_lookup(table, &key, &clusterList);
-		#ifdef DEBUG
-			sprintf(s, "%d : %ld\n", key, clusterList->size)
-			logger_write(INFO, s);
-		#else
-			printf("%d : %ld\n", key, clusterList->size);
-		#endif
+		sprintf(s, "%d : %ld\n", key, clusterList->size);
+		logger_write(NONE, s);
 	}
 }
 
 /**
- * @brief 
+ * @brief Print cluster hierarchies
  * 
  * @param hierarchy 
  * @param numPoints 
@@ -1878,15 +1876,11 @@ void hdbscan_print_hierarchies(hashtable* hierarchy, index_t numPoints, char *fi
 		strcat(hierarchyFilename, "_hierarchy.csv");
 		hierarchyFile = fopen(hierarchyFilename, "w");
 	}
-	#ifdef DEBUG
-		logger_write(INFO, "\n////////////////////////////////////////////////////// Printing Hierarchies //////////////////////////////////////////////////////\n");
-		char s[100];
-		sprintf(s, "hierarchy size = %ld\n", hashtable_size(hierarchy));
-		logger_write(INFO, "hierarchy size = %ld\n", hashtable_size(hierarchy));
-	#else
-		printf("\n////////////////////////////////////////////////////// Printing Hierarchies //////////////////////////////////////////////////////\n");
-		printf("hierarchy size = %ld\n", hashtable_size(hierarchy));
-	#endif
+	
+	char s[100];
+	logger_write(INFO, "\n////////////////////////////////////////////////////// Printing Hierarchies //////////////////////////////////////////////////////\n");
+	sprintf(s, "hierarchy size = %ld\n", hashtable_size(hierarchy));
+	logger_write(INFO, s);
 	
 	for(size_t i = 0; i < set_size(hierarchy->keys); i++){
 		int64_t level;
@@ -1918,16 +1912,23 @@ void hdbscan_print_hierarchies(hashtable* hierarchy, index_t numPoints, char *fi
 	if(hierarchyFile){
 		fclose(hierarchyFile);
 	}
-	printf("//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////\n\n");
+
+	logger_write(INFO, "//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////\n\n");
+
 }
 
 void hdbscan_print_outlier_scores(outlier_score* scores, index_t numPoints) {
-	printf("\n////////////////////////////////////////////////////// Printing outlier Scores //////////////////////////////////////////////////////\n");
+	
+	char s[100];
+	logger_write(NONE, "\n////////////////////////////////////////////////////// Printing outlier Scores //////////////////////////////////////////////////////\n");
+
 	for(index_t i = 0; i < numPoints; i++) {
 		outlier_score* score = scores + i;
-		printf("%ld : (%6f, %6f)\n", (long)score->id, score->coreDistance, score->score);
+		sprintf(s, "%ld : (%6f, %6f)\n", (long)score->id, score->coreDistance, score->score);
+		logger_write(NONE, s);	
 	}
-	printf("//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////\n\n");
+
+	logger_write(NONE, "//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////\n\n");
 
 }
 
@@ -1937,23 +1938,25 @@ void hdbscan_print_outlier_scores(outlier_score* scores, index_t numPoints) {
  * @param distancesMap 
  */
 void hdbscan_print_distance_map(hashtable* distancesMap){
-
 	char s[512];
+	logger_write(NONE, "\n/////////////////////////////////////////////////////// Printing Distances ///////////////////////////////////////////////////////\n");
 
-	printf("\n/////////////////////////////////////////////////////// Printing Distances ///////////////////////////////////////////////////////\n");
 	for(size_t i = 0; i < hashtable_size(distancesMap); i++)
 	{
 		label_t key;
 		distance_values* dv = NULL;
 		set_value_at(distancesMap->keys, i, &key);
 		hashtable_lookup(distancesMap, &key, &dv);
-		printf("%d -> {\n", key);
-		printf("\tmin_cr : %f, max_cr : %f, cr_confidence : %f\n", dv->min_cr, dv->max_cr, dv->cr_confidence);
-		printf("\tmin_dr : %f, max_dr : %f, dr_confidence : %f\n", dv->min_dr, dv->max_dr, dv->dr_confidence);
-
-		printf("}\n\n");
+		sprintf(s, "%d -> {\n", key);
+		sprintf(s + strlen(s), "\tmin_cr : %f, max_cr : %f, cr_confidence : %f\n", dv->min_cr, dv->max_cr, dv->cr_confidence);
+		sprintf(s + strlen(s), "\tmin_dr : %f, max_dr : %f, dr_confidence : %f\n", dv->min_dr, dv->max_dr, dv->dr_confidence);
+		sprintf(s + strlen(s), "}\n\n");
+	
+		logger_write(NONE, s);
 	}
-	printf("///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////\n\n");
+	
+	logger_write(NONE, "///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////\n\n");
+
 }
 
 /**
@@ -1962,24 +1965,26 @@ void hdbscan_print_distance_map(hashtable* distancesMap){
  * \param stats 
  */
 void hdbscan_print_stats(clustering_stats* stats){
+	char s[1200];
+	sprintf(s, "////////////////////////////////////////////////////// Statistical Values ////////////////////////////////////////////////////////\n");
+	sprintf(s + strlen(s), "Cluster Count 					: %d\n", stats->count);
+	sprintf(s + strlen(s), "Core Distances - Max 			: %.5f\n", stats->coreDistanceValues.max);
+	sprintf(s + strlen(s), "Core Distances - Mean 			: %.5f\n", stats->coreDistanceValues.mean);
+	sprintf(s + strlen(s), "Core Distances - Skewness 		: %.5f\n", stats->coreDistanceValues.skewness);
+	sprintf(s + strlen(s), "Core Distances - Kurtosis 		: %.5f\n", stats->coreDistanceValues.kurtosis);
+	sprintf(s + strlen(s), "Core Distances - Variance 		: %.5f\n", stats->coreDistanceValues.variance);
+	sprintf(s + strlen(s), "Core Distances - Standard Dev 	: %.5f\n\n", stats->coreDistanceValues.standardDev);
 
-	printf("////////////////////////////////////////////////////// Statistical Values ////////////////////////////////////////////////////////\n");
-	printf("Cluster Count 					: %d\n", stats->count);
-	printf("Core Distances - Max 			: %.5f\n", stats->coreDistanceValues.max);
-	printf("Core Distances - Mean 			: %.5f\n", stats->coreDistanceValues.mean);
-	printf("Core Distances - Skewness 		: %.5f\n", stats->coreDistanceValues.skewness);
-	printf("Core Distances - Kurtosis 		: %.5f\n", stats->coreDistanceValues.kurtosis);
-	printf("Core Distances - Variance 		: %.5f\n", stats->coreDistanceValues.variance);
-	printf("Core Distances - Standard Dev 	: %.5f\n\n", stats->coreDistanceValues.standardDev);
+	sprintf(s + strlen(s), "Intra Distances - Max 			: %.5f\n", stats->intraDistanceValues.max);
+	sprintf(s + strlen(s), "Intra Distances - Mean 			: %.5f\n", stats->intraDistanceValues.mean);
+	sprintf(s + strlen(s), "Intra Distances - Skewness 		: %.5f\n", stats->intraDistanceValues.skewness);
+	sprintf(s + strlen(s), "Intra Distances - Kurtosis 		: %.5f\n", stats->intraDistanceValues.kurtosis);
+	sprintf(s + strlen(s), "Intra Distances - Variance 		: %.5f\n", stats->intraDistanceValues.variance);
+	sprintf(s + strlen(s), "Intra Distances - Standard Dev 	: %.5f\n", stats->intraDistanceValues.standardDev);
 
-	printf("Intra Distances - Max 			: %.5f\n", stats->intraDistanceValues.max);
-	printf("Intra Distances - Mean 			: %.5f\n", stats->intraDistanceValues.mean);
-	printf("Intra Distances - Skewness 		: %.5f\n", stats->intraDistanceValues.skewness);
-	printf("Intra Distances - Kurtosis 		: %.5f\n", stats->intraDistanceValues.kurtosis);
-	printf("Intra Distances - Variance 		: %.5f\n", stats->intraDistanceValues.variance);
-	printf("Intra Distances - Standard Dev 	: %.5f\n", stats->intraDistanceValues.standardDev);
+	sprintf(s + strlen(s), "//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////\n\n");
 
-	printf("//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////\n\n");
+	logger_write(NONE, s);
 }
 
 /**

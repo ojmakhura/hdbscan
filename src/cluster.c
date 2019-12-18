@@ -48,11 +48,7 @@ cluster* cluster_init(cluster* cl, label_t label, cluster* parent, distance_t bi
 		cl = (cluster*)malloc(sizeof(cluster));
 	}
 	if(cl == NULL){
-		if(log_file == NULL) {
-			printf("ERROR: cluster_init - Could not allocate memory for cluster.");
-		} else {
-			logger_write(ERROR, "cluster_init - Could not allocate memory for cluster.");
-		}
+		logger_write(ERROR, "cluster_init - Could not allocate memory for cluster.");	
 	} else {
 
 		cl->label = label;
@@ -97,7 +93,7 @@ void cluster_destroy(cluster* cl){
 		}
 		free(cl);
 	}
-}
+} 
 
 int cluster_detach_points(cluster* cl, index_t numPoints, distance_t level){
 
@@ -107,7 +103,10 @@ int cluster_detach_points(cluster* cl, index_t numPoints, distance_t level){
 	if (cl->numPoints == 0)
 		cl->deathLevel = level;
 	else if (cl->numPoints < 0){
-		printf("ERROR: Cluster %d has %d points.\n", cl->label, cl->numPoints);
+		
+		char s[100];
+		sprintf(s, "cluster_detach_points - Cluster %d has %d points.\n", cl->label, cl->numPoints);
+		logger_write(FATAL, s);
 		return CLUSTER_ERROR;
 	}
 

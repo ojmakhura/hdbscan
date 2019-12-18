@@ -41,16 +41,15 @@ enum LOGTYPE {
     FATAL,      // A fatal error has occured: program will exit immediately
     ERROR,      // An error has occured: program may not exit
     INFO,       // Nessessary information regarding program operation
-    WARN       // Any circumstance that may not affect normal operation
+    WARN,       // Any circumstance that may not affect normal operation
+    NONE
 };
-
-static FILE* log_file = NULL;
 
 void logger_init();
 void logger_write(enum LOGTYPE type, const char* str);
 void logger_close();
-
+#endif
 #ifdef __cplusplus
 }
-#endif
+
 #endif /* HDBSCAN_LOGGER_H_ */
