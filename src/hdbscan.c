@@ -58,11 +58,11 @@
  * @param rowwise 
  * @return uint 
  */
-uint hdbscan_get_dataset_size(uint rows, uint cols, boolean rowwise){
+index_t hdbscan_get_dataset_size(index_t rows, index_t cols, boolean rowwise){
     if(rowwise == 1){
         return rows;
     } else{
-        return rows * cols;
+        return (index_t)(rows * cols);
     }
 }
 
@@ -129,10 +129,6 @@ hdbscan* hdbscan_init(hdbscan* sc, index_t minPoints){
 		sc->coreDistances = NULL;
 		sc->outlierScores = NULL;
 	}
-
-#ifdef DEBUG
-	logger_init();
-#endif
 
 	return sc;
 }
@@ -230,9 +226,6 @@ void hdbscan_destroy(hdbscan* sc){
 		free(sc);
 	}
 
-#ifdef DEBUG
-	logger_close();
-#endif
 }
 
 /**
@@ -245,7 +238,7 @@ int hdbscan_do_run(hdbscan* sc){
 	index_t csize = sc->numPoints/5;
 	if(csize < 4)
 	{
-		csize = csize * 4;
+		csize = (index_t)(csize * 4);
 	}
 	
 	sc->hierarchy = hashtable_init(csize, H_LONG, H_PTR, long_compare);
@@ -292,7 +285,7 @@ int hdbscan_rerun(hdbscan* sc, index_t minPts){
 	sc->coreDistances = NULL;
 	sc->outlierScores = NULL;
 	sc->minPoints = minPts;
-	sc->distanceFunction.numNeighbors = minPts-1;
+	sc->distanceFunction.numNeighbors = (index_t)(minPts - 1);
 	distance_get_core_distances(&(sc->distanceFunction));
 
 	return hdbscan_do_run(sc);
@@ -324,12 +317,12 @@ int hdbscan_run(hdbscan* sc, void* dataset, index_t rows, index_t cols, boolean 
 	distance_init(&sc->distanceFunction, _EUCLIDEAN, datatype);
 
 	sc->numPoints = hdbscan_get_dataset_size(rows, cols, rowwise);
-	distance_compute(&(sc->distanceFunction), dataset, rows, cols, sc->minPoints-1);
+	distance_compute(&(sc->distanceFunction), dataset, rows, cols, (index_t)(sc->minPoints-1));
 
 	index_t csize = sc->numPoints/5;
 	if(csize < 4)
 	{
-		csize = csize * 4;
+		csize = (index_t)(csize * 4);
 	}
 	sc->clusters = ptr_array_list_init(csize, cluster_compare);
 	sc->clusterStabilities = hashtable_init(csize, H_INT, H_PTR, int_compare);
@@ -829,16 +822,16 @@ int hdbscan_construct_mst(hdbscan* sc){
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-	for(index_t i = 0; i < size-1; i++){
+	for(index_t i = 0; i < (index_t)(size-1); i++){
 		attachedPoints[i] = FALSE;
 	}
 
 	//The MST is expanded starting with the last point in the data set:
-	index_t currentPoint = size - 1;
-	attachedPoints[size - 1] = TRUE;
+	index_t currentPoint = (index_t)(size - 1);
+	attachedPoints[(size_t)(size - 1)] = TRUE;
 
 	//Each point has a current neighbor point in the tree, and a current nearest distance:
-	index_t ssize = size - 1 + selfEdgeCapacity;
+	index_t ssize =(index_t)(size - 1 + selfEdgeCapacity);
 	ArrayList* nearestMRDNeighbors = array_list_init(ssize, sizeof(index_t), NULL);
 	
 	//Create an array for vertices in the tree that each point attached to:
@@ -959,11 +952,13 @@ int hdbscan_construct_mst(hdbscan* sc){
 
 	//If necessary, attach self edges:
 	if (sc->selfEdges == TRUE) {
+		index_t end = (index_t)(size * 2 - 1);
+		index_t begin = (index_t)(size - 1);
 		#ifdef _OPENMP
-		#pragma omp parallel for
+		#pragma omp parallel for shared(begin, end)
 		#endif
-		for (index_t i = size - 1; i < size * 2 - 1; i++) {
-			index_t vertex = i - (size - 1);
+		for (index_t i = begin; i < end; i++) {
+			index_t vertex = (index_t)(i - begin);
 			neighbours[i] = vertex;
 			others[i] = vertex;
 			distances[i] = coreDistances[vertex];
@@ -1178,7 +1173,7 @@ int hdbscsan_calculate_outlier_scores(hdbscan* sc, distance_t* pointNoiseLevels,
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-	for(uint i = 0; i < sc->numPoints; i++){
+	for(index_t i = 0; i < sc->numPoints; i++){
 		label_t tmp = pointLastClusters[i];
 		cluster* c = ((cluster **)sc->clusters->data)[tmp];
 		distance_t epsilon_max = c->propagatedLowestChildDeathLevel;
@@ -1209,7 +1204,7 @@ int hdbscsan_calculate_outlier_scores(hdbscan* sc, distance_t* pointNoiseLevels,
  * @return hashtable* 
  */
 hashtable* hdbscan_create_cluster_map(label_t* labels, index_t begin, index_t end){
-	index_t bsize = (end - begin)/4;
+	index_t bsize = (index_t)((end - begin)/4);
 	hashtable* clusterTable;
 	
 	if(sizeof(label_t) == sizeof(int)) {
@@ -1221,7 +1216,7 @@ hashtable* hdbscan_create_cluster_map(label_t* labels, index_t begin, index_t en
 	}
 
 	clusterTable->size = 0;
-	index_t size = end - begin;
+	index_t size = (index_t)(end - begin);
 	
 	for(index_t i = begin; i < end; i++){
 		label_t *lb = labels + i;
@@ -1350,11 +1345,11 @@ void hdbscan_skew_kurt_1(clustering_stats* stats, distance_t sum_sc, distance_t 
 	{
 	#endif
 	//int32_t N = stats->count;
-	stats->coreDistanceValues.skewness = sum_sc / (stats->count * pow(stats->coreDistanceValues.standardDev, 3));
-	stats->intraDistanceValues.skewness = sum_sd / (stats->count * pow(stats->intraDistanceValues.standardDev, 3));
+	stats->coreDistanceValues.skewness = (distance_t)(sum_sc / (stats->count * pow(stats->coreDistanceValues.standardDev, 3)));
+	stats->intraDistanceValues.skewness = (distance_t)(sum_sd / (stats->count * pow(stats->intraDistanceValues.standardDev, 3)));
 
-	stats->coreDistanceValues.kurtosis = (sum_dc / (stats->count * pow(stats->coreDistanceValues.standardDev, 4))) - 3;
-	stats->intraDistanceValues.kurtosis = (sum_dd / (stats->count *pow(stats->intraDistanceValues.standardDev, 4))) - 3;
+	stats->coreDistanceValues.kurtosis = (distance_t)((sum_dc / (stats->count * pow(stats->coreDistanceValues.standardDev, 4))) - 3);
+	stats->intraDistanceValues.kurtosis = (distance_t)((sum_dd / (stats->count *pow(stats->intraDistanceValues.standardDev, 4))) - 3);
 	#ifdef _OPENMP
 	}
 	#endif
@@ -1382,29 +1377,29 @@ void hdbscan_skew_kurt_2(clustering_stats* stats, distance_t sum_sc, distance_t 
 	
 	// Calculate the skewness
 	if(stats->count >= 2){
-		distance_t tmp1 = ((distance_t)N) / ((N - 1) * (N - 2));
-		stats->coreDistanceValues.skewness = tmp1 * (sum_sc / pow(stats->coreDistanceValues.standardDev, 3));
-		stats->intraDistanceValues.skewness = tmp1 * (sum_sd / pow(stats->intraDistanceValues.standardDev, 3));
+		distance_t tmp1 = (distance_t)(((distance_t)N) / (distance_t)((N - 1) * (N - 2)));
+		stats->coreDistanceValues.skewness = (distance_t)(tmp1 * (distance_t)(sum_sc / pow(stats->coreDistanceValues.standardDev, 3)));
+		stats->intraDistanceValues.skewness = (distance_t)(tmp1 * (distance_t)(sum_sd / pow(stats->intraDistanceValues.standardDev, 3)));
 	} else {
-		stats->coreDistanceValues.skewness = 0.0/0.0;
-		stats->intraDistanceValues.skewness = 0.0/0.0;
+		stats->coreDistanceValues.skewness = (distance_t)(0.0/0.0);
+		stats->intraDistanceValues.skewness = (distance_t)(0.0/0.0);
 	}
 
 	// Calculate the kurtosis
 	if(stats->count >= 3){
-		distance_t tmp2 = (((distance_t)N) * (N + 1)) / ((N - 1) * (N - 2) * (N - 3));
-		stats->coreDistanceValues.kurtosis = tmp2 * (sum_dc / pow(stats->coreDistanceValues.standardDev, 4));
-		stats->intraDistanceValues.kurtosis = tmp2 * (sum_dd / pow(stats->intraDistanceValues.standardDev, 4));
+		distance_t tmp2 = (distance_t)((((distance_t)N) * (distance_t)(N + 1)) / (distance_t)((N - 1) * (N - 2) * (N - 3)));
+		stats->coreDistanceValues.kurtosis = (distance_t)(tmp2 * (distance_t)(sum_dc / pow(stats->coreDistanceValues.standardDev, 4)));
+		stats->intraDistanceValues.kurtosis = (distance_t)(tmp2 * (distance_t)(sum_dd / pow(stats->intraDistanceValues.standardDev, 4)));
 	}
 
 	if(stats->count >= 3){
-		distance_t tmp3 = (3 * (((distance_t)N) - 1) * (N - 1)) / ((N - 2) * (N - 3));
-		stats->coreDistanceValues.kurtosis -= tmp3;
-		stats->intraDistanceValues.kurtosis -= tmp3;
+		distance_t tmp3 = (distance_t)((3 * (((distance_t)N) - 1) * (distance_t)(N - 1)) / (distance_t)((N - 2) * (N - 3)));
+		stats->coreDistanceValues.kurtosis = (distance_t)(stats->coreDistanceValues.kurtosis - tmp3);
+		stats->intraDistanceValues.kurtosis = (distance_t)(stats->intraDistanceValues.kurtosis - tmp3);
 	} else {
 
-		stats->coreDistanceValues.kurtosis = 0.0/0.0;
-		stats->intraDistanceValues.kurtosis = 0.0/0.0;
+		stats->coreDistanceValues.kurtosis = (distance_t)(0.0/0.0);
+		stats->intraDistanceValues.kurtosis = (distance_t)(0.0/0.0);
 	}
 	#ifdef _OPENMP
 	}
@@ -1455,21 +1450,21 @@ void hdbscan_calculate_stats_helper(distance_t* cr, distance_t* dr, clustering_s
 	for(index_t i = 0; i < stats->count; i++)
 	{
 		distance_t tmp_c = cr[i] - stats->coreDistanceValues.mean;
-		stats->coreDistanceValues.variance += tmp_c * tmp_c;
-		sum_sc += pow(tmp_c, 3);
-		sum_dc += pow(tmp_c, 4);
+		stats->coreDistanceValues.variance += (distance_t)(tmp_c * tmp_c);
+		sum_sc += (distance_t)pow(tmp_c, 3);
+		sum_dc +=(distance_t) pow(tmp_c, 4);
 
 		distance_t tmp_d = dr[i] - stats->intraDistanceValues.mean;
-		stats->intraDistanceValues.variance += tmp_d * tmp_d;
-		sum_sd += pow(tmp_d, 3);
-		sum_dd += pow(tmp_d, 4);
+		stats->intraDistanceValues.variance += (distance_t)(tmp_d * tmp_d);
+		sum_sd += (distance_t)pow(tmp_d, 3);
+		sum_dd += (distance_t)pow(tmp_d, 4);
 	}
 
-	stats->coreDistanceValues.variance = stats->coreDistanceValues.variance / (stats->count - 1);
-	stats->intraDistanceValues.variance = stats->intraDistanceValues.variance / (stats->count - 1);
+	stats->coreDistanceValues.variance = stats->coreDistanceValues.variance / (distance_t)(stats->count - 1);
+	stats->intraDistanceValues.variance = stats->intraDistanceValues.variance / (distance_t)(stats->count - 1);
 
-	stats->coreDistanceValues.standardDev = sqrt(stats->coreDistanceValues.variance);
-	stats->intraDistanceValues.standardDev = sqrt(stats->intraDistanceValues.variance);
+	stats->coreDistanceValues.standardDev = (distance_t)sqrt(stats->coreDistanceValues.variance);
+	stats->intraDistanceValues.standardDev = (distance_t)sqrt(stats->intraDistanceValues.variance);
 
 	hdbscan_skew_kurt_1(stats, sum_sc, sum_sd, sum_dc, sum_dd);	
 }
@@ -1799,9 +1794,7 @@ void hdbscan_destroy_cluster_map(hashtable* table){
  * @param table 
  */
 void hdbscan_print_cluster_map(hashtable* table){
-#ifdef DEBUG
 	char s[50];
-#endif
 	assert(table != NULL);
 
 	label_t key;
@@ -1837,7 +1830,7 @@ void hdbscan_print_cluster_sizes(hashtable* table){
 	assert(table != NULL);
 	label_t key;
 	ArrayList *clusterList = NULL;
-	char s[10];
+	char s[50];
 
 	for(size_t i = 0; i < hashtable_size(table); i++)
 	{	

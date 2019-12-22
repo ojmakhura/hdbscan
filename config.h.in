@@ -12,12 +12,11 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
 typedef @LABEL_TYPE@ label_t;
-
 typedef @DISTANCE_TYPE@ distance_t;
+typedef @INDEX_TYPE@ index_t;
+
 #define D_MAX @D_MAX@
 #define D_MIN @D_MIN@
-
-typedef @INDEX_TYPE@ index_t;
 
 /* always defined to indicate that i18n is enabled */
 #undef ENABLE_NLS

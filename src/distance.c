@@ -95,12 +95,12 @@ void distance_clean(distance* d){
 distance_t distance_get(distance* dis, index_t row, index_t col) {
 	size_t idx;
 	if (row < col) {
-		idx = (dis->rows * row + col) - TRIANGULAR_H(row + 1);
+		idx = (size_t) ((size_t)(dis->rows * row + col) - (size_t)TRIANGULAR_H((uint)(row + 1)));
 
 	} else if (row == col) {
 		return 0;
 	} else {
-		idx = (dis->rows * col + row) - TRIANGULAR_H(col + 1);
+		idx = (size_t)((size_t)(dis->rows * col + row) - (size_t)TRIANGULAR_H((uint)(col + 1)));
 	}
 	return dis->distances[idx];
 }
@@ -120,7 +120,7 @@ void distance_compute(distance* dis, void* dataset, index_t rows, index_t cols, 
 	//setDimenstions(dis, rows, cols);
 	dis->rows = rows;
     dis->cols = cols;
-    size_t sub = (rows * rows -rows)/2;
+    size_t sub = (size_t)(rows * rows -rows)/2;
     dis->distances = (distance_t *)malloc(sub * sizeof(distance_t));
     dis->coreDistances = (distance_t *)malloc(dis->rows * sizeof(distance_t));
 	distance_t sum, diff;
@@ -166,7 +166,7 @@ void distance_compute(distance* dis, void* dataset, index_t rows, index_t cols, 
     			sum += (diff * diff);
             }
 
-			sum = sqrt(sum);
+			sum = (distance_t)sqrt(sum);
 
 			// Calculate the linearised upper triangular matrix offset
 			size_t offset = i * dis->rows + j;
@@ -212,7 +212,7 @@ void distance_get_core_distances(distance *dis)
 			distance_t t = distance_get(dis, i, j);
 			
 			index_t low = 0;
-			index_t high = dis->numNeighbors+1;
+			index_t high = (index_t)(dis->numNeighbors + 1);
 
 			// No need to attempt insertion if the distance is already
 			// greater than the last entry in sortedDistance
@@ -221,22 +221,22 @@ void distance_get_core_distances(distance *dis)
 
 			// Look for the entry position
 			do {
-				index_t mid = low + (high - low) / 2;
+				index_t mid = (index_t)(low + (high - low) / (index_t)2);
 				
 				if (sortedDistance[mid] > t) {
 					high = mid;
 				} else if (sortedDistance[mid] == t) {
 					break;
 				} else {
-					low = mid + 1;
+					low = (index_t)(mid + 1);
 				}
 				
 			} while(low < high);
 
-			index_t s = dis->numNeighbors+1;
+			index_t s = (index_t)(dis->numNeighbors+1);
 			if((low < s) && (sortedDistance[ dis->numNeighbors] != t)) {
 				size_t ds = sizeof(distance_t);
-				size_t t3 = (s - low - 1) * ds; 	// Number of bytes to copy
+				size_t t3 = (size_t)((size_t)(s - low - 1) * ds); 	// Number of bytes to copy
 
 				/* Shift the data to the right */
 				memmove(sortedDistance + low + 1, sortedDistance + low, t3);
@@ -251,14 +251,13 @@ void distance_get_core_distances(distance *dis)
 }
 
 void distances_print(distance *dis) {
-#ifdef DEBUG
+	
 	char s[20];
-#endif
 	for (index_t i = 0; i < dis->rows; i++) {
 		logger_write(NONE, "[");
 
-		for (index_t j = i + 1; j < dis->rows; j++) {
-			printf(s, "%f ", distance_get(dis, i, j));
+		for (index_t j = (index_t)(i + 1); j < dis->rows; j++) {
+			sprintf(s, "%f ", distance_get(dis, i, j));
 			logger_write(NONE, s);
 		}
 

@@ -97,7 +97,7 @@ void cluster_destroy(cluster* cl){
 
 int cluster_detach_points(cluster* cl, index_t numPoints, distance_t level){
 
-	cl->numPoints -= numPoints;
+	cl->numPoints = (index_t)(cl->numPoints - numPoints);
 	cl->stability += (numPoints * (1 / level - 1 / cl->birthLevel));
 
 	if (cl->numPoints == 0)
@@ -126,13 +126,13 @@ void cluster_propagate(cluster* cl){
 		}
 
 		if (cl->hasChildren == FALSE || cl->numConstraintsSatisfied > cl->propagatedNumConstraintsSatisfied) {
-			cl->parent->propagatedNumConstraintsSatisfied += cl->numConstraintsSatisfied;
+			cl->parent->propagatedNumConstraintsSatisfied = (index_t) (cl->parent->propagatedNumConstraintsSatisfied + cl->numConstraintsSatisfied);
 			cl->parent->propagatedStability += cl->stability;
 			array_list_append(cl->parent->propagatedDescendants, &cl);
 		}
 		else if (cl->numConstraintsSatisfied < cl->propagatedNumConstraintsSatisfied) {
 
-			cl->parent->propagatedNumConstraintsSatisfied += cl->propagatedNumConstraintsSatisfied;
+			cl->parent->propagatedNumConstraintsSatisfied = (index_t) (cl->parent->propagatedNumConstraintsSatisfied + cl->propagatedNumConstraintsSatisfied);
 			cl->parent->propagatedStability += cl->propagatedStability;
 
 			for(index_t i = 0; i < cl->propagatedDescendants->size; i++)
@@ -145,13 +145,13 @@ void cluster_propagate(cluster* cl){
 		else if (cl->numConstraintsSatisfied == cl->propagatedNumConstraintsSatisfied) {
 			//Chose the parent over descendants if there is a tie in stability:
 			if (cl->stability >= cl->propagatedStability) {
-				cl->parent->propagatedNumConstraintsSatisfied += cl->numConstraintsSatisfied;
+				cl->parent->propagatedNumConstraintsSatisfied = (index_t)(cl->parent->propagatedNumConstraintsSatisfied + cl->numConstraintsSatisfied);
 				cl->parent->propagatedStability += cl->stability;
 				array_list_append(cl->parent->propagatedDescendants, &cl);
 			}
 
 			else {
-				cl->parent->propagatedNumConstraintsSatisfied += cl->propagatedNumConstraintsSatisfied;
+				cl->parent->propagatedNumConstraintsSatisfied = (index_t)(cl->parent->propagatedNumConstraintsSatisfied + cl->propagatedNumConstraintsSatisfied);
 				cl->parent->propagatedStability += cl->propagatedStability;
 
 				for(index_t i = 0; i < cl->propagatedDescendants->size; i++)
@@ -186,12 +186,12 @@ boolean cluster_virtual_child_contains_point(cluster* cl, index_t point){
 
 void cluster_add_virtual_child_constraints_satisfied(cluster* cl, index_t numConstraints){
 
-	cl->propagatedNumConstraintsSatisfied += numConstraints;
+	cl->propagatedNumConstraintsSatisfied = (index_t)(cl->propagatedNumConstraintsSatisfied + numConstraints);
 }
 
 void cluster_add_constraints_satisfied(cluster* cl, index_t numConstraints){
 
-	cl->numConstraintsSatisfied += numConstraints;
+	cl->numConstraintsSatisfied = (index_t)(cl->numConstraintsSatisfied + numConstraints);
 }
 
 void cluster_release_virtual_child(cluster* cl){

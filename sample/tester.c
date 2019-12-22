@@ -42,14 +42,15 @@
 double* getDset(char* filename, index_t *rs, index_t *cs){
 
 	ArrayList* list = (ArrayList *)array_list_init(10, sizeof(double), double_compare);
-
+	char buff[2048];
 	FILE *fp = fopen(filename,"r");
 	if(!fp){
-		logger_write(FATAL, "Could not open file%s\n", filename);
+		sprintf(buff, "Could not open file%s\n", filename);
+		logger_write(FATAL, buff);
 		exit(0);
 	}
 	
-	char buff[2048];
+	
 	char* delim = " ,\n\t\r\v";
 	while(fgets(buff, 2048, fp) != 0) {
 		char *toks = strtok (buff, delim);
@@ -77,13 +78,19 @@ double* getDset(char* filename, index_t *rs, index_t *cs){
 
 int main(int argc, char** argv){
 
+#ifdef DEBUG
+	logger_init();
+#endif
+
 	clock_t begin, end;
 	int err;
 	index_t rs = 0, cs = 0;
 	double time_spent;
-	logger_write(INFO, "argc = %d\n", argc);
-	double* dset = NULL;
 	char tmp[200];
+	sprintf(tmp, "argc = %d\n", argc);
+	logger_write(INFO, tmp);
+	distance_t* dset = NULL;
+	
 
 	if(argc == 3){ // will read the dataset from the provided csv file
 		dset = getDset(argv[2], &rs, &cs);
@@ -92,6 +99,7 @@ int main(int argc, char** argv){
 		rs = (index_t)rows;
 		cs = (index_t)cols;
 	}
+
 	sprintf(tmp, "(rows, cols) = (%d, %d)\n", rs, cs);
 	logger_write(INFO, tmp);
 	hdbscan* scan = hdbscan_init(NULL, (index_t)atoi(argv[1]));
@@ -122,7 +130,8 @@ int main(int argc, char** argv){
 			logger_write(INFO, tmp);
 		}
 		
-		logger_write(NONE, "%d ------- ***********************************************************************************\n");
+		sprintf(tmp, "%d ------- ***********************************************************************************\n", scan->minPoints);
+		logger_write(NONE, tmp);
 
 		if(err == HDBSCAN_ERROR){
 			logger_write(ERROR, "Could not run hdbscan\n");
@@ -160,7 +169,8 @@ int main(int argc, char** argv){
 			for(size_t i = 0; i < sorted->size; i++){
 				ArrayList* l1;
 				hashtable_lookup(clusterTable, data+i, &l1);
-				logger_write(NONE, "%d : %ld\n", data[i], l1->size);
+				sprintf(tmp, "%d : %ld\n", data[i], l1->size);
+				logger_write(NONE, tmp);
 			}
 			logger_write(NONE, "]\n\n");
 			
@@ -171,18 +181,21 @@ int main(int argc, char** argv){
 			for(size_t i = 0; i < sorted->size; i++){
 				distance_values* dis;
 				hashtable_lookup(dMap, data+i, &dis);
-				logger_write(NONE, "%d : (%f, %f)\n", data[i], dis->dr_confidence, dis->cr_confidence);
+				sprintf(tmp, "%d : (%f, %f)\n", data[i], dis->dr_confidence, dis->cr_confidence);
+				logger_write(NONE, tmp);
 			}
 			logger_write(NONE, "]\n\n");
 			array_list_delete(sorted);
 
 			hdbscan_print_distance_map(dMap);
 			hdbscan_print_stats(&stats);
-			logger_write(INFO, "Clustering validity : %d\n", hdbscan_analyse_stats(&stats));
+			sprintf(tmp, "Clustering validity : %d\n", hdbscan_analyse_stats(&stats));
+			logger_write(INFO, tmp);
 			
 			/*logger_write("\n\nCluster labels = [");
 			for(uint i = 0; i < scan->numPoints; i++){
-				logger_write("%d ", scan->clusterLabels[i]);
+				sprintf(tmp, "%d ", scan->clusterLabels[i]);
+				logger_write(NONE, tmp);
 			}
 			logger_write("]\n\n");
 			*/
@@ -198,5 +211,8 @@ int main(int argc, char** argv){
 
 	hdbscan_destroy(scan);
 
+#ifdef DEBUG
+	logger_close();
+#endif
 	return 0;
 }

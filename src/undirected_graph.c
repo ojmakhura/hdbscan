@@ -147,7 +147,7 @@ void graph_quicksort_by_edge_weight(UndirectedGraph* g) {
 	index_t endIndexStack[esize/2];
 
 	(startIndexStack)[0] = 0;
-	(endIndexStack)[0] = (index_t)esize - 1;
+	(endIndexStack)[0] = (index_t)(esize - 1);
 	int stackTop = 0;
 
 	while (stackTop >= 0) {
@@ -160,12 +160,12 @@ void graph_quicksort_by_edge_weight(UndirectedGraph* g) {
 
 		if (pivotIndex > startIndex + 1) {
 			(startIndexStack)[stackTop + 1] = (index_t)startIndex;
-			(endIndexStack)[stackTop + 1] = (index_t)pivotIndex - 1;
+			(endIndexStack)[stackTop + 1] = (index_t)(pivotIndex - 1);
 			stackTop++;
 		}
 
 		if (pivotIndex < endIndex - 1) {
-			(startIndexStack)[stackTop + 1] = (index_t)pivotIndex + 1;
+			(startIndexStack)[stackTop + 1] = (index_t)(pivotIndex + 1);
 			(endIndexStack)[stackTop + 1] = (index_t)endIndex;
 			stackTop++;
 		}

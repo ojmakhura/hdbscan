@@ -7,7 +7,7 @@ To install the library at /usr/local:
 2. cd hdbscan
 3. mkdir build
 4. cd build
-5. cmake ..
+5. cmake -D DEBUG_ENABLE=FALSE -DDISTANCE_TYPE=float -DINDEX_TYPE="unsigned short" -DLABEL_TYPE="unsigned short" ..
 6. make
 7. make install
 
