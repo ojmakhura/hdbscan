@@ -42,6 +42,16 @@
 
 #include <float.h>
 
+/**
+ * @brief Create a new cluster
+ * 
+ * @param cl 
+ * @param label The cluster label which should be globally unique
+ * @param parent The cluster which split to create this cluster.
+ * @param birthLevel The MST edge level at which this cluster first appears
+ * @param numPoints The number of points in this cluster.
+ * @return cluster* 
+ */
 cluster* cluster_init(cluster* cl, label_t label, cluster* parent, distance_t birthLevel, index_t numPoints){
 	
 	if(cl == NULL){
@@ -80,6 +90,11 @@ cluster* cluster_init(cluster* cl, label_t label, cluster* parent, distance_t bi
 	return cl;
 }
 
+/**
+ * @brief Free all the memory allocated for the cluster.
+ * 
+ * @param cl 
+ */
 void cluster_destroy(cluster* cl){
 	if(cl != NULL){
 		if(cl->virtualChildCluster != NULL){
@@ -95,6 +110,16 @@ void cluster_destroy(cluster* cl){
 	}
 } 
 
+/**
+ * @brief Removes the specified number of points from this cluster at the given edge level, which will
+ * update the stability of this cluster and potentially cause cluster death.  If cluster death
+ * occurs, the number of constraints satisfied by the virtual child cluster will also be calculated.
+ * 
+ * @param cl 
+ * @param numPoints 
+ * @param level 
+ * @return int 
+ */
 int cluster_detach_points(cluster* cl, index_t numPoints, distance_t level){
 
 	cl->numPoints = (index_t)(cl->numPoints - numPoints);
@@ -113,6 +138,15 @@ int cluster_detach_points(cluster* cl, index_t numPoints, distance_t level){
 	return CLUSTER_SUCCESS;
 }
 
+/**
+ * @brief This cluster will propagate itself to its parent if its number of satisfied constraints is
+ * higher than the number of propagated constraints.  Otherwise, this cluster propagates its
+ * propagated descendants.  In the case of ties, stability is examined.
+ * Additionally, this cluster propagates the lowest death level of any of its descendants to its
+ * parent.
+ * 
+ * @param cl 
+ */
 void cluster_propagate(cluster* cl){
 
 	if (cl->parent != NULL) {

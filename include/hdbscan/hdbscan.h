@@ -125,7 +125,7 @@ typedef struct _hierarchy_entry{
 
 /**
  * \struct hdbscan
- * @brief Main HDBSCAN object
+ * @brief Main HDBSCAN structure
  * 
  */
 struct hdbscan {

@@ -74,12 +74,22 @@ distance* distance_init(distance* dis, calculator cal, enum HTYPES datatype) {
 	return dis;
 }
 
+/**
+ * @brief Free the memory allocated for the distance struct.
+ * 
+ * @param d 
+ */
 void distance_destroy(distance* d) {
 	distance_clean(d);
 	if(d != NULL)
 		free(d);
 }
- 
+
+/**
+ * @brief Clean up memory allocation by freeing the distances and coreDIstance memory.
+ * 
+ * @param d 
+ */
 void distance_clean(distance* d){
 	if(d->distances != NULL){
 		free(d->distances);
@@ -92,6 +102,16 @@ void distance_clean(distance* d){
 	}
 }
 
+/**
+ * @brief Get the distance between the elements row and col. This function used the 
+ * TRIANGULAR_H function to find the map the rwo and col values into the truncated 
+ * distance vector.
+ * 
+ * @param dis 
+ * @param row 
+ * @param col 
+ * @return distance_t 
+ */
 distance_t distance_get(distance* dis, index_t row, index_t col) {
 	size_t idx;
 	if (row < col) {
@@ -134,6 +154,10 @@ void distance_compute(distance* dis, void* dataset, index_t rows, index_t cols, 
 			sum = 0;
 
             for (size_t k = 0; ((k < dis->cols) && (i != j)); k++) {
+				/**
+				 * @brief This may look like repitiion but should not be made into a function
+				 * since it will slow down execution due to branch execution. 
+				 */
 				if(dis->datatype == H_DOUBLE) {
 
 					double* dt = dataset;
@@ -177,7 +201,6 @@ void distance_compute(distance* dis, void* dataset, index_t rows, index_t cols, 
 		}
 	}
 	distance_get_core_distances(dis);
-	//exit(0);
 }
 
 /**
@@ -250,6 +273,11 @@ void distance_get_core_distances(distance *dis)
 
 }
 
+/**
+ * @brief Print the distane values.
+ * 
+ * @param dis 
+ */
 void distances_print(distance *dis) {
 	
 	char s[20];

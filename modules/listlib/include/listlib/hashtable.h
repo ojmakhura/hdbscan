@@ -37,7 +37,6 @@
 extern "C" {
 #endif
 
-//#include "linkedlist.h"
 #include "list.h"
 #include "set.h"
 #include "primes.h"

@@ -55,14 +55,8 @@ typedef struct NODE
 
 /*****************************************************************************************
  * \struct LINKEDLIST
- * @brief This is a specialised linkedlist written specifically for the chained hashtable needed 
- * by the HDBSCAN implementation in this library. 
+ * @brief Linked list implementation
  * 
- * The node holds 2 pieces of information, 
- * the key, and the a value pointing to either a DoubleArrayList (see doublelist.h and 
- * doublelist.c) or an IntArrayList (see intlist.h and intlist.c). The need for the key
- * in the nodes is to identify the key for the value in the node in case there was a
- * collision at the hashtable location pointing to the linked list.
  * ***************************************************************************************/
 typedef struct LINKEDLIST
 {

@@ -45,7 +45,7 @@ namespace clustering {
 /**
  * \struct Cluster
  * 
- * @brief Cluster object implementation
+ * \brief Cluster object implementation
  * 
  * The cluster object has the label and the parent if it is child cluster as well
  * as descendants if it is not the las one.

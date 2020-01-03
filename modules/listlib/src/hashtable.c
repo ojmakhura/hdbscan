@@ -39,7 +39,7 @@
  * @copyright Copyright (c) 2019
  * 
  */
-
+#include "hdbscan/logger.h"
 #include "listlib/hashtable.h"
 #include "listlib/list.h"
 #include <string.h>
@@ -119,7 +119,7 @@ hashtable* hashtable_init_size(size_t buckets, enum HTYPES ktype, enum HTYPES dt
 
     if(htbl == NULL)
     {
-        printf("ERROR: Hash table memory allocation failed\n");
+        logger_write(FATAL, "Hash table memory allocation failed\n");
         return NULL;
     }
 
@@ -136,7 +136,7 @@ hashtable* hashtable_init_size(size_t buckets, enum HTYPES ktype, enum HTYPES dt
     htbl->table = calloc(htbl->buckets, sizeof(hashtable_entry *));
     if(htbl->table == NULL)
     {
-        printf("ERROR: Hash table bucket memory allocation failed\n");
+        logger_write(FATAL, "Hash table bucket memory allocation failed\n");
         free(htbl);
         return NULL;
     }
