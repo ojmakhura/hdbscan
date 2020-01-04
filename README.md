@@ -28,4 +28,3 @@ The data type of label used. The options are ```unsigned int, unsigned long, uns
 The library comes with 2 tester files in the samples folder. The file tester.c shows how to use the library in a C implementation. THe file tester.cpp shows how to use the library with a C++ implementation. The implementation has bee designed to work with a dataset of 5 different types of data, float, double, int, long and short.
 
 To let the algorithm know which datatype you are working with, you pass the H\_{FLOAT, DOUBLE, INT, SHORT, FLOAT} as a parameter to the run() method. Python code uses numpy and will determine the datatypes from the numpy array. The code expectes a 1 or two dimensional dataset.
-

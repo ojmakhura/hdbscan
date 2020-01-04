@@ -42,7 +42,7 @@ enum LOGTYPE {
     ERROR,      // An error has occured: program may not exit
     INFO,       // Nessessary information regarding program operation
     WARN,       // Any circumstance that may not affect normal operation
-    NONE
+    NONE        // Logging that does need the time and type of the message
 };
 
 void logger_init();

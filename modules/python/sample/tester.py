@@ -18,11 +18,11 @@ def printLabels(labels):
 		print(str(l) + " ", end="")
 	print("]\n")
 	
-def main(fname):
+def main(fname, minPts):
 	print("Opening file : ", fname)	
 	dataset = readFile(fname)
 	
-	scan = PyHdbscan.PyHdbscan(6)
+	scan = PyHdbscan.PyHdbscan(minPts)
 		
 	print("\n***********************************************************************************\n")
 	for i in range(3, 4):
@@ -43,4 +43,4 @@ def main(fname):
 		print("\n***********************************************************************************\n")
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    main(sys.argv[1], int(sys.argv[2]))

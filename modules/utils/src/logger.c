@@ -46,7 +46,7 @@
 #include <assert.h>
 #include <time.h>
 
-static FILE* log_file = NULL;
+static FILE* log_file;
 static char* getDateString() {
     // Initialize and get current time
     time_t t = time( NULL );
@@ -62,6 +62,8 @@ static char* getDateString() {
 
 void logger_init()
 {
+    log_file = NULL;
+#ifdef DEBUG
     if(log_file == NULL) {
     	
         log_file = fopen("hdbscan.log", "a");
@@ -70,7 +72,7 @@ void logger_init()
             printf("Log file not opened.");
         }
     }
-
+#endif
 }
 
 void logger_write(enum LOGTYPE type, const char* str) {

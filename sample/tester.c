@@ -78,9 +78,7 @@ double* getDset(char* filename, index_t *rs, index_t *cs){
 
 int main(int argc, char** argv){
 
-#ifdef DEBUG
 	logger_init();
-#endif
 
 	clock_t begin, end;
 	int err;
@@ -192,27 +190,24 @@ int main(int argc, char** argv){
 			sprintf(tmp, "Clustering validity : %d\n", hdbscan_analyse_stats(&stats));
 			logger_write(INFO, tmp);
 			
-			/*logger_write("\n\nCluster labels = [");
+			logger_write(NONE, "\n\nCluster labels = [");
 			for(uint i = 0; i < scan->numPoints; i++){
 				sprintf(tmp, "%d ", scan->clusterLabels[i]);
 				logger_write(NONE, tmp);
 			}
-			logger_write("]\n\n");
-			*/
-			//hdbscan_print_outlier_scores(scan->outlierScores, scan->numPoints);
+			logger_write(NONE, "]\n\n");
+			
+			hdbscan_print_outlier_scores(scan->outlierScores, scan->numPoints);
 						
 			hdbscan_destroy_distance_map(dMap);
 			hdbscan_destroy_cluster_map(clusterTable);
 		}
 
 		logger_write(NONE, "***********************************************************************************\n\n");
-		//break;
+		break;
 	}
 
 	hdbscan_destroy(scan);
-
-#ifdef DEBUG
 	logger_close();
-#endif
 	return 0;
 }

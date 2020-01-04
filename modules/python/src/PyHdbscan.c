@@ -72,7 +72,7 @@ typedef struct {
 	PyObject* labels;
     PyObject* clusterMap;
     PyObject* hierarchy;
-	index_t minPoints, cols, rows;     /// TODO: change rows and cols to use long or ulong
+	index_t minPoints, cols, rows;
 } PyHdbscan;
 
 /**
@@ -176,7 +176,7 @@ void get_labels(PyHdbscan *self, label_t *labels){
  * @return PyObject* 
  */
 static PyObject *PyHdbscan_run(PyHdbscan *self, PyObject *args){
-	/// TODO: check for errors
+	
 	PyObject *dataset;
 	    
     if (! PyArg_ParseTuple(args, "O", &dataset)){
