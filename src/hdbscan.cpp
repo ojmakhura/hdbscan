@@ -33,7 +33,6 @@
  * merely call the C functions. Only those files who use C++ native code and structures
  * are fully implemented here.
  * 
- * @version 3.1.6
  * @date 2018-01-10
  * 
  * @copyright Copyright (c) 2018

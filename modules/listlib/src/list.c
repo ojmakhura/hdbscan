@@ -74,6 +74,13 @@ ArrayList* array_list_init(size_t initial_size, size_t step, int32_t (*compare)(
 	return list;
 }
 
+/**
+ * @brief Initialise the array list for handling pointers
+ * 
+ * @param initial_size 
+ * @param compare 
+ * @return ArrayList* 
+ */
 ArrayList* ptr_array_list_init(size_t initial_size, int32_t (*compare)(const void *a, const void *b))
 {
 	return array_list_init(initial_size, sizeof(void *), compare);

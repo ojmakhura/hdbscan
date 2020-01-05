@@ -35,8 +35,8 @@ extern "C" {
 #include "listlib/list.h"
 #include "listlib/set.h"
 
-#define CLUSTER_SUCCESS 1
-#define CLUSTER_ERROR	0
+#define CLUSTER_SUCCESS 1			//! Notificaiton for successful operatoin
+#define CLUSTER_ERROR	0			//! Notification for errorneous results
 
 #ifdef __cplusplus
 namespace clustering {
@@ -53,11 +53,11 @@ namespace clustering {
  */
 struct Cluster {
 
-	label_t label;
-	distance_t birthLevel;
-	distance_t deathLevel;
-	index_t numPoints;
-	int64_t offset; //First level where points with this cluster's label appear
+	label_t label;					//! Cluster labels
+	distance_t birthLevel;			//! The MST level at which this cluster first appeared
+	distance_t deathLevel;			//! The MST level at which this cluster dissappears
+	index_t numPoints;				//! Initial number of points in this cluster
+	int64_t offset; 				//! First level where points with this cluster's label appear
 	distance_t stability;
 	distance_t propagatedStability;
 	distance_t propagatedLowestChildDeathLevel;

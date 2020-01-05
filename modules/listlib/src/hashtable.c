@@ -27,16 +27,16 @@
  * SOFTWARE.
  */
 
-/**
- * @file hashtable.c
+/*!
+ * \file hashtable.c
  * 
- * @author your name (you@domain.com)
+ * \author Onalenna Junior Makhura (ojmakhura@roguesystems.co.bw)
  * 
- * @brief 
- * @version 0.1
- * @date 2019-06-10
+ * \brief Implementation of the chained hashtable
  * 
- * @copyright Copyright (c) 2019
+ * \date 2019-06-10
+ * 
+ * \copyright Copyright (c) 2019
  * 
  */
 #include "hdbscan/logger.h"

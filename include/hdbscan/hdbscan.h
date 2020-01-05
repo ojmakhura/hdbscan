@@ -61,9 +61,6 @@ typedef hashtable IntDoubleMap;
 typedef hashtable IntDoubleListMap;
 typedef hashtable IntClusterListMap;
 
-/**\typedef LongHierarchyEntryMap*/
-//typedef GHashTable LongHierarchyEntryMap;
-
 /**
  * Implementation of the HDBSCAN* algorithm, which is broken into several methods.
  * @author ojmakhura

@@ -30,7 +30,6 @@
  * 
  * @brief Implementation of the distance calculations for HDBSCAN
  * 
- * @version 3.1.6
  * @date 2019-07-10
  * 
  * @copyright Copyright (c) 2018
@@ -103,7 +102,7 @@ void distance_clean(distance* d){
 }
 
 /**
- * @brief Get the distance between the elements row and col. This function used the 
+ * \brief Get the distance between the elements row and col. This function used the 
  * TRIANGULAR_H function to find the map the rwo and col values into the truncated 
  * distance vector.
  * 
@@ -137,7 +136,7 @@ distance_t distance_get(distance* dis, index_t row, index_t col) {
  */
 void distance_compute(distance* dis, void* dataset, index_t rows, index_t cols, index_t numNeighbors){
 	dis->numNeighbors = numNeighbors;
-	//setDimenstions(dis, rows, cols);
+	
 	dis->rows = rows;
     dis->cols = cols;
     size_t sub = (size_t)(rows * rows -rows)/2;
@@ -186,7 +185,6 @@ void distance_compute(distance* dis, void* dataset, index_t rows, index_t cols, 
 					diff = (distance_t)(dt[i * dis->cols + k] - dt[j * dis->cols + k]);
 				}
 
-    			//diff = get_diff(dis, dataset, i, j, k);
     			sum += (diff * diff);
             }
 
@@ -194,10 +192,8 @@ void distance_compute(distance* dis, void* dataset, index_t rows, index_t cols, 
 
 			// Calculate the linearised upper triangular matrix offset
 			size_t offset = i * dis->rows + j;
-			size_t c = offset - TRIANGULAR_H((uint)i + 1);
-			//printf("%ld: c = %ld\n", (rows * rows -rows)/2, c);			
-			dis->distances[c] = sum;
-			
+			size_t c = offset - TRIANGULAR_H((uint)i + 1);		
+			dis->distances[c] = sum;			
 		}
 	}
 	distance_get_core_distances(dis);

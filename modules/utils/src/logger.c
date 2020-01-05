@@ -28,15 +28,14 @@
  */
 
 /**
- * @file logger.c
- * @author Onalenna Junior Makhura (ojmakhura@roguesystems.co.bw)
+ * \file logger.c
+ * \author Onalenna Junior Makhura (ojmakhura@roguesystems.co.bw)
  *
- * @brief Logging facility implementation
+ * \brief Logging facility implementation
  *
- * @version
- * @date 2019-10-13
+ * \date 2019-10-13
  *
- * @copyright Copyright (c) 2019
+ * \copyright Copyright (c) 2019
  *
  */
 
@@ -62,7 +61,11 @@ static char* getDateString() {
 
 void logger_init()
 {
-    log_file = NULL;
+    log_file = NULL; //! Make sure the log file pointer is null
+    /*!
+     * \brief Only open the file if the library was compiled for debugging
+     * 
+     */
 #ifdef DEBUG
     if(log_file == NULL) {
     	
@@ -77,6 +80,7 @@ void logger_init()
 
 void logger_write(enum LOGTYPE type, const char* str) {
 
+    /** Must check the file is open if we logging to it */
 #ifdef DEBUG
     assert(log_file != NULL);
 #endif
@@ -96,6 +100,7 @@ void logger_write(enum LOGTYPE type, const char* str) {
         tp = "";
     }
     
+    /** If the LOGTYPE is none, we do not add the timestamp information to the log */
     if(type != NONE) {
         size_t sz = strlen(date) + strlen(tp) + strlen(str) + 10;
         char buffer[sz];

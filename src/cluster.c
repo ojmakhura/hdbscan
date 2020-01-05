@@ -31,7 +31,6 @@
  * 
  * @brief Implementation of the functions from cluster.h
  * 
- * @version 3.1.6
  * @date 2018-01-10
  * 
  * @copyright Copyright (c) 2019

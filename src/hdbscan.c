@@ -30,7 +30,6 @@
  * 
  * @brief Core implementation of the HDBSCAN algorithm
  * 
- * @version 
  * @date 2018-01-10
  * 
  * @copyright Copyright (c) 2019

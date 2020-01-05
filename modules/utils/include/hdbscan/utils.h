@@ -27,7 +27,7 @@
  * SOFTWARE.
  */
 
-/** @file utils.h */
+/** \file utils.h */
 #ifndef HDBSCAN_UTILS_H_
 #define HDBSCAN_UTILS_H_
 

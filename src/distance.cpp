@@ -33,7 +33,6 @@
  * but are not part of the hdbscan class and are implemented using C++
  * specific constructs such as vectors and maps.
  * 
- * @version 3.1.6
  * @date 2019-07-10
  * 
  * @copyright Copyright (c) 2019

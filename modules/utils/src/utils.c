@@ -27,6 +27,18 @@
  * SOFTWARE.
  */
 
+/**
+ * \file utils.c
+ * \author Onalenna Junior Makhura (ojmakhura@roguesystems.co.bw)
+ *
+ * \brief Utility functions implementations for use by other HDBSCAN modules
+ *
+ * \date 2019-10-13
+ *
+ * \copyright Copyright (c) 2019
+ *
+ */
+
 #include "hdbscan/utils.h"
 #include <stdlib.h>
 

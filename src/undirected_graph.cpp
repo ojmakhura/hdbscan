@@ -30,7 +30,6 @@
  * 
  * @brief C++ version of the UndirectedGraph.
  * 
- * @version 3.1.6
  * @date 2018-01-10
  * 
  * @copyright Copyright (c) 2018

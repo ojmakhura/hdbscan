@@ -27,7 +27,7 @@
  * SOFTWARE.
  */
 
-/** @file logger.h */
+/** \file logger.h */
 #ifndef HDBSCAN_LOGGER_H_
 #define HDBSCAN_LOGGER_H_
 
@@ -44,8 +44,18 @@ enum LOGTYPE {
     WARN,       // Any circumstance that may not affect normal operation
     NONE        // Logging that does need the time and type of the message
 };
-
+/*!
+ * \brief Initalise the logger. We can choose to open the log file if
+ * the library was compiled with -D DEBUG_ENABLE=TRUE 
+ */
 void logger_init();
+
+/*!
+ * \brief Write the log either 
+ * 
+ * \param type 
+ * \param str 
+ */
 void logger_write(enum LOGTYPE type, const char* str);
 void logger_close();
 #endif

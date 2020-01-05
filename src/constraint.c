@@ -30,7 +30,6 @@
  * 
  * @brief Implementation of the functions in constraint.h
  * 
- * @version 0.1
  * @date 2019-07-10
  * 
  * @copyright Copyright (c) 2019
