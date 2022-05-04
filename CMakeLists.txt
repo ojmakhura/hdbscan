@@ -10,8 +10,9 @@ set (HDBSCAN_VERSION ${HDBSCAN_MAJOR_VERSION}.${HDBSCAN_MINOR_VERSION}.${HDBSCAN
 
 # Set modules to build
 OPTION (BUILD_SAMPLES "Build Samples" ON)
-OPTION (BUILD_PYTHON2 "Build python 2 bindings" OFF)
+#OPTION (BUILD_PYTHON2 "Build python 2 bindings" OFF)
 OPTION (BUILD_PYTHON3 "Build python 3 bindings" OFF)
+OPTION (BUILD_MODULE_TESTS "Build unit tests for modules" OFF)
 OPTION (BUILD_JAVA "Build java bindings" OFF)
 
 # Setting data types
@@ -51,6 +52,7 @@ else()
 	set(LIBDIR "lib")
 endif()
 
+set(LIBDIR "lib")
 set(INSTALL_LIB_DIR "${LIBDIR}" CACHE PATH "Installation directory for libraries")
 set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH "Installation directory for CMake files")
 set(INSTALL_BIN_DIR bin CACHE PATH "Installation directory for executables")

@@ -2,7 +2,7 @@
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import hdbscan.Hdbscan;
+import bw.co.roguesystems.hdbscan.Hdbscan;
 public class Htest {
 	public static double[][] readInDataSet(String fileName, String delimiter) throws IOException {
 		BufferedReader reader = new BufferedReader(new FileReader(fileName));

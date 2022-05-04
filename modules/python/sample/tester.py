@@ -21,6 +21,7 @@ def printLabels(labels):
 def main(fname, minPts):
 	print("Opening file : ", fname)	
 	dataset = readFile(fname)
+	print(type(dataset))
 	
 	scan = PyHdbscan.PyHdbscan(minPts)
 		

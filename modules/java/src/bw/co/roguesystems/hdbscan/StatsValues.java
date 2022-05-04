@@ -1,4 +1,4 @@
-package hdbscan;
+package bw.co.roguesystems.hdbscan;
 
 public class StatsValues{	
 	private double mean;

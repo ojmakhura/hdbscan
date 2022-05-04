@@ -24,7 +24,7 @@
  * SOFTWARE.
  */
 
- package hdbscan;
+ package bw.co.roguesystems.hdbscan;
 
 import java.util.HashMap;
 import java.util.ArrayList;
