@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.16.3)
 
 project(hdbscan)
 set(HDBSCAN_DESCRIPTION "Implementation of HDBSCAN algorithm in C, C++, Java and python(2, 3)")

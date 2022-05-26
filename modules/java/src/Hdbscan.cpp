@@ -37,7 +37,7 @@
  * @copyright Copyright (c) 2018
  * 
  */
-#include "hdbscan_Hdbscan.h"
+#include "bw_co_roguesystems_hdbscan_Hdbscan.h"
 #include "hdbscan/hdbscan.hpp"
 #include <iostream>
 

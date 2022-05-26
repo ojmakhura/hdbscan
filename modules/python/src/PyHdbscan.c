@@ -156,6 +156,9 @@ void get_labels(PyHdbscan *self, label_t *labels){
     } else {
         c ="H";
     }
+    
+    self->labels = PyList_New(0);
+
 	for(uint i = 0; i < self->rows; i++){
 		PyList_Append(self->labels, Py_BuildValue(c, labels[i]));
 	}
@@ -227,7 +230,7 @@ static PyObject *PyHdbscan_run(PyHdbscan *self, PyObject *args){
 	int err = hdbscan_run(scan, dset, self->rows, self->cols, TRUE, datatype);
 
     npy_intp dims[] = {self->rows, 1}; // Dimensions for the labels numpy array
-    self->labels = PyArray_SimpleNewFromData(1, dims, NPY_INT, scan->clusterLabels);
+    get_labels(self, scan->clusterLabels);
 
     Py_INCREF(self->labels);
     Py_XDECREF(dataset); // Release the dataset memory
@@ -263,7 +266,7 @@ static PyObject* PyHdbscan_rerun(PyHdbscan *self, PyObject *args) {
         tp = NPY_LONG;
     }
 
-    self->labels = PyArray_SimpleNewFromData(1, dims, tp, scan->clusterLabels);
+    get_labels(self, scan->clusterLabels);
     Py_INCREF(self->labels);
 	
 	return Py_BuildValue("i", err);
@@ -300,7 +303,7 @@ static PyObject* PyHdbscan_getClusterMap(PyHdbscan *self, PyObject *args) {
     }
 
     Py_INCREF(self->clusterMap);
-    return Py_BuildValue("i", err);
+    return self->clusterMap;
 }
 
 static PyObject* PyHdbscan_getHierarchies(PyHdbscan *self, PyObject *args) {
