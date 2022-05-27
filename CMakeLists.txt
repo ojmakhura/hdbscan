@@ -54,6 +54,7 @@ endif()
 
 set(LIBDIR "lib")
 set(INSTALL_LIB_DIR "${LIBDIR}" CACHE PATH "Installation directory for libraries")
+set(INSTALL_JNI_LIB_DIR "/usr/lib/jni" CACHE PATH "Installation directory for JNI libraries")
 set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH "Installation directory for CMake files")
 set(INSTALL_BIN_DIR bin CACHE PATH "Installation directory for executables")
 set(INSTALL_INCLUDE_DIR include CACHE PATH "Installation directory for header files")

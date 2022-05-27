@@ -44,7 +44,7 @@
 using namespace clustering;
 hdbscan scan;
 
-JNIEXPORT void JNICALL Java_hdbscan_Hdbscan_initHdbscan(JNIEnv *env, jobject obj, jint minPoints){
+JNIEXPORT void JNICALL Java_bw_co_roguesystems_hdbscan_Hdbscan_initHdbscan(JNIEnv *env, jobject obj, jint minPoints){
 	hdbscan_init(&scan, minPoints);
 }
 
@@ -63,7 +63,7 @@ jintArray getLabelsArray(JNIEnv *env, label_t *lbs, int rows){
 	return labels;
 }
 
-JNIEXPORT jintArray JNICALL Java_hdbscan_Hdbscan_runImpl(JNIEnv *env, jobject obj, jobjectArray dataset){
+JNIEXPORT jintArray JNICALL Java_bw_co_roguesystems_hdbscan_Hdbscan_runImpl(JNIEnv *env, jobject obj, jobjectArray dataset){
 	
 	int rows = env->GetArrayLength(dataset);
 	jdoubleArray dim=  (jdoubleArray)env->GetObjectArrayElement(dataset, 0);
@@ -88,7 +88,7 @@ JNIEXPORT jintArray JNICALL Java_hdbscan_Hdbscan_runImpl(JNIEnv *env, jobject ob
 }
 
 
-JNIEXPORT jintArray JNICALL Java_hdbscan_Hdbscan_reRunImpl(JNIEnv *env, jobject obj, jint newMinPts){
+JNIEXPORT jintArray JNICALL Java_bw_co_roguesystems_hdbscan_Hdbscan_reRunImpl(JNIEnv *env, jobject obj, jint newMinPts){
 	scan.reRun(newMinPts);	
 	return getLabelsArray(env, scan.clusterLabels, scan.numPoints);
 }
