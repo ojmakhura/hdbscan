@@ -1,4 +1,4 @@
-package bw.co.roguesystems.hdbscan;
+package bw.co.roguesystems;
 
 public class DistanceValues{
 	

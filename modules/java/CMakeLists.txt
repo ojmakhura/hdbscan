@@ -9,7 +9,7 @@ set(CMAKE_JNI_TARGET TRUE)
 
 set(HDBSCAN_JNI_SRC src/Hdbscan.cpp )
 set(LIB_VERSION ${HDBSCAN_MAJOR_VERSION}.${HDBSCAN_MINOR_VERSION}.${HDBSCAN_PATCH_VERSION})
-set(JAVA_SOURCE_FILES src/bw/co/roguesystems/hdbscan/Hdbscan.java)
+set(JAVA_SOURCE_FILES src/bw/co/roguesystems/Hdbscan.java)
 
 add_library(${PROJECT_NAME}-${LIB_VERSION} SHARED ${HDBSCAN_JNI_SRC} )
 target_link_libraries(${PROJECT_NAME}-${LIB_VERSION} LINK_PUBLIC ${HDBSCAN_LIBRARY}_static ${JAVA_JVM_LIBRARY})
@@ -33,7 +33,7 @@ INSTALL(CODE "execute_process( \
 if(${MVN_INSTALL})
 INSTALL(CODE "execute_process( \
     COMMAND mvn install:install-file \
-        -Dfile=modules/java/hdbscan.jar -DgroupId=bw.co.roguesystems.hdbscan
+        -Dfile=modules/java/hdbscan.jar -DgroupId=bw.co.roguesystems \
         -DartifactId=hdbscan \
         -Dversion=${LIB_VERSION} -Dpackaging=jar  \
     )"
