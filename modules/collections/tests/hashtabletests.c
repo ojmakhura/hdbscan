@@ -41,8 +41,8 @@
  */
 #include <CUnit/Basic.h>
 #include <stdio.h>
-#include "listlib/hashtable.h"
-#include "listlib/list.h"
+#include "collections/hashtable.h"
+#include "collections/list.h"
 
 /**
  * @brief Initialise the hashtable test suite.

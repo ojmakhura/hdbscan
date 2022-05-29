@@ -367,7 +367,7 @@ static PyMemberDef PyHdbscan_members[] = {
  */
 static PyTypeObject PyHdbscanType = {
    PyVarObject_HEAD_INIT(NULL, 0)
-   "PyHdbscan.PyHdbscan",               /* tp_name */
+   "PyHdbscan.PyHdbscan",     /* tp_name */
    sizeof(PyHdbscan),         /* tp_basicsize */
    0,                         /* tp_itemsize */
    (destructor)PyHdbscan_dealloc, /* tp_dealloc */

@@ -39,7 +39,7 @@
  * @copyright Copyright (c) 2019
  * 
  */
-#include "listlib/linkedlist.h"
+#include "collections/linkedlist.h"
 #include <CUnit/Basic.h>
 #include <stdio.h>
 

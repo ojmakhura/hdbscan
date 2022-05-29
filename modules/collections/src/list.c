@@ -42,7 +42,7 @@
  * 
  */
 
-#include "listlib/list.h"
+#include "collections/list.h"
 #include <string.h>
 #include <assert.h>
 #include "hdbscan/utils.h"

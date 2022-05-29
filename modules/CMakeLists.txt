@@ -1,8 +1,10 @@
 add_subdirectory(${UTILS_DIR})
-add_subdirectory(${LISTLIB_DIR})
+add_subdirectory(${COLLECTIONS_DIR})
 
 IF(BUILD_JAVA)
 	add_subdirectory(${HDBSCAN_JAVA_DIR})
 ENDIF()
 
-add_subdirectory(${HDBSCAN_PYTHON_DIR})
+IF(BUILD_PYTHON3)
+	add_subdirectory(${HDBSCAN_PYTHON_DIR})
+ENDIF()

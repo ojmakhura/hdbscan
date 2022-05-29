@@ -17,5 +17,5 @@ if(NOT TARGET hdbscan AND NOT hdbscan_BINARY_DIR)
 endif()
  
 # These are IMPORTED targets created by HdbscanTargets.cmake
-set(HDBSCAN_LIBRARIES hdbscan listlib)
+set(HDBSCAN_LIBRARIES hdbscan collections)
 set(HDBSCAN_EXECUTABLE hdbscan_csample hdbscan_cppsample)

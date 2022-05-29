@@ -40,7 +40,7 @@
 #include <assert.h>
 #include <time.h>
 #include <math.h>
-#include "listlib/set.h"
+#include "collections/set.h"
 #include "hdbscan/logger.h"
 
 #ifdef _OPENMP

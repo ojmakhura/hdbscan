@@ -5,30 +5,33 @@ with open("${PYTHON_MODULE_DIR}/README.md", "r") as fh:
 
 extensions = {
     "PyHdbscan":["${PYTHON_MODULE_DIR}/src/PyHdbscan.c"]
-    }
+}
 
-_modules = [Extension(	key, 
-						sources=sources,
-						include_dirs = ['${HDBSCAN_INCLUDE_DIR}', 
-										'${UTILS_INCLUDE_DIR}',
-										'${LISTLIB_INCLUDE_DIR}', 
-										'${CMAKE_BINARY_DIR}'],
-						
-						libraries = [	'${HDBSCAN_LIBRARY}_static',
-										'${UTILS_LIBRARY}',
-										'${LISTLIB_LIBRARY}_static',
-										'm'
-									],
-						
-						library_dirs = ['${HDBSCAN_LIB_DIR}',
-										'${UTILS_LIB_DIR}',
-										'${LISTLIB_LIB_DIR}'
-										],
-						
-						extra_compile_args=['-fopenmp'],
-						extra_link_args=['-lgomp']
-					) 
-			for key,sources in extensions.items()]
+_modules = [
+	Extension(	key, 
+		sources=sources,
+		include_dirs = [
+			'${HDBSCAN_INCLUDE_DIR}', 
+			'${UTILS_INCLUDE_DIR}',
+			'${COLLECTIONS_INCLUDE_DIR}', 
+			'${CMAKE_BINARY_DIR}'
+		],
+		libraries = [
+			'${HDBSCAN_LIBRARY}',
+			'${UTILS_LIBRARY}',
+			'${COLLECTIONS_LIBRARY}',
+			'm'
+		],
+		library_dirs = [
+			'${HDBSCAN_LIB_DIR}',
+			'${UTILS_LIB_DIR}',
+			'${COLLECTIONS_LIB_DIR}'
+		],
+		extra_compile_args=['-fopenmp'],
+		extra_link_args=['-lgomp']
+	) 
+	for key,sources in extensions.items()
+]
 
 setup(name='PyHdbscan',
     version='${HDBSCAN_VERSION}',

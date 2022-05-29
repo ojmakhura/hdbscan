@@ -40,7 +40,7 @@
  * 
  */
 
-#include "listlib/linkedlist.h"
+#include "collections/linkedlist.h"
 #include <string.h>
 
 #ifdef _OPENMP

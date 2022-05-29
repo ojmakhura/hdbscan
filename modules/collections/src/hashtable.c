@@ -40,8 +40,8 @@
  * 
  */
 #include "hdbscan/logger.h"
-#include "listlib/hashtable.h"
-#include "listlib/list.h"
+#include "collections/hashtable.h"
+#include "collections/list.h"
 #include <string.h>
 #include <assert.h>
 

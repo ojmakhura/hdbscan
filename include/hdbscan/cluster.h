@@ -32,8 +32,8 @@ extern "C" {
 #endif
 #include "config.h"
 #include "hdbscan/utils.h"
-#include "listlib/list.h"
-#include "listlib/set.h"
+#include "collections/list.h"
+#include "collections/set.h"
 
 #define CLUSTER_SUCCESS 1			//! Notificaiton for successful operatoin
 #define CLUSTER_ERROR	0			//! Notification for errorneous results

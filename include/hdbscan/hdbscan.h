@@ -42,8 +42,8 @@ extern "C" {
 #include "distance.h"
 #include "outlier_score.h"
 #include "undirected_graph.h"
-#include "listlib/list.h"
-#include "listlib/hashtable.h"
+#include "collections/list.h"
+#include "collections/hashtable.h"
 
 #define FILE_BUFFER_SIZE = 32678
 #define HDBSCAN_SUCCESS 0

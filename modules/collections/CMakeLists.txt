@@ -1,0 +1,20 @@
+set (COLLECTIONS_INCLUDE_DIR ${COLLECTIONS_DIR}/include)
+set (COLLECTIONS_SRC_DIR ${COLLECTIONS_DIR}/src)
+
+if(BUILD_MODULE_TESTS)
+  set (COLLECTIONS_TST_DIR ${COLLECTIONS_DIR}/tests)
+endif()
+
+include_directories (${COLLECTIONS_INCLUDE_DIR} ${UTILS_INCLUDE_DIR})
+add_subdirectory (${COLLECTIONS_SRC_DIR})
+
+if(BUILD_MODULE_TESTS)
+  add_subdirectory (${COLLECTIONS_TST_DIR})
+endif()
+
+set_target_properties(${COLLECTIONS_LIBRARY} PROPERTIES
+  PUBLIC_HEADER "include/collections/*.h"
+  VERSION ${PROJECT_VERSION}
+  SOVERSION ${PROJECT_VERSION_MAJOR}
+)
+  

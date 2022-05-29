@@ -38,7 +38,7 @@
  * 
  */
 
-#include "listlib/set.h"
+#include "collections/set.h"
 #include <string.h>
 
 set_t* set_init(size_t step, int32_t (*compare)(const void *a, const void *b))

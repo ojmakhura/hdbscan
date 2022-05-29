@@ -34,7 +34,7 @@ extern "C" {
 
 #include "config.h"
 #include "hdbscan/utils.h"
-#include "listlib/list.h"
+#include "collections/list.h"
 
 #define GRAPH_SUCCESS 1
 #define GRAPH_ERROR 0

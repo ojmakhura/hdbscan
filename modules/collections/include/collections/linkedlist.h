@@ -36,7 +36,7 @@ extern "C" {
 
 #include <stdint.h>
 #include <stdlib.h>
-#include "listlib/list.h"
+#include "collections/list.h"
 #include "hdbscan/utils.h"
 
 /**

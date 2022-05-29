@@ -36,7 +36,7 @@
  * @copyright Copyright (c) 2019
  * 
  */
-#include "listlib/primes.h"
+#include "collections/primes.h"
 
 int32_t get_prime(int32_t min)
 {

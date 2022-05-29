@@ -38,7 +38,7 @@
  * 
  */
 
-#include "listlib/set.h"
+#include "collections/set.h"
 #include "hdbscan/utils.h"
 #include <CUnit/Basic.h>
 #include <stdio.h>

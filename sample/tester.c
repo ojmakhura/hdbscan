@@ -33,7 +33,7 @@
 #include "hdbscan/hdbscan.h"
 #include "hdbscan/logger.h"
 #include "dataset.h"
-#include "listlib/list.h"
+#include "collections/list.h"
 #include <time.h>
 #include <stdio.h>
 #include <string.h>

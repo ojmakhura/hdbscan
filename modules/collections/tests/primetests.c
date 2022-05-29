@@ -39,7 +39,7 @@
  * @copyright Copyright (c) 2019
  * 
  */
-#include "listlib/primes.h"
+#include "collections/primes.h"
 #include <CUnit/Basic.h>
 #include <stdio.h>
 #include <string.h>
