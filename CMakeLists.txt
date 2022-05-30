@@ -1,17 +1,16 @@
 cmake_minimum_required (VERSION 3.16.3)
 
-project(hdbscan VERSION 4.0.0)
+project(hdbscan VERSION 5.1.2)
 
 set(HDBSCAN_DESCRIPTION "Implementation of HDBSCAN algorithm in C, C++, Java and python(2, 3)")
 # The version number.
-set (HDBSCAN_MAJOR_VERSION 4)
-set (HDBSCAN_MINOR_VERSION 0)
-set (HDBSCAN_PATCH_VERSION 0)
+set (HDBSCAN_MAJOR_VERSION 5)
+set (HDBSCAN_MINOR_VERSION 1)
+set (HDBSCAN_PATCH_VERSION 2)
 set (HDBSCAN_VERSION ${HDBSCAN_MAJOR_VERSION}.${HDBSCAN_MINOR_VERSION}.${HDBSCAN_PATCH_VERSION})
 
 # Set modules to build
 OPTION (BUILD_SAMPLES "Build Samples" ON)
-#OPTION (BUILD_PYTHON2 "Build python 2 bindings" OFF)
 OPTION (BUILD_PYTHON3 "Build python 3 bindings" OFF)
 OPTION (BUILD_MODULE_TESTS "Build unit tests for modules" OFF)
 OPTION (BUILD_JAVA "Build java bindings" OFF)
@@ -98,8 +97,6 @@ foreach(p LIB BIN INCLUDE CMAKE SHARE)
   endif()
 endforeach()
 
-#find_package(GSL REQUIRED) 
-
 #ensure we have pkg-config in the system
 find_package(PkgConfig)
 
@@ -135,14 +132,6 @@ export(TARGETS
   ${UTILS_LIBRARY}
   FILE "${PROJECT_BINARY_DIR}/HdbscanTargets.cmake"
 )
-
-# if(${BUILD_JAVA})
-# export(TARGETS 
-#   ${HDBSCAN_JAVA_LIBRARY}
-#   FILE "${PROJECT_BINARY_DIR}/HdbscanTargets.cmake"
-# )
-# endif(${BUILD_JAVA})
-
  
 # Export the package for use from the build-tree
 # (this registers the build-tree with a global CMake-registry)
