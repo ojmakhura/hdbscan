@@ -15,6 +15,10 @@ OPTION (BUILD_PYTHON3 "Build python 3 bindings" OFF)
 OPTION (BUILD_MODULE_TESTS "Build unit tests for modules" OFF)
 OPTION (BUILD_JAVA "Build java bindings" OFF)
 
+IF(BUILD_PYTHON3)
+  set(PYTHON_INCLUDE_DIR "/usr/include/python3" CACHE PATH "Python include directory")
+ENDIF()
+
 # Setting data types
 set(LABEL_TYPE "unsigned int" CACHE STRING "Data types for the labels")
 set_property(CACHE LABEL_TYPE PROPERTY STRINGS "unsigned int" "unsigned short" "unsigned long")
