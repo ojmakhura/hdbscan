@@ -40,10 +40,17 @@
 
 using namespace std;
 
+#ifndef map_t
 typedef map<label_t, vector<index_t>> map_t;
-typedef map<label_t, vector<distance_t>> map_d;
-typedef set<index_t> set_i;
+#endif
 
+#ifndef map_d
+typedef map<label_t, vector<distance_t>> map_d;
+#endif
+
+#ifndef set_i
+typedef set<index_t> set_i;
+#endif
 
 namespace clustering {
 	
