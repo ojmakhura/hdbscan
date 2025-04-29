@@ -1,7 +1,7 @@
 project (${HDBSCAN_PYTHON_LIBRARY} VERSION ${HDBSCAN_VERSION})
 set (PYTHON_MODULE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
-find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+find_package(Python3 REQUIRED COMPONENTS Interpreter Development NumPy)
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
@@ -19,6 +19,7 @@ file (GLOB SOURCE_FILES "${PYTHON_MODULE_DIR}/src/PyHdbscan.c")
 # source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCE_FILES} ${PYTHON_FILES} m)
 
 find_package(pybind11 CONFIG )
+include_directories(${Python3_NumPy_INCLUDE_DIRS})
 pybind11_add_module(${PROJECT_NAME} 
 	${SOURCE_FILES}
 )
