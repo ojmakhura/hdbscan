@@ -68,6 +68,7 @@ JNIEXPORT jintArray JNICALL Java_bw_co_roguesystems_Hdbscan_runImpl(JNIEnv *env,
 	int rows = env->GetArrayLength(dataset);
 	jdoubleArray dim=  (jdoubleArray)env->GetObjectArrayElement(dataset, 0);
 	int cols = env -> GetArrayLength(dim);
+	env->DeleteLocalRef(dim);
 	double *dset = new double[rows * cols];
 	long dIdx = 0;
 
@@ -79,10 +80,12 @@ JNIEXPORT jintArray JNICALL Java_bw_co_roguesystems_Hdbscan_runImpl(JNIEnv *env,
 			dset[dIdx] = row[j];
 			dIdx++;
 		}
+		env->ReleaseDoubleArrayElements(dim, row, JNI_ABORT);
+		env->DeleteLocalRef(dim);
 	}
 	scan.run(dset, (index_t)rows, (index_t)cols, TRUE, H_DOUBLE);
 	
-	delete dset;
+	delete[] dset;
 	
 	return getLabelsArray(env, scan.clusterLabels, rows);
 }

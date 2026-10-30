@@ -102,9 +102,8 @@ void logger_write(enum LOGTYPE type, const char* str) {
     
     /** If the LOGTYPE is none, we do not add the timestamp information to the log */
     if(type != NONE) {
-        size_t sz = strlen(date) + strlen(tp) + strlen(str) + 10;
-        char buffer[sz];
-        sprintf(buffer, "%s %s: %s", date, tp, str);
+        char buffer[4096];
+        snprintf(buffer, sizeof(buffer), "%s %s: %s", date, tp, str);
     #ifdef DEBUG
         fprintf(log_file, "%s", buffer);
     #else

@@ -90,6 +90,9 @@ void distance_destroy(distance* d) {
  * @param d 
  */
 void distance_clean(distance* d){
+	if(d == NULL)
+		return;
+
 	if(d->distances != NULL){
 		free(d->distances);
 		d->distances = NULL;
@@ -114,15 +117,57 @@ void distance_clean(distance* d){
 distance_t distance_get(distance* dis, index_t row, index_t col) {
 	size_t idx;
 	if (row < col) {
-		idx = (size_t) ((size_t)(dis->rows * row + col) - (size_t)TRIANGULAR_H((uint)(row + 1)));
+		idx = (size_t)dis->rows * row + col - TRIANGULAR_H((size_t)row + 1);
 
 	} else if (row == col) {
 		return 0;
 	} else {
-		idx = (size_t)((size_t)(dis->rows * col + row) - (size_t)TRIANGULAR_H((uint)(col + 1)));
+		idx = (size_t)dis->rows * col + row - TRIANGULAR_H((size_t)col + 1);
 	}
 	return dis->distances[idx];
 }
+
+#ifdef _OPENMP
+/// Rows near the top of the triangle have the most work, so hand them out dynamically
+#define DISTANCE_OMP_FOR _Pragma("omp parallel for schedule(dynamic, 16)")
+#else
+#define DISTANCE_OMP_FOR
+#endif
+
+/**
+ * @brief Define a euclidean distance kernel for one input datatype. Each
+ * datatype gets its own copy of the loop so that the type check is not done
+ * for every element.
+ */
+#define DEFINE_DISTANCE_COMPUTE(NAME, TYPE)											\
+static void NAME(distance* dis, const void* dataset) {								\
+	const TYPE* dt = (const TYPE*)dataset;											\
+	size_t n = dis->rows;															\
+	size_t cols = dis->cols;														\
+	DISTANCE_OMP_FOR																\
+	for (size_t i = 0; i < n; i++) {												\
+		const TYPE* a = dt + i * cols;												\
+		/* Offset of row i in the linearised upper triangular matrix. The		\
+		 * subtraction may wrap for i = 0, but base + j is always in range. */	\
+		size_t base = i * n - TRIANGULAR_H(i + 1);									\
+		for (size_t j = i + 1; j < n; j++) {										\
+			const TYPE* b = dt + j * cols;											\
+			distance_t sum = 0;														\
+			for (size_t k = 0; k < cols; k++) {										\
+				distance_t diff = (distance_t)(a[k] - b[k]);						\
+				sum += (diff * diff);												\
+			}																		\
+			dis->distances[base + j] = (distance_t)sqrt(sum);						\
+		}																			\
+	}																				\
+}
+
+DEFINE_DISTANCE_COMPUTE(distance_compute_double, double)
+DEFINE_DISTANCE_COMPUTE(distance_compute_float, float)
+DEFINE_DISTANCE_COMPUTE(distance_compute_int, int)
+DEFINE_DISTANCE_COMPUTE(distance_compute_long, long)
+DEFINE_DISTANCE_COMPUTE(distance_compute_short, short)
+DEFINE_DISTANCE_COMPUTE(distance_compute_char, char)
 
 /**
  * @brief Compute the euclidean distance. We also calculate the size 
@@ -139,62 +184,36 @@ void distance_compute(distance* dis, void* dataset, index_t rows, index_t cols, 
 	
 	dis->rows = rows;
     dis->cols = cols;
-    size_t sub = (size_t)(rows * rows -rows)/2;
-    dis->distances = (distance_t *)malloc(sub * sizeof(distance_t));
-    dis->coreDistances = (distance_t *)malloc(dis->rows * sizeof(distance_t));
-	distance_t sum, diff;
+	// Compute the triangular matrix size in size_t so that large datasets do not
+	// overflow index_t, and make sure the byte count itself does not overflow.
+	size_t n = (size_t)rows;
+	if(n > 1 && (n - 1 > SIZE_MAX / n || (n * (n - 1)) / 2 > SIZE_MAX / sizeof(distance_t))) {
+		logger_write(FATAL, "distance_compute - Dataset too large for the distance matrix");
+		return;
+	}
+	size_t sub = n > 1 ? (n * (n - 1)) / 2 : 0;
 
-#ifdef _OPENMP
-#pragma omp parallel for private(sum, diff)   /// Use omp to speed up calculations
-#endif
-	for (size_t i = 0; i < dis->rows; i++) {
-		for (size_t j = i + 1; j < dis->rows; j++) {
-			diff = 0.0;
-			sum = 0;
+	dis->distances = (distance_t *)malloc((sub > 0 ? sub : 1) * sizeof(distance_t));
+	dis->coreDistances = (distance_t *)malloc((n > 0 ? n : 1) * sizeof(distance_t));
 
-            for (size_t k = 0; ((k < dis->cols) && (i != j)); k++) {
-				/**
-				 * @brief This may look like repitiion but should not be made into a function
-				 * since it will slow down execution due to branch execution. 
-				 */
-				if(dis->datatype == H_DOUBLE) {
-
-					double* dt = dataset;
-					diff = (distance_t)(dt[i * dis->cols + k] - dt[j * dis->cols + k]);
-
-				} else if(dis->datatype == H_FLOAT) {
-
-					float* dt = dataset;
-					diff = (distance_t)(dt[i * dis->cols + k] - dt[j * dis->cols + k]);
-
-				} else if(dis->datatype == H_INT) {
-
-					int* dt = dataset;
-					diff = (distance_t)(dt[i * dis->cols + k] - dt[j * dis->cols + k]);
-				} else if(dis->datatype == H_LONG) {
-
-					long* dt = dataset;
-					diff = (distance_t)(dt[i * dis->cols + k] - dt[j * dis->cols + k]);
-				} else if(dis->datatype == H_SHORT) {
-
-					short* dt = dataset;
-					diff = (distance_t)(dt[i * dis->cols + k] - dt[j * dis->cols + k]);
-				} else {
-
-					char* dt = (char*)dataset;
-					diff = (distance_t)(dt[i * dis->cols + k] - dt[j * dis->cols + k]);
-				}
-
-    			sum += (diff * diff);
-            }
-
-			sum = (distance_t)sqrt(sum);
-
-			// Calculate the linearised upper triangular matrix offset
-			size_t offset = i * dis->rows + j;
-			size_t c = offset - TRIANGULAR_H((uint)i + 1);		
-			dis->distances[c] = sum;			
-		}
+	if(dis->distances == NULL || dis->coreDistances == NULL) {
+		logger_write(FATAL, "distance_compute - Failed to allocate memory for distances");
+		distance_clean(dis);
+		return;
+	}
+	/// Branch on the datatype once instead of inside the innermost loop
+	if(dis->datatype == H_DOUBLE) {
+		distance_compute_double(dis, dataset);
+	} else if(dis->datatype == H_FLOAT) {
+		distance_compute_float(dis, dataset);
+	} else if(dis->datatype == H_INT) {
+		distance_compute_int(dis, dataset);
+	} else if(dis->datatype == H_LONG) {
+		distance_compute_long(dis, dataset);
+	} else if(dis->datatype == H_SHORT) {
+		distance_compute_short(dis, dataset);
+	} else {
+		distance_compute_char(dis, dataset);
 	}
 	distance_get_core_distances(dis);
 }
@@ -227,33 +246,43 @@ void distance_get_core_distances(distance *dis)
 			sortedDistance[j] = D_MAX;
 		}
 
+		// Index the triangular matrix directly rather than calling distance_get
+		// for every pair. The row base may wrap for i = 0; base + j stays in range.
+		size_t n = dis->rows;
+		size_t base = (size_t)i * n - TRIANGULAR_H((size_t)i + 1);
 		for (index_t j = 0; j < dis->rows; j++) {
-			distance_t t = distance_get(dis, i, j);
-			
-			index_t low = 0;
-			index_t high = (index_t)(dis->numNeighbors + 1);
+			distance_t t;
+			if (j < i) {
+				t = dis->distances[(size_t)j * n + i - TRIANGULAR_H((size_t)j + 1)];
+			} else if (j == i) {
+				t = 0;
+			} else {
+				t = dis->distances[base + j];
+			}
 
-			// No need to attempt insertion if the distance is already
-			// greater than the last entry in sortedDistance
-			if(t > sortedDistance[dis->numNeighbors])
+			index_t s = (index_t)(dis->numNeighbors + 1);
+			index_t low = 0;
+			index_t high = s;
+
+			// No need to attempt insertion if the distance is not smaller
+			// than the last entry in sortedDistance
+			if(t >= sortedDistance[dis->numNeighbors])
 				continue;
 
-			// Look for the entry position
-			do {
+			// Find the first entry greater than t (upper bound) so that ties
+			// keep the array sorted. Stopping at an equal entry would leave
+			// low pointing anywhere before it.
+			while(low < high) {
 				index_t mid = (index_t)(low + (high - low) / (index_t)2);
-				
+
 				if (sortedDistance[mid] > t) {
 					high = mid;
-				} else if (sortedDistance[mid] == t) {
-					break;
 				} else {
 					low = (index_t)(mid + 1);
 				}
-				
-			} while(low < high);
+			}
 
-			index_t s = (index_t)(dis->numNeighbors+1);
-			if((low < s) && (sortedDistance[ dis->numNeighbors] != t)) {
+			if(low < s) {
 				size_t ds = sizeof(distance_t);
 				size_t t3 = (size_t)((size_t)(s - low - 1) * ds); 	// Number of bytes to copy
 
@@ -281,7 +310,7 @@ void distances_print(distance *dis) {
 		logger_write(NONE, "[");
 
 		for (index_t j = (index_t)(i + 1); j < dis->rows; j++) {
-			sprintf(s, "%f ", distance_get(dis, i, j));
+			snprintf(s, sizeof(s), "%f ", distance_get(dis, i, j));
 			logger_write(NONE, s);
 		}
 

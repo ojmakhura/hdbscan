@@ -129,7 +129,7 @@ int cluster_detach_points(cluster* cl, index_t numPoints, distance_t level){
 	else if (cl->numPoints < 0){
 		
 		char s[100];
-		sprintf(s, "cluster_detach_points - Cluster %d has %d points.\n", cl->label, cl->numPoints);
+		snprintf(s, sizeof(s), "cluster_detach_points - Cluster %d has %d points.\n", cl->label, cl->numPoints);
 		logger_write(FATAL, s);
 		return CLUSTER_ERROR;
 	}
@@ -200,14 +200,7 @@ void cluster_propagate(cluster* cl){
 
 
 int cluster_add_points_to_virtual_child_cluster(cluster* cl, set_t* points){
-	index_t d;
-	for(index_t i = 0; i < points->size; i++){
-		
-		set_value_at(points, i, &d);
-		set_insert(cl->virtualChildCluster, &d);
-	}
-	
-	return 1;
+	return set_insert_all(cl->virtualChildCluster, points->data, points->size);
 }
 
 boolean cluster_virtual_child_contains_point(cluster* cl, index_t point){

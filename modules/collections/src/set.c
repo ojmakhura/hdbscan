@@ -40,6 +40,7 @@
 
 #include "collections/set.h"
 #include <string.h>
+#include <stdlib.h>
 
 set_t* set_init(size_t step, int32_t (*compare)(const void *a, const void *b))
 {
@@ -124,4 +125,102 @@ void set_sort(set_t* _set){
 
 int32_t set_empty(set_t* _set) {
     return array_list_empty(_set);
+}
+
+void set_make_unique(set_t* _set)
+{
+    if(_set->size < 2) {
+        return;
+    }
+
+    array_list_sort(_set);
+
+    // Compact in place, keeping the first of each run of equal elements
+    char* data = (char *)_set->data;
+    size_t step = _set->step;
+    size_t kept = 1;
+    for(size_t i = 1; i < _set->size; i++) {
+        if(_set->compare(data + (kept - 1) * step, data + i * step) != 0) {
+            if(kept != i) {
+                memcpy(data + kept * step, data + i * step, step);
+            }
+            kept++;
+        }
+    }
+    _set->size = kept;
+}
+
+int32_t set_insert_all(set_t* _set, const void* data, size_t count)
+{
+    if(count == 0) {
+        return 1;
+    }
+
+    size_t step = _set->step;
+    if(count == 1) {
+        set_insert(_set, (void *)data);
+        return 1;
+    }
+
+    // Sort and deduplicate the incoming elements on their own
+    char* incoming = (char *)malloc(count * step);
+    if(incoming == NULL) {
+        return 0;
+    }
+    memcpy(incoming, data, count * step);
+    qsort(incoming, count, step, _set->compare);
+
+    size_t m = 1;
+    for(size_t i = 1; i < count; i++) {
+        if(_set->compare(incoming + (m - 1) * step, incoming + i * step) != 0) {
+            if(m != i) {
+                memcpy(incoming + m * step, incoming + i * step, step);
+            }
+            m++;
+        }
+    }
+
+    // Merge the two sorted runs into a new buffer: O(size + m) instead of O(size * m)
+    size_t capacity = _set->max_size > _set->size + m ? _set->max_size : _set->size + m;
+    char* merged = (char *)malloc(capacity * step);
+    if(merged == NULL) {
+        free(incoming);
+        return 0;
+    }
+
+    char* current = (char *)_set->data;
+    size_t i = 0, j = 0, k = 0;
+    while(i < _set->size && j < m) {
+        int cmp = _set->compare(current + i * step, incoming + j * step);
+        if(cmp < 0) {
+            memcpy(merged + k * step, current + i * step, step);
+            i++;
+        } else if(cmp > 0) {
+            memcpy(merged + k * step, incoming + j * step, step);
+            j++;
+        } else {
+            memcpy(merged + k * step, current + i * step, step);
+            i++;
+            j++;
+        }
+        k++;
+    }
+
+    if(i < _set->size) {
+        memcpy(merged + k * step, current + i * step, (_set->size - i) * step);
+        k += _set->size - i;
+    }
+
+    if(j < m) {
+        memcpy(merged + k * step, incoming + j * step, (m - j) * step);
+        k += m - j;
+    }
+
+    free(incoming);
+    free(_set->data);
+    _set->data = merged;
+    _set->size = k;
+    _set->max_size = capacity;
+
+    return 1;
 }

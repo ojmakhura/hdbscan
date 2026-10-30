@@ -137,42 +137,67 @@ void graph_clean(UndirectedGraph* g) {
 	}
 }
 
+/**
+ * @brief An edge copied out of the graph's parallel arrays for sorting
+ */
+typedef struct {
+	distance_t weight;
+	index_t a, b;
+} graph_sort_edge;
+
+static int graph_sort_edge_compare(const void* x, const void* y) {
+	const graph_sort_edge* e1 = (const graph_sort_edge*)x;
+	const graph_sort_edge* e2 = (const graph_sort_edge*)y;
+
+	if (e1->weight != e2->weight)
+		return e1->weight < e2->weight ? -1 : 1;
+
+	// Break ties on the vertices so the order does not depend on the qsort implementation
+	if (e1->a != e2->a)
+		return e1->a < e2->a ? -1 : 1;
+
+	if (e1->b != e2->b)
+		return e1->b < e2->b ? -1 : 1;
+
+	return 0;
+}
+
 void graph_quicksort_by_edge_weight(UndirectedGraph* g) {
 	size_t esize = g->edgeWeights->size;
 	if (esize <= 1)
 		return;
 
-	index_t startIndexStack[esize/2];
-	index_t endIndexStack[esize/2];
+	distance_t* dt = g->edgeWeights->data;
+	index_t* da = g->verticesA->data;
+	index_t* db = g->verticesB->data;
 
-	(startIndexStack)[0] = 0;
-	(endIndexStack)[0] = (index_t)(esize - 1);
-	int stackTop = 0;
-
-	while (stackTop >= 0) {
-		int64_t startIndex = (startIndexStack)[stackTop];
-		int64_t endIndex = (endIndexStack)[stackTop];
-		stackTop--;
-
-		int pivotIndex = graph_select_pivot_index(g, startIndex, endIndex);
-		pivotIndex = graph_partition(g, startIndex, endIndex, pivotIndex);
-
-		if (pivotIndex > startIndex + 1) {
-			(startIndexStack)[stackTop + 1] = (index_t)startIndex;
-			(endIndexStack)[stackTop + 1] = (index_t)(pivotIndex - 1);
-			stackTop++;
-		}
-
-		if (pivotIndex < endIndex - 1) {
-			(startIndexStack)[stackTop + 1] = (index_t)(pivotIndex + 1);
-			(endIndexStack)[stackTop + 1] = (index_t)endIndex;
-			stackTop++;
-		}
+	/// Sort a packed copy of the edges: qsort keeps this O(n log n) even with many equal weights
+	graph_sort_edge* edges = (graph_sort_edge*)malloc(esize * sizeof(graph_sort_edge));
+	if (edges == NULL) {
+		logger_write(FATAL, "graph_quicksort_by_edge_weight - Could not allocate memory for sorting.");
+		graph_quicksort(g, 0, (int64_t)esize - 1);
+		return;
 	}
+
+	for (size_t i = 0; i < esize; i++) {
+		edges[i].weight = dt[i];
+		edges[i].a = da[i];
+		edges[i].b = db[i];
+	}
+
+	qsort(edges, esize, sizeof(graph_sort_edge), graph_sort_edge_compare);
+
+	for (size_t i = 0; i < esize; i++) {
+		dt[i] = edges[i].weight;
+		da[i] = edges[i].a;
+		db[i] = edges[i].b;
+	}
+
+	free(edges);
 }
 
 int32_t graph_select_pivot_index(UndirectedGraph* g, int64_t startIndex, int64_t endIndex) {
-	if (startIndex - endIndex <= 1)
+	if (endIndex - startIndex <= 1)
 		return (int32_t)startIndex;
 
 	distance_t first, middle, last;
@@ -269,17 +294,17 @@ void graph_print(UndirectedGraph* g) {
 	index_t* db = g->verticesB->data;
 
 	char s[300];
-	sprintf(s,
+	snprintf(s, sizeof(s),
 			"numVertices: %d, verticesA.length: %ld,  verticesB.length: %ld, edgeWeights.length: %ld, edges.length: %d\n",
 			g->numVertices, g->verticesA->size, g->verticesB->size, g->edgeWeights->size, g->numVertices);
-	sprintf(s + strlen(s), "\nVertices A\n");
+	snprintf(s + strlen(s), sizeof(s) - strlen(s), "\nVertices A\n");
 
 	logger_write(NONE, s);
 
 	for (size_t i = 0; i < g->verticesA->size; i++) {
 		index_t vertex = da[i];
 	#ifdef DEBUG
-		sprintf(s, "%d, ", vertex);
+		snprintf(s, sizeof(s), "%d, ", vertex);
 		logger_write(NONE, s);
 	#else
 		printf("%d, ", vertex);
@@ -287,26 +312,26 @@ void graph_print(UndirectedGraph* g) {
 		
 	}
 
-	sprintf(s, "\n\nVertices B\n");
+	snprintf(s, sizeof(s), "\n\nVertices B\n");
 	logger_write(NONE, s);
 
 	for (size_t i = 0; i < g->verticesB->size; i++) {
 		index_t vertex = db[i];
 	
-		sprintf(s, "%d, ", vertex);
+		snprintf(s, sizeof(s), "%d, ", vertex);
 		logger_write(NONE, s);
 	}
 
-	sprintf(s, "\n\nnedgeWeights\n");
+	snprintf(s, sizeof(s), "\n\nnedgeWeights\n");
 	logger_write(NONE, s);
 
     for (size_t i = 0; i < g->edgeWeights->size; i++) {
 		distance_t weight = dt[i];
-		sprintf(s, "%f, ", weight);
+		snprintf(s, sizeof(s), "%f, ", weight);
 		logger_write(NONE, s);
 	}
 
-	sprintf(s, "\n\nEdges\n");
+	snprintf(s, sizeof(s), "\n\nEdges\n");
 	logger_write(NONE, s);
 
 	for(uint i = 0; i < g->numVertices; i++){
@@ -316,7 +341,7 @@ void graph_print(UndirectedGraph* g) {
 		index_t* ldata = edge->data;
 
 		for(index_t i = 0; i < edge->size; i++){
-			sprintf(s, "%d, ", ldata[i]);
+			snprintf(s, sizeof(s), "%d, ", ldata[i]);
 			logger_write(NONE, s);			
 		}
 	

@@ -119,11 +119,13 @@ int32_t array_list_value_at(ArrayList* list, size_t pos, void* data)
 int32_t array_list_grow(ArrayList* list){
 
 	size_t newmax = highestPowerof2(list->max_size*2);
-	list->data = realloc(list->data, newmax * list->step);
+	void* newdata = realloc(list->data, newmax * list->step);
 
-	if(list->data == NULL){
+	if(newdata == NULL){
 		return -1;
 	}
+
+	list->data = newdata;
 
 	list->max_size = newmax;
 
@@ -206,9 +208,14 @@ int32_t array_list_append(ArrayList* list, void* data)
 }
 
 int32_t array_list_insert_at(ArrayList* list, void* data, size_t pos) {
+	if(list == NULL || list->data == NULL || pos > list->size) {
+		return 0;
+	}
 
 	if(list->size == list->max_size) {
-       array_list_grow(list);
+		if(array_list_grow(list) < 0) {
+			return 0;
+		}
     }
 
     size_t t1 = pos * list->step;					// Beginning of the source
@@ -280,7 +287,11 @@ void array_list_clear(ArrayList* list, int32_t resize)
 {
 	list->size = 0;
 	if(resize) {
-		list->data = realloc(list->data, list->step);
+		void* newdata = realloc(list->data, list->step);
+		if(newdata != NULL) {
+			list->data = newdata;
+			list->max_size = 1;
+		}
 	}
 }
 

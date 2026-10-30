@@ -160,9 +160,9 @@ int32_t ptr_ptr_compare(const void * ptr_a, const void * ptr_b);
  * @brief Calculate the triangular number of n
  * 
  * @param n 
- * @return uint 
+ * @return size_t 
  */
-inline uint TRIANGULAR_H(uint n) {
+inline size_t TRIANGULAR_H(size_t n) {
 	return (n * n + n) / 2;
 }
 

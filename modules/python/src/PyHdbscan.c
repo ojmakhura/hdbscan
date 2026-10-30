@@ -54,8 +54,6 @@
             PyModuleDef_HEAD_INIT, name, doc, -1, methods, }; \
         ob = PyModule_Create(&PyHdbscanNodule);
 
-hdbscan* scan = NULL;
-
 /**
  * @brief PyHdbscan object
  * 
@@ -66,7 +64,48 @@ typedef struct {
     PyObject* clusterMap;
     PyObject* hierarchy;
 	index_t minPoints, cols, rows;
+	hdbscan* scan;		/// Each Python object owns its own clustering state
 } PyHdbscan;
+
+/**
+ * @brief Get the numpy type matching label_t
+ * 
+ * @return int 
+ */
+static int label_npy_type(void){
+    if(sizeof(label_t) == sizeof(int)) {
+        return NPY_INT;
+    } else if (sizeof(label_t) == sizeof(long)) {
+        return NPY_LONG;
+    }
+    return NPY_SHORT;
+}
+
+/**
+ * @brief Get the PyArg format character matching index_t
+ * 
+ * @return const char* 
+ */
+static const char* index_format(void){
+    if(sizeof(index_t) == sizeof(int)) {
+        return "I";
+    } else if(sizeof(index_t) == sizeof(long)) {
+        return "k";
+    }
+    return "H";
+}
+
+/**
+ * @brief Replace a PyObject member, releasing the old reference
+ * 
+ * @param member 
+ * @param value A new reference, which is stolen
+ */
+static void replace_member(PyObject** member, PyObject* value){
+    PyObject* old = *member;
+    *member = value;
+    Py_XDECREF(old);
+}
 
 /**
  * @brief Cleanup
@@ -74,10 +113,13 @@ typedef struct {
  * @param self 
  */
 static void PyHdbscan_dealloc(PyHdbscan* self){
-	hdbscan_clean(scan);
-    Py_XDECREF(self->labels);
-    Py_XDECREF(self->clusterMap);
-    Py_XDECREF(self->hierarchy);
+    if(self->scan != NULL){
+        hdbscan_destroy(self->scan);
+        self->scan = NULL;
+    }
+    Py_CLEAR(self->labels);
+    Py_CLEAR(self->clusterMap);
+    Py_CLEAR(self->hierarchy);
     Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
@@ -102,6 +144,7 @@ PyHdbscan_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 		self->minPoints = 0;
 		self->rows = 0;
 		self->cols = 0;
+		self->scan = NULL;
     }
 
     return (PyObject *)self;
@@ -119,49 +162,61 @@ static int
 PyHdbscan_init(PyHdbscan *self, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"minPoints", NULL};
+    index_t minPoints = 0;
 
-    char* c;
-    if(sizeof(index_t) == sizeof(int)) {
-        c = "I";
-    } else if(sizeof(index_t) == sizeof(long)) {
-        c = "k";
-    } else {
-        c ="H";
-    }
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, c, kwlist, &self->minPoints))
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, index_format(), kwlist, &minPoints))
         return -1;
     
-    if(self->minPoints < 2){
+    if(minPoints < 2){
+        PyErr_SetString(PyExc_ValueError, "minPoints must be at least 2.");
 		return -1;
 	} 
-	
-    scan = hdbscan_init(NULL, self->minPoints);
+
+    if(self->scan != NULL){
+        hdbscan_destroy(self->scan);
+    }
+
+    self->minPoints = minPoints;
+    self->rows = 0;
+    self->cols = 0;
+    self->scan = hdbscan_init(NULL, self->minPoints);
+    if(self->scan == NULL){
+        PyErr_NoMemory();
+        return -1;
+    }
 	
     return 0;
 }
 
 /**
- * @brief Get the labels object
+ * @brief Build self->labels from the clustering result
  * 
  * @param self 
- * @param labels 
+ * @return int 0 on success, -1 with a Python exception set on failure
  */
-void get_labels(PyHdbscan *self, label_t *labels){
-    char* c;
-    if(sizeof(label_t) == sizeof(int)) {
-        c = "I";
-    } else if(sizeof(label_t) == sizeof(long)) {
-        c = "k";
-    } else {
-        c ="H";
+static int get_labels(PyHdbscan *self){
+    label_t* labels = self->scan->clusterLabels;
+    if(labels == NULL){
+        PyErr_SetString(PyExc_RuntimeError, "No cluster labels available.");
+        return -1;
     }
-    
-    self->labels = PyList_New(0);
 
-	for(uint i = 0; i < self->rows; i++){
-		PyList_Append(self->labels, Py_BuildValue(c, labels[i]));
+    PyObject* list = PyList_New((Py_ssize_t)self->rows);
+    if(list == NULL){
+        return -1;
+    }
+
+	for(index_t i = 0; i < self->rows; i++){
+        PyObject* item = PyLong_FromUnsignedLong((unsigned long)labels[i]);
+        if(item == NULL){
+            Py_DECREF(list);
+            return -1;
+        }
+		PyList_SET_ITEM(list, (Py_ssize_t)i, item);	/// Steals the reference
 	}
+
+    replace_member(&self->labels, list);
+    return 0;
 }
 
 /**
@@ -178,8 +233,19 @@ static PyObject *PyHdbscan_run(PyHdbscan *self, PyObject *args){
     if (! PyArg_ParseTuple(args, "O", &dataset)){
         return NULL;
 	}
+
+    if(self->scan == NULL){
+        PyErr_SetString(PyExc_RuntimeError, "PyHdbscan has not been initialised.");
+        return NULL;
+    }
     
-    int typenum = PyArray_TYPE(dataset);
+    // Convert anything array-like into an aligned, C-contiguous numpy array
+    PyArrayObject* d_arr = (PyArrayObject*)PyArray_FROM_OF(dataset, NPY_ARRAY_IN_ARRAY);
+    if(d_arr == NULL){
+        return NULL;
+    }
+
+    int typenum = PyArray_TYPE(d_arr);
     uint datatype;
 
     /// Determine the datatype from the array
@@ -204,36 +270,45 @@ static PyObject *PyHdbscan_run(PyHdbscan *self, PyObject *args){
         datatype = H_SHORT;
     }
     else{
-        printf("Unsupported datatype.\n");
+        Py_DECREF(d_arr);
+        PyErr_SetString(PyExc_TypeError, "Unsupported datatype.");
         return NULL;
     }
-
-    Py_INCREF(dataset);    
-    
-    // Create a contigous array from dataset
-    PyArrayObject* d_arr = (PyArrayObject*)PyArray_ContiguousFromAny(dataset, typenum, 0, 0);
 	
     int nd = PyArray_NDIM(d_arr);
 	npy_intp *dimensions = PyArray_DIMS(d_arr);
+    npy_intp rows, cols;
 
     // Get numpy array dimensions
     if(nd == 1)
     {
-        self->cols = 1;
-        self->rows = (uint)*dimensions;
+        rows = dimensions[0];
+        cols = 1;
+    } else if(nd == 2) {
+        rows = dimensions[0];
+        cols = dimensions[1];
     } else {
-        self->rows = (uint)dimensions[0];
-        self->cols = (uint)dimensions[1];
+        Py_DECREF(d_arr);
+        PyErr_SetString(PyExc_ValueError, "The dataset must be a 1 or 2 dimensional array.");
+        return NULL;
     }
+
+    if(rows < 2 || cols < 1 || (npy_uintp)rows > (npy_uintp)((index_t)-1) || (npy_uintp)cols > (npy_uintp)((index_t)-1)){
+        Py_DECREF(d_arr);
+        PyErr_SetString(PyExc_ValueError, "The dataset has an unsupported shape.");
+        return NULL;
+    }
+
+    self->rows = (index_t)rows;
+    self->cols = (index_t)cols;
 	
     void *dset = PyArray_DATA(d_arr); /// The contigous array
-	int err = hdbscan_run(scan, dset, self->rows, self->cols, TRUE, datatype);
+	int err = hdbscan_run(self->scan, dset, self->rows, self->cols, TRUE, datatype);
+    Py_DECREF(d_arr);
 
-    npy_intp dims[] = {self->rows, 1}; // Dimensions for the labels numpy array
-    get_labels(self, scan->clusterLabels);
-
-    Py_INCREF(self->labels);
-    Py_XDECREF(dataset); // Release the dataset memory
+    if(err == HDBSCAN_SUCCESS && get_labels(self) < 0){
+        return NULL;
+    }
 
 	return Py_BuildValue("i", err);
 }
@@ -246,93 +321,142 @@ static PyObject *PyHdbscan_run(PyHdbscan *self, PyObject *args){
  * @return PyObject* 
  */
 static PyObject* PyHdbscan_rerun(PyHdbscan *self, PyObject *args) {
-	Py_XDECREF(self->labels); 
-    if (!PyArg_ParseTuple(args, "i", &self->minPoints))
+    index_t minPoints = 0;
+    if (!PyArg_ParseTuple(args, index_format(), &minPoints))
         return NULL;
     
-    if(self->minPoints < 2){
-        printf("minPts must be greater than 2.\n");
+    if(self->scan == NULL || self->scan->distanceFunction.distances == NULL){
+        PyErr_SetString(PyExc_RuntimeError, "run() must succeed before rerun().");
+        return NULL;
+    }
+
+    if(minPoints < 2 || minPoints > self->rows){
+        PyErr_SetString(PyExc_ValueError, "minPoints must be between 2 and the number of rows.");
 		return NULL;
 	} 
 	
-	int err = hdbscan_rerun(scan, self->minPoints);
+    self->minPoints = minPoints;
+	int err = hdbscan_rerun(self->scan, self->minPoints);
 
-    npy_intp dims[] = {self->rows, 1};
-    enum NPY_TYPES tp = NPY_SHORT;
-
-    if(sizeof(label_t) == sizeof(int)) {
-        tp = NPY_INT;
-    } else if (sizeof(label_t) == sizeof(long)) {
-        tp = NPY_LONG;
+    if(err == HDBSCAN_SUCCESS && get_labels(self) < 0){
+        return NULL;
     }
-
-    get_labels(self, scan->clusterLabels);
-    Py_INCREF(self->labels);
 	
 	return Py_BuildValue("i", err);
 }
 
 static PyObject* PyHdbscan_getClusterMap(PyHdbscan *self, PyObject *args) {
-    Py_XDECREF(self->clusterMap); 
     int32_t begin, end;
     if (!PyArg_ParseTuple(args, "ii", &begin, &end))
         return NULL;
 
-    enum NPY_TYPES tp = NPY_SHORT;
-
-    if(sizeof(label_t) == sizeof(int)) {
-        tp = NPY_INT;
-    } else if (sizeof(label_t) == sizeof(long)) {
-        tp = NPY_LONG;
+    if(self->scan == NULL || self->scan->clusterLabels == NULL){
+        PyErr_SetString(PyExc_RuntimeError, "run() must succeed before getClusterMap().");
+        return NULL;
     }
 
-    int err = 1;
-    hashtable* tmp = hdbscan_create_cluster_map(scan->clusterLabels, begin, end);
-    self->clusterMap = PyDict_New();
-    label_t label;
+    if(begin < 0 || end <= begin || (index_t)end > self->rows){
+        PyErr_SetString(PyExc_IndexError, "begin and end must satisfy 0 <= begin < end <= rows.");
+        return NULL;
+    }
 
-    for(size_t i = 0; i < tmp->size; i++) {
-        label = ((label_t *)tmp->keys->data)[i];
-        PyObject* key = Py_BuildValue("i", label);
-        ArrayList* lst;
+    int tp = label_npy_type();
+    hashtable* tmp = hdbscan_create_cluster_map(self->scan->clusterLabels, (index_t)begin, (index_t)end);
+    if(tmp == NULL){
+        return PyErr_NoMemory();
+    }
+
+    PyObject* clusterMap = PyDict_New();
+    if(clusterMap == NULL){
+        hdbscan_destroy_cluster_map(tmp);
+        return NULL;
+    }
+
+    for(size_t i = 0; i < hashtable_size(tmp); i++) {
+        label_t label = ((label_t *)tmp->keys->data)[i];
+        ArrayList* lst = NULL;
         hashtable_lookup(tmp, &label, &lst);
-        npy_intp dims[] = {lst->size, 1};
-        label_t* labels = lst->data;
-        PyObject* value = PyArray_SimpleNewFromData(1, dims, tp, labels);
-        PyDict_SetItem(self->clusterMap, key, value);
-    }
+        if(lst == NULL){
+            continue;
+        }
 
+        // Copy the points so the array does not refer to memory freed below
+        npy_intp dims[] = {(npy_intp)lst->size};
+        PyObject* value = PyArray_SimpleNew(1, dims, tp);
+        PyObject* key = PyLong_FromUnsignedLong((unsigned long)label);
+        if(value == NULL || key == NULL || PyArray_ITEMSIZE((PyArrayObject*)value) != (npy_intp)lst->step){
+            Py_XDECREF(value);
+            Py_XDECREF(key);
+            Py_DECREF(clusterMap);
+            hdbscan_destroy_cluster_map(tmp);
+            if(!PyErr_Occurred()){
+                PyErr_SetString(PyExc_RuntimeError, "Could not build the cluster map.");
+            }
+            return NULL;
+        }
+        memcpy(PyArray_DATA((PyArrayObject*)value), lst->data, lst->size * lst->step);
+
+        int set = PyDict_SetItem(clusterMap, key, value);
+        Py_DECREF(key);
+        Py_DECREF(value);
+        if(set < 0){
+            Py_DECREF(clusterMap);
+            hdbscan_destroy_cluster_map(tmp);
+            return NULL;
+        }
+    }
+    hdbscan_destroy_cluster_map(tmp);
+
+    replace_member(&self->clusterMap, clusterMap);
     Py_INCREF(self->clusterMap);
     return self->clusterMap;
 }
 
 static PyObject* PyHdbscan_getHierarchies(PyHdbscan *self, PyObject *args) {
-    Py_XDECREF(self->hierarchy); 
-    enum NPY_TYPES tp = NPY_SHORT;
-
-    if(sizeof(label_t) == sizeof(int)) {
-        tp = NPY_INT;
-    } else if (sizeof(label_t) == sizeof(long)) {
-        tp = NPY_LONG;
+    if(self->scan == NULL || self->scan->hierarchy == NULL){
+        PyErr_SetString(PyExc_RuntimeError, "run() must succeed before getHierarchies().");
+        return NULL;
     }
 
-    int err = 1;
-    self->hierarchy = PyDict_New();
-    int64_t level;
-	hierarchy_entry* data;
-
-    for(size_t i = 0; i < hashtable_size(scan->hierarchy); i++) {
-        
-		set_value_at(scan->hierarchy->keys, i, &level);
-        hashtable_lookup(scan->hierarchy, &level, &data);
-        npy_intp dims[] = {scan->numPoints, 1};
-        PyObject* value = PyArray_SimpleNewFromData(1, dims, tp, data->labels);
-        PyObject* key = Py_BuildValue("k", level);
-        PyDict_SetItem(self->hierarchy, key, value);
+    int tp = label_npy_type();
+    hashtable* hierarchy = self->scan->hierarchy;
+    PyObject* hierarchyDict = PyDict_New();
+    if(hierarchyDict == NULL){
+        return NULL;
     }
-    
-    Py_INCREF(self->hierarchy);
-    return Py_BuildValue("i", err);
+
+    for(size_t i = 0; i < hashtable_size(hierarchy); i++) {
+        int64_t level;
+	    hierarchy_entry* data = NULL;
+		set_value_at(hierarchy->keys, i, &level);
+        hashtable_lookup(hierarchy, &level, &data);
+        if(data == NULL || data->labels == NULL){
+            continue;
+        }
+
+        // Copy the labels so Python never holds pointers into memory freed by rerun()
+        npy_intp dims[] = {(npy_intp)self->scan->numPoints};
+        PyObject* value = PyArray_SimpleNew(1, dims, tp);
+        PyObject* key = PyLong_FromLongLong((long long)level);
+        if(value == NULL || key == NULL){
+            Py_XDECREF(value);
+            Py_XDECREF(key);
+            Py_DECREF(hierarchyDict);
+            return NULL;
+        }
+        memcpy(PyArray_DATA((PyArrayObject*)value), data->labels, (size_t)self->scan->numPoints * sizeof(label_t));
+
+        int set = PyDict_SetItem(hierarchyDict, key, value);
+        Py_DECREF(key);
+        Py_DECREF(value);
+        if(set < 0){
+            Py_DECREF(hierarchyDict);
+            return NULL;
+        }
+    }
+
+    replace_member(&self->hierarchy, hierarchyDict);
+    return Py_BuildValue("i", 1);
 }
 
 /**
@@ -352,12 +476,12 @@ static PyMethodDef PyHdbscan_methods[] = {
  * 
  */
 static PyMemberDef PyHdbscan_members[] = {
-    {"labels", T_OBJECT_EX, offsetof(PyHdbscan, labels), 0, "Cluster labels"},
-    {"clusterMap", T_OBJECT_EX, offsetof(PyHdbscan, clusterMap), 0, "Dictionary of the clusters and the points"},
-    {"hierarchy", T_OBJECT_EX, offsetof(PyHdbscan, hierarchy), 0, "Dictionary of the hierarchies"},
-    {"minPoints", T_INT, offsetof(PyHdbscan, minPoints), 0, "Minimum number of point in a cluster"},
-    {"rows", T_INT, offsetof(PyHdbscan, rows), 0, "number of data points"},
-    {"cols", T_INT, offsetof(PyHdbscan, cols), 0, "The size of each data point"},
+    {"labels", T_OBJECT_EX, offsetof(PyHdbscan, labels), READONLY, "Cluster labels"},
+    {"clusterMap", T_OBJECT_EX, offsetof(PyHdbscan, clusterMap), READONLY, "Dictionary of the clusters and the points"},
+    {"hierarchy", T_OBJECT_EX, offsetof(PyHdbscan, hierarchy), READONLY, "Dictionary of the hierarchies"},
+    {"minPoints", T_UINT, offsetof(PyHdbscan, minPoints), READONLY, "Minimum number of point in a cluster"},
+    {"rows", T_UINT, offsetof(PyHdbscan, rows), READONLY, "number of data points"},
+    {"cols", T_UINT, offsetof(PyHdbscan, cols), READONLY, "The size of each data point"},
     {NULL}  /* Sentinel */
 };
 

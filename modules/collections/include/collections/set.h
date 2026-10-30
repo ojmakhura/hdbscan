@@ -120,6 +120,25 @@ void set_sort(set_t* _set);
 
 int32_t set_empty(set_t* _set);
 
+/**
+ * @brief Sort the elements and drop duplicates, restoring the set ordering after
+ * elements were added with array_list_append. This is O(n log n), where adding the
+ * same elements one by one with set_insert is O(n^2).
+ * 
+ * @param _set 
+ */
+void set_make_unique(set_t* _set);
+
+/**
+ * @brief Insert count elements from data into the set in one pass.
+ * 
+ * @param _set 
+ * @param data 
+ * @param count 
+ * @return int32_t 1 on success, 0 if memory could not be allocated
+ */
+int32_t set_insert_all(set_t* _set, const void* data, size_t count);
+
 #ifdef __cplusplus
 };
 #endif
